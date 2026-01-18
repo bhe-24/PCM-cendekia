@@ -3,141 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cendekia Aksara | Sekolah Menulis Masa Depan</title>
+    <title>Cendekia Aksara | Sekolah Menulis Indonesia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
     <style>
+        /* Font: Plus Jakarta Sans (Kesan Modern & Institusional) */
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
         body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
+        
+        /* Hero Background Gradient */
         .hero-bg {
-            background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.8)), url('https://images.unsplash.com/photo-1455390582262-044cdead277a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
-            background-size: cover;
-            background-position: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            position: relative;
+            overflow: hidden;
         }
+        
+        /* Efek latar belakang abstrak */
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%; height: 100%;
+            background-image: radial-gradient(#334155 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        .stat-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+
+        /* Loader Kecil untuk Angka */
+        .loader-dots::after {
+            content: ' .';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        @keyframes dots { 0%, 20% { content: ' .'; } 40% { content: ' ..'; } 60% { content: ' ...'; } 80%, 100% { content: ''; } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
 
     <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center gap-3">
-                    <div class="bg-[#005a9c] text-white p-2 rounded-lg">
-                        <i class="fas fa-book-open-reader text-xl"></i>
+                    <div class="bg-[#005a9c] text-white w-10 h-10 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
+                        <i class="fas fa-feather-alt text-lg"></i>
                     </div>
-                    <span class="text-xl font-bold tracking-tight text-slate-900">Cendekia Aksara</span>
+                    <span class="text-xl font-extrabold tracking-tight text-slate-900">Cendekia Aksara</span>
                 </div>
+
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="#program" class="text-sm font-medium text-slate-600 hover:text-[#005a9c] transition">Program</a>
+                    <a href="#program" class="text-sm font-medium text-slate-600 hover:text-[#005a9c] transition">Kurikulum</a>
                     <a href="#tentang" class="text-sm font-medium text-slate-600 hover:text-[#005a9c] transition">Tentang Kami</a>
-                    <a href="#faq" class="text-sm font-medium text-slate-600 hover:text-[#005a9c] transition">FAQ</a>
-                    <a href="portal.html" class="px-5 py-2.5 bg-[#005a9c] text-white text-sm font-semibold rounded-full hover:bg-[#004b80] transition shadow-lg shadow-blue-900/20">
-                        Login Portal <i class="fas fa-arrow-right ml-2"></i>
+                    <div class="h-6 w-px bg-slate-300"></div>
+                    <a href="login.html" class="text-sm font-bold text-[#005a9c] hover:text-[#004b80] transition">Masuk</a>
+                    <a href="login.html?mode=register" class="px-5 py-2.5 bg-[#005a9c] text-white text-sm font-bold rounded-full hover:bg-[#004b80] transition shadow-lg shadow-blue-900/20">
+                        Daftar Sekarang
                     </a>
                 </div>
+
                 <div class="md:hidden">
-                    <button class="text-slate-600 hover:text-slate-900">
-                        <i class="fas fa-bars text-2xl"></i>
-                    </button>
+                    <a href="login.html" class="text-[#005a9c] font-bold text-sm">Masuk Portal <i class="fas fa-arrow-right ml-1"></i></a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <header class="hero-bg h-screen flex items-center justify-center text-center px-4 relative">
-        <div class="max-w-4xl mx-auto relative z-10">
-            <span class="inline-block py-1 px-3 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs font-semibold tracking-wider mb-6 uppercase">
-                Penerimaan Siswa Baru 2026
-            </span>
-            <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-6">
-                Melahirkan Penulis <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Generasi Emas</span>
-            </h1>
-            <p class="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Bergabunglah dengan ekosistem literasi paling terstruktur di Indonesia. Kurikulum berbasis industri, mentor ahli, dan komunitas yang suportif.
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="login.html" class="px-8 py-4 bg-white text-slate-900 font-bold rounded-full hover:bg-slate-100 transition shadow-xl text-lg">
-                    Daftar Sekarang
-                </a>
-                <a href="#program" class="px-8 py-4 bg-transparent border border-slate-500 text-white font-semibold rounded-full hover:bg-white/10 transition text-lg backdrop-blur-sm">
-                    Pelajari Kurikulum
-                </a>
-            </div>
-        </div>
-        
-        <div class="absolute bottom-0 w-full bg-white/5 border-t border-white/10 backdrop-blur-sm py-6 hidden md:block">
-            <div class="max-w-7xl mx-auto flex justify-around text-white">
-                <div><span class="block text-3xl font-bold">500+</span><span class="text-sm text-slate-400">Alumni</span></div>
-                <div><span class="block text-3xl font-bold">100%</span><span class="text-sm text-slate-400">Beasiswa Penuh</span></div>
-                <div><span class="block text-3xl font-bold">50+</span><span class="text-sm text-slate-400">Karya Terbit</span></div>
+    <header class="hero-bg min-h-screen flex items-center pt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                
+                <div class="text-left animate-fade-in-up">
+                    <span class="inline-block py-1 px-3 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs font-bold tracking-wider mb-6 uppercase">
+                        <i class="fas fa-circle text-[8px] mr-2 text-green-400 animate-pulse"></i>Penerimaan Siswa Baru Dibuka
+                    </span>
+                    <h1 class="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6">
+                        Menulis Adalah <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Jalan Keabadian</span>
+                    </h1>
+                    <p class="text-lg text-slate-300 mb-8 max-w-xl leading-relaxed">
+                        Cendekia Aksara adalah inkubator penulis masa depan. Kami menyediakan kurikulum terstruktur, mentoring eksklusif, dan komunitas suportif secara gratis.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="login.html?mode=register" class="px-8 py-4 bg-white text-slate-900 font-bold rounded-full hover:bg-slate-100 transition shadow-xl text-center">
+                            Mulai Menulis
+                        </a>
+                        <a href="#program" class="px-8 py-4 bg-white/10 border border-white/20 text-white font-semibold rounded-full hover:bg-white/20 transition backdrop-blur-sm text-center">
+                            Pelajari Program
+                        </a>
+                    </div>
+
+                    <div class="mt-12 grid grid-cols-2 sm:grid-cols-3 gap-4 border-t border-white/10 pt-8">
+                        <div>
+                            <p class="text-3xl font-bold text-white flex items-center gap-2">
+                                <span id="stat-siswa">0</span>
+                                <span class="text-xs text-slate-400 loader-dots hidden" id="loader-siswa"></span>
+                            </p>
+                            <p class="text-sm text-slate-400">Siswa Bergabung</p>
+                        </div>
+                        <div>
+                            <p class="text-3xl font-bold text-white flex items-center gap-2">
+                                <span id="stat-pengajar">0</span>
+                                <span class="text-xs text-slate-400 loader-dots hidden" id="loader-pengajar"></span>
+                            </p>
+                            <p class="text-sm text-slate-400">Mentor & Pengajar</p>
+                        </div>
+                         <div>
+                            <p class="text-3xl font-bold text-white">100%</p>
+                            <p class="text-sm text-slate-400">Gratis (Beasiswa)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative hidden lg:block">
+                    <div class="absolute inset-0 bg-blue-500 rounded-full opacity-20 blur-3xl transform translate-x-10 translate-y-10"></div>
+                    <img src="https://images.unsplash.com/photo-1457369804613-52c61a468e7d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" alt="Menulis" class="relative rounded-2xl shadow-2xl border-4 border-white/10 transform rotate-2 hover:rotate-0 transition duration-500">
+                    
+                    <div class="absolute -bottom-10 -left-10 bg-white p-6 rounded-xl shadow-xl max-w-xs animate-bounce-slow">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i class="fas fa-quote-right"></i></div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-500">Kutipan Hari Ini</p>
+                                <p class="text-sm font-bold text-slate-800">Pramoedya Ananta Toer</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-600 italic">"Orang boleh pandai setinggi langit, tapi selama ia tidak menulis, ia akan hilang di dalam masyarakat dan dari sejarah."</p>
+                    </div>
+                </div>
+
             </div>
         </div>
     </header>
 
-    <section id="program" class="py-24 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl font-bold text-slate-900 mb-4">Mengapa Cendekia Aksara?</h2>
-                <p class="text-slate-600">Kami tidak sekadar mengajar menulis. Kami membangun disiplin, logika berpikir, dan rasa dalam berkarya.</p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-xl transition duration-300 group">
-                    <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-[#005a9c] transition duration-300">
-                        <i class="fas fa-graduation-cap text-2xl text-[#005a9c] group-hover:text-white"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-3">Kurikulum Terstruktur</h3>
-                    <p class="text-slate-600 leading-relaxed">Materi disusun bertahap dari dasar hingga penerbitan, memastikan pemahaman yang utuh.</p>
-                </div>
-                <div class="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-xl transition duration-300 group">
-                    <div class="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-emerald-600 transition duration-300">
-                        <i class="fas fa-users text-2xl text-emerald-600 group-hover:text-white"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-3">Komunitas Eksklusif</h3>
-                    <p class="text-slate-600 leading-relaxed">Berjejaring dengan penulis lain yang memiliki visi sama dalam lingkungan positif.</p>
-                </div>
-                <div class="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-xl transition duration-300 group">
-                    <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-purple-600 transition duration-300">
-                        <i class="fas fa-medal text-2xl text-purple-600 group-hover:text-white"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-3">Sertifikasi Resmi</h3>
-                    <p class="text-slate-600 leading-relaxed">Dapatkan sertifikat kelulusan digital yang dapat diverifikasi dan diakui.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="bg-slate-900 text-slate-300 py-12 border-t border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div class="col-span-1 md:col-span-2">
-                <div class="flex items-center gap-3 mb-4">
-                    <i class="fas fa-book-open-reader text-2xl text-white"></i>
-                    <span class="text-xl font-bold text-white">Cendekia Aksara</span>
-                </div>
-                <p class="text-sm text-slate-400 max-w-sm">
-                    Institusi pendidikan non-formal yang berdedikasi memajukan literasi Indonesia melalui teknologi dan kurikulum berkualitas.
-                </p>
-            </div>
-            <div>
-                <h4 class="text-white font-bold mb-4">Tautan</h4>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="#" class="hover:text-white transition">Beranda</a></li>
-                    <li><a href="portal.html" class="hover:text-white transition">Masuk Portal</a></li>
-                    <li><a href="#" class="hover:text-white transition">Kontak Admin</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-white font-bold mb-4">Legal</h4>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="#" class="hover:text-white transition">Syarat & Ketentuan</a></li>
-                    <li><a href="#" class="hover:text-white transition">Kebijakan Privasi</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-500">
-            &copy; 2026 Cendekia Aksara. All rights reserved.
-        </div>
+    <footer class="bg-slate-900 text-slate-400 py-8 text-center text-sm border-t border-slate-800 mt-auto">
+        <p>&copy; 2026 Cendekia Aksara. Membangun Peradaban Lewat Tulisan.</p>
     </footer>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, getCountFromServer, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", 
+            authDomain: "mading-cf676.firebaseapp.com", 
+            projectId: "mading-cf676", 
+            storageBucket: "mading-cf676.appspot.com", 
+            messagingSenderId: "72175203671", 
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // FUNGSI UNTUK MENGAMBIL DATA NYATA
+        async function fetchRealStats() {
+            const elSiswa = document.getElementById('stat-siswa');
+            const elPengajar = document.getElementById('stat-pengajar');
+            const loadSiswa = document.getElementById('loader-siswa');
+            const loadPengajar = document.getElementById('loader-pengajar');
+
+            // Tampilkan loader saat memuat
+            elSiswa.textContent = ''; elPengajar.textContent = '';
+            loadSiswa.classList.remove('hidden'); loadPengajar.classList.remove('hidden');
+
+            try {
+                const usersColl = collection(db, "users");
+                
+                // 1. Hitung Siswa (Query: role == 'siswa')
+                const qSiswa = query(usersColl, where("role", "==", "siswa"));
+                const snapshotSiswa = await getCountFromServer(qSiswa);
+                const countSiswa = snapshotSiswa.data().count;
+
+                // 2. Hitung Pengajar (Query: role == 'admin')
+                const qAdmin = query(usersColl, where("role", "==", "admin"));
+                const snapshotAdmin = await getCountFromServer(qAdmin);
+                const countAdmin = snapshotAdmin.data().count;
+
+                // Tampilkan Data
+                elSiswa.textContent = countSiswa + "+"; // Tambah "+" biar keren
+                elPengajar.textContent = countAdmin;
+                
+            } catch (error) {
+                console.error("Gagal mengambil statistik:", error);
+                elSiswa.textContent = "-";
+                elPengajar.textContent = "-";
+            } finally {
+                // Sembunyikan loader
+                loadSiswa.classList.add('hidden'); loadPengajar.classList.add('hidden');
+            }
+        }
+
+        // Jalankan saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', fetchRealStats);
+    </script>
 </body>
 </html>
