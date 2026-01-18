@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Tugas - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+
+        /* Loader */
+        .page-loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #0f172a; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Mobile Sidebar Overlay */
+        #mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; display: none; }
+        aside { transition: transform 0.3s ease-in-out; }
+        @media (max-width: 768px) {
+            aside { position: fixed; inset-y: 0; left: 0; transform: translateX(-100%); z-index: 50; width: 80%; max-width: 300px; }
+            aside.open { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <div id="loader" class="page-loader">
+        <div class="spinner mb-4"></div>
+        <p class="text-slate-900 font-bold text-sm animate-pulse">Memuat Bank Soal...</p>
+    </div>
+
+    <div id="mobile-overlay"></div>
+
+    <aside id="sidebar" class="bg-slate-900 text-slate-300 flex flex-col h-full md:w-64 md:transform-none flex-shrink-0">
+        <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-user-shield"></i></div>
+                <h1 class="font-bold text-lg text-white">Admin Panel</h1>
+            </div>
+            <button id="close-sidebar" class="md:hidden text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="index.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
+                <i class="fas fa-chart-pie w-5 text-center"></i> Ringkasan
+            </a>
+            <a href="siswa.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
+                <i class="fas fa-users w-5 text-center"></i> Data Siswa
+            </a>
+            <a href="tugas.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 bg-blue-600 text-white font-bold shadow-lg shadow-blue-900/50">
+                <i class="fas fa-tasks w-5 text-center"></i> Kelola Tugas
+            </a>
+            <a href="chat.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
+                <i class="fas fa-envelope w-5 text-center"></i> Pesan
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-800 bg-slate-900">
+            <button id="logout-btn" class="w-full px-4 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 hover:text-white text-sm font-medium transition flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> Keluar
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full relative w-full overflow-hidden">
+        
+        <header class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0 shadow-sm">
+            <div class="font-bold text-slate-800 text-lg">Bank Soal</div>
+            <button id="open-sidebar" class="text-slate-600 w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100"><i class="fas fa-bars text-xl"></i></button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            <div class="max-w-7xl mx-auto">
+                
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-slate-800">Manajemen Tugas</h2>
+                    <p class="text-slate-500 text-sm mt-1">Buat, edit, dan hapus soal yang akan dikerjakan siswa.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-full">
+                        <div class="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center rounded-t-xl">
+                            <div>
+                                <h3 class="font-bold text-slate-800"><i class="fas fa-filter text-blue-600 mr-2"></i>Tahap Seleksi</h3>
+                                <p class="text-xs text-slate-500">Muncul saat status "Seleksi"</p>
+                            </div>
+                        </div>
+                        
+                        <div class="p-5 border-b border-slate-100 bg-blue-50/50">
+                            <form id="form-selection">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tambah Soal Baru</label>
+                                <textarea id="input-selection-q" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" rows="2" placeholder="Contoh: Mengapa Anda ingin bergabung?" required></textarea>
+                                <button type="submit" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-bold transition">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Soal
+                                </button>
+                            </form>
+                        </div>
+
+                        <div id="list-selection" class="flex-1 p-5 space-y-3 overflow-y-auto max-h-[500px]">
+                            <p class="text-center text-slate-400 text-sm py-4">Memuat data...</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-full">
+                        <div class="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center rounded-t-xl">
+                            <div>
+                                <h3 class="font-bold text-slate-800"><i class="fas fa-flag text-green-600 mr-2"></i>Pekan Orientasi</h3>
+                                <p class="text-xs text-slate-500">Muncul saat status "Pekan Orientasi"</p>
+                            </div>
+                        </div>
+                        
+                        <div class="p-5 border-b border-slate-100 bg-green-50/50">
+                            <form id="form-orientation" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Judul Tugas</label>
+                                    <input type="text" id="input-orientation-title" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="Contoh: Resume Materi 1" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Deskripsi / Instruksi</label>
+                                    <textarea id="input-orientation-desc" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" rows="2" placeholder="Jelaskan detail tugas..." required></textarea>
+                                </div>
+                                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-bold transition">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Tugas
+                                </button>
+                            </form>
+                        </div>
+
+                        <div id="list-orientation" class="flex-1 p-5 space-y-3 overflow-y-auto max-h-[500px]">
+                             <p class="text-center text-slate-400 text-sm py-4">Memuat data...</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676", storageBucket: "mading-cf676.appspot.com", messagingSenderId: "72175203671", appId: "1:72175203671:web:7a0676a55beb64bc96ba12" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let globalTasks = { selection: [], orientation: [] };
+
+        // AUTH & INIT
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) window.location.href = '../login.html';
+            else {
+                // Security Check (Opsional, tapi bagus)
+                const u = await getDoc(doc(db, "users", user.uid));
+                if(u.data().role !== 'admin') window.location.href = '../login.html';
+                
+                // Init Tasks Listener
+                initTasksListener();
+            }
+        });
+
+        function initTasksListener() {
+            const configRef = doc(db, 'config', 'tasks');
+            
+            onSnapshot(configRef, (docSnap) => {
+                const loader = document.getElementById('loader');
+                
+                if (docSnap.exists()) {
+                    globalTasks = docSnap.data();
+                } else {
+                    // Jika belum ada, buat file config kosong
+                    setDoc(configRef, { selection: [], orientation: [] });
+                    globalTasks = { selection: [], orientation: [] };
+                }
+
+                renderTasks();
+                
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+            });
+        }
+
+        // RENDER LISTS
+        function renderTasks() {
+            // 1. Render Selection
+            const selList = document.getElementById('list-selection');
+            selList.innerHTML = '';
+            if (!globalTasks.selection || globalTasks.selection.length === 0) {
+                selList.innerHTML = `<p class="text-center text-slate-400 text-xs italic">Belum ada soal seleksi.</p>`;
+            } else {
+                globalTasks.selection.forEach(task => {
+                    const item = document.createElement('div');
+                    item.className = "bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between items-start group hover:border-blue-300 transition";
+                    item.innerHTML = `
+                        <p class="text-sm text-slate-700 w-full mr-2">${task.question}</p>
+                        <button onclick="window.deleteTask('selection', '${task.id}')" class="text-slate-400 hover:text-red-500 transition px-2">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    `;
+                    selList.appendChild(item);
+                });
+            }
+
+            // 2. Render Orientation
+            const oriList = document.getElementById('list-orientation');
+            oriList.innerHTML = '';
+            if (!globalTasks.orientation || globalTasks.orientation.length === 0) {
+                oriList.innerHTML = `<p class="text-center text-slate-400 text-xs italic">Belum ada tugas orientasi.</p>`;
+            } else {
+                globalTasks.orientation.forEach(task => {
+                    const item = document.createElement('div');
+                    item.className = "bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between items-start group hover:border-green-300 transition";
+                    item.innerHTML = `
+                        <div class="w-full mr-2">
+                            <p class="text-sm font-bold text-slate-800">${task.title}</p>
+                            <p class="text-xs text-slate-500 mt-1">${task.description}</p>
+                        </div>
+                        <button onclick="window.deleteTask('orientation', '${task.id}')" class="text-slate-400 hover:text-red-500 transition px-2">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    `;
+                    oriList.appendChild(item);
+                });
+            }
+        }
+
+        // ADD TASK LOGIC
+        document.getElementById('form-selection').onsubmit = async (e) => {
+            e.preventDefault();
+            const q = document.getElementById('input-selection-q').value;
+            if(!q.trim()) return;
+
+            const newTask = { id: Date.now().toString(), question: q };
+            const newArr = [...(globalTasks.selection || []), newTask];
+            
+            await updateTasksInDB('selection', newArr);
+            e.target.reset();
+        };
+
+        document.getElementById('form-orientation').onsubmit = async (e) => {
+            e.preventDefault();
+            const t = document.getElementById('input-orientation-title').value;
+            const d = document.getElementById('input-orientation-desc').value;
+            if(!t.trim()) return;
+
+            const newTask = { id: Date.now().toString(), title: t, description: d };
+            const newArr = [...(globalTasks.orientation || []), newTask];
+            
+            await updateTasksInDB('orientation', newArr);
+            e.target.reset();
+        };
+
+        // DELETE TASK LOGIC (Global Scope)
+        window.deleteTask = async (type, id) => {
+            if(!confirm("Hapus soal ini?")) return;
+            
+            const currentArr = globalTasks[type] || [];
+            const newArr = currentArr.filter(t => t.id !== id);
+            
+            await updateTasksInDB(type, newArr);
+        };
+
+        // HELPER: UPDATE DB
+        async function updateTasksInDB(type, newArray) {
+            try {
+                const configRef = doc(db, 'config', 'tasks');
+                await updateDoc(configRef, { [type]: newArray });
+                // Tidak perlu alert, karena onSnapshot akan auto-refresh UI
+            } catch (err) {
+                console.error(err);
+                alert("Gagal menyimpan perubahan.");
+            }
+        }
+
+        // Sidebar Mobile Logic (Copy Paste Standard)
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        document.getElementById('open-sidebar').onclick = () => { sidebar.classList.add('open'); overlay.style.display = 'block'; };
+        document.getElementById('close-sidebar').onclick = () => { sidebar.classList.remove('open'); overlay.style.display = 'none'; };
+        overlay.onclick = () => { sidebar.classList.remove('open'); overlay.style.display = 'none'; };
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
+
+    </script>
+</body>
+</html>
