@@ -3,440 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masuk - Cendekia Aksara</title>
+    <title>Masuk Portal - Cendekia Aksara</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
     <style>
-        /* FONT PREMIUM: Plus Jakarta Sans */
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
         
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f1f5f9; /* Slate-100 */
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
+        /* Notifikasi Toast */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { min-width: 300px; padding: 16px; border-radius: 12px; background: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-left: 5px solid; animation: slideIn 0.3s ease-out; }
+        .toast-success { border-color: #10b981; } .toast-error { border-color: #ef4444; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
-        /* --- CUSTOM NOTIFICATION (TOAST) STYLES --- */
-        #toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+        /* Spinner */
+        .spinner { border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .toast {
-            min-width: 300px;
-            padding: 16px;
-            border-radius: 12px;
-            background: white;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            animation: slideIn 0.3s ease-out forwards;
-            border-left: 5px solid;
-            font-size: 0.9rem;
-        }
-
-        .toast-success { border-color: #10b981; color: #065f46; }
-        .toast-error { border-color: #ef4444; color: #991b1b; }
-        .toast-info { border-color: #3b82f6; color: #1e40af; }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes fadeOut {
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top: 3px solid white;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Smooth Transitions */
-        .form-section { transition: all 0.3s ease-in-out; }
-        .hidden-section { display: none; opacity: 0; }
-        .active-section { display: block; opacity: 1; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .hidden-section { display: none; }
+        .active-section { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
 
     <div id="toast-container"></div>
 
-    <div id="forgot-password-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all scale-100">
-            <div class="text-center mb-6">
-                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-key text-blue-600 text-xl"></i>
-                </div>
-                <h3 class="text-xl font-bold text-slate-800">Lupa Password?</h3>
-                <p class="text-sm text-slate-500">Masukkan email Anda. Kami akan mengirimkan link untuk mereset password.</p>
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+        <div class="p-6 text-center bg-white border-b border-slate-100">
+            <a href="index.html" class="inline-flex items-center gap-2 text-[#005a9c] hover:text-[#004b80] mb-4 text-sm font-semibold">
+                <i class="fas fa-arrow-left"></i> Kembali ke Beranda
+            </a>
+            <div class="w-12 h-12 bg-[#005a9c] text-white rounded-lg flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fas fa-feather-alt"></i>
             </div>
-            <form id="reset-password-form">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Email Terdaftar</label>
-                    <input type="email" id="reset-email" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#005a9c] focus:border-transparent outline-none transition" placeholder="nama@email.com">
+            <h2 class="text-2xl font-bold text-slate-800">Portal Akademik</h2>
+            <p class="text-slate-500 text-sm">Masuk untuk mengakses materi & kelas.</p>
+        </div>
+
+        <div class="flex p-2 m-4 bg-slate-100 rounded-lg">
+            <button id="tab-login" class="flex-1 py-2 text-sm font-bold rounded-md bg-white text-[#005a9c] shadow-sm transition">Masuk</button>
+            <button id="tab-register" class="flex-1 py-2 text-sm font-bold rounded-md text-slate-500 hover:text-slate-700 transition">Daftar Baru</button>
+        </div>
+
+        <div id="view-login" class="p-6 pt-0 active-section">
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Email</label>
+                    <input type="email" id="login-email" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#005a9c] outline-none" placeholder="nama@email.com">
                 </div>
-                <div class="flex gap-3">
-                    <button type="button" id="close-reset-modal" class="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-slate-600 font-medium hover:bg-slate-50 transition">Batal</button>
-                    <button type="submit" class="flex-1 px-4 py-2 bg-[#005a9c] text-white rounded-lg font-bold hover:bg-[#004b80] transition flex justify-center items-center gap-2">
-                        <span id="reset-btn-text">Kirim Link</span>
-                        <div id="reset-spinner" class="spinner hidden"></div>
-                    </button>
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="block text-xs font-bold text-slate-600 uppercase">Password</label>
+                        <a href="#" class="text-xs text-[#005a9c] hover:underline">Lupa Password?</a>
+                    </div>
+                    <input type="password" id="login-password" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#005a9c] outline-none" placeholder="••••••••">
                 </div>
+                <button type="submit" class="w-full bg-[#005a9c] text-white font-bold py-3 rounded-lg hover:bg-[#004b80] transition flex justify-center items-center gap-2">
+                    <span>Masuk Portal</span>
+                    <div class="spinner hidden"></div>
+                </button>
             </form>
         </div>
-    </div>
 
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] overflow-hidden border border-slate-100">
-        
-        <div class="bg-white p-6 pb-0 text-center">
-            <div class="inline-flex items-center justify-center p-3 mb-4">
-                <img src="https://via.placeholder.com/150/005a9c/FFFFFF?text=Logo+CA" alt="Logo Cendekia Aksara" class="h-16 w-auto object-contain">
-            </div>
-            <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Cendekia Aksara</h2>
-            <p class="text-slate-500 text-sm mt-1">Portal Pembelajaran & Administrasi Terpadu</p>
-        </div>
-
-        <div class="px-6 py-4">
-            <div class="flex p-1 bg-slate-100 rounded-xl relative">
-                <div id="slider-bg" class="w-1/2 h-full absolute bg-white rounded-lg shadow-sm transition-all duration-300 top-1 left-1 bottom-1"></div>
-                <button id="tab-login" class="w-1/2 py-2 text-sm font-bold text-[#005a9c] z-10 transition-colors duration-300 relative">Masuk</button>
-                <button id="tab-register" class="w-1/2 py-2 text-sm font-bold text-slate-500 z-10 transition-colors duration-300 relative">Daftar Baru</button>
-            </div>
-        </div>
-
-        <div class="p-6 pt-0">
-            <div id="view-login" class="form-section active-section">
-                <form id="login-form" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Email</label>
-                        <div class="relative">
-                            <i class="fas fa-envelope absolute left-4 top-3.5 text-slate-400"></i>
-                            <input type="email" id="login-email" required class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#005a9c] focus:border-transparent outline-none transition bg-slate-50 focus:bg-white" placeholder="contoh@email.com">
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="block text-xs font-bold text-slate-600 uppercase">Password</label>
-                            <a href="#" id="forgot-password-link" class="text-xs text-[#005a9c] font-semibold hover:underline">Lupa Password?</a>
-                        </div>
-                        <div class="relative">
-                            <i class="fas fa-lock absolute left-4 top-3.5 text-slate-400"></i>
-                            <input type="password" id="login-password" required class="w-full pl-10 pr-10 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#005a9c] focus:border-transparent outline-none transition bg-slate-50 focus:bg-white" placeholder="••••••••">
-                            <button type="button" class="toggle-password absolute right-4 top-3.5 text-slate-400 hover:text-slate-600">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="w-full bg-[#005a9c] hover:bg-[#004b80] text-white font-bold py-3.5 rounded-lg shadow-lg shadow-blue-900/20 transition duration-300 flex justify-center items-center gap-2 group">
-                        <span>Masuk Portal</span>
-                        <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-                        <div class="login-spinner spinner hidden"></div>
-                    </button>
-                </form>
-            </div>
-
-            <div id="view-register" class="form-section hidden-section">
-                <form id="register-form" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nama Lengkap</label>
-                        <div class="relative">
-                            <i class="fas fa-user absolute left-4 top-3.5 text-slate-400"></i>
-                            <input type="text" id="reg-name" required class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#005a9c] focus:border-transparent outline-none transition bg-slate-50 focus:bg-white" placeholder="Nama Sesuai KTP/Identitas">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Email</label>
-                        <div class="relative">
-                            <i class="fas fa-envelope absolute left-4 top-3.5 text-slate-400"></i>
-                            <input type="email" id="reg-email" required class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#005a9c] focus:border-transparent outline-none transition bg-slate-50 focus:bg-white" placeholder="contoh@email.com">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nomor Telepon (WhatsApp)</label>
-                        <div class="relative">
-                            <i class="fas fa-phone absolute left-4 top-3.5 text-slate-400"></i>
-                            <input type="tel" id="reg-phone" required class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#005a9c] focus:border-transparent outline-none transition bg-slate-50 focus:bg-white" placeholder="0812...">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password Baru</label>
-                        <div class="relative">
-                            <i class="fas fa-lock absolute left-4 top-3.5 text-slate-400"></i>
-                            <input type="password" id="reg-password" required minlength="6" class="w-full pl-10 pr-10 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#005a9c] focus:border-transparent outline-none transition bg-slate-50 focus:bg-white" placeholder="Min. 6 karakter">
-                            <button type="button" class="toggle-password absolute right-4 top-3.5 text-slate-400 hover:text-slate-600">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-lg shadow-lg shadow-emerald-900/20 transition duration-300 flex justify-center items-center gap-2">
-                        <span>Buat Akun</span>
-                        <div class="reg-spinner spinner hidden"></div>
-                    </button>
-                </form>
-            </div>
-        </div>
-        
-        <div class="bg-slate-50 p-4 text-center border-t border-slate-100">
-            <a href="index.html" class="text-sm text-slate-500 hover:text-[#005a9c] transition flex items-center justify-center gap-2">
-                <i class="fas fa-home"></i> Kembali ke Beranda Utama
-            </a>
+        <div id="view-register" class="p-6 pt-0 hidden-section">
+            <form id="register-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nama Lengkap</label>
+                    <input type="text" id="reg-name" required class="w-full p-3 border border-slate-300 rounded-lg outline-none" placeholder="Sesuai KTP/Identitas">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Email</label>
+                    <input type="email" id="reg-email" required class="w-full p-3 border border-slate-300 rounded-lg outline-none" placeholder="nama@email.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nomor WhatsApp</label>
+                    <input type="tel" id="reg-phone" required class="w-full p-3 border border-slate-300 rounded-lg outline-none" placeholder="0812...">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
+                    <input type="password" id="reg-password" required minlength="6" class="w-full p-3 border border-slate-300 rounded-lg outline-none" placeholder="Min. 6 karakter">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition flex justify-center items-center gap-2">
+                    <span>Buat Akun Siswa</span>
+                    <div class="spinner hidden"></div>
+                </button>
+            </form>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- KONFIGURASI FIREBASE ---
-        const firebaseConfig = { 
-            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", 
-            authDomain: "mading-cf676.firebaseapp.com", 
-            projectId: "mading-cf676", 
-            storageBucket: "mading-cf676.appspot.com", 
-            messagingSenderId: "72175203671", 
-            appId: "1:72175203671:web:7a0676a55beb64bc96ba12" 
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676", storageBucket: "mading-cf676.appspot.com", messagingSenderId: "72175203671", appId: "1:72175203671:web:7a0676a55beb64bc96ba12" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- LOGIKA UI (Tab Switch, Password Toggle, Modal) ---
+        // --- TAB SWITCHER LOGIC ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode'); // Cek apakah ?mode=register
+        
         const tabLogin = document.getElementById('tab-login');
         const tabRegister = document.getElementById('tab-register');
         const viewLogin = document.getElementById('view-login');
         const viewRegister = document.getElementById('view-register');
-        const sliderBg = document.getElementById('slider-bg');
 
-        tabLogin.addEventListener('click', () => {
-            viewLogin.classList.remove('hidden-section');
-            viewLogin.classList.add('active-section');
-            viewRegister.classList.add('hidden-section');
-            viewRegister.classList.remove('active-section');
-            sliderBg.style.transform = 'translateX(0)';
-            tabLogin.classList.replace('text-slate-500', 'text-[#005a9c]');
-            tabRegister.classList.replace('text-[#005a9c]', 'text-slate-500');
-        });
-
-        tabRegister.addEventListener('click', () => {
-            viewRegister.classList.remove('hidden-section');
-            viewRegister.classList.add('active-section');
-            viewLogin.classList.add('hidden-section');
-            viewLogin.classList.remove('active-section');
-            sliderBg.style.transform = 'translateX(100%)';
-            tabRegister.classList.replace('text-slate-500', 'text-[#005a9c]');
-            tabLogin.classList.replace('text-[#005a9c]', 'text-slate-500');
-        });
-
-        // Toggle Password Visibility
-        document.querySelectorAll('.toggle-password').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const input = e.currentTarget.previousElementSibling;
-                const icon = e.currentTarget.querySelector('i');
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.add('fa-eye');
-                    icon.classList.remove('fa-eye-slash');
-                }
-            });
-        });
-
-        // --- CUSTOM NOTIFICATION SYSTEM (TOAST) ---
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            let iconClass = 'fa-info-circle';
-            let bgClass = 'toast-info';
-            
-            if (type === 'success') { iconClass = 'fa-check-circle'; bgClass = 'toast-success'; }
-            if (type === 'error') { iconClass = 'fa-exclamation-circle'; bgClass = 'toast-error'; }
-
-            toast.className = `toast ${bgClass}`;
-            toast.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <i class="fas ${iconClass} text-lg"></i>
-                    <span>${message}</span>
-                </div>
-                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 ml-4"><i class="fas fa-times"></i></button>
-            `;
-
-            container.appendChild(toast);
-
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                toast.style.animation = 'fadeOut 0.5s ease-out forwards';
-                setTimeout(() => toast.remove(), 500);
-            }, 5000);
+        function switchTab(target) {
+            if (target === 'register') {
+                viewLogin.classList.add('hidden-section'); viewLogin.classList.remove('active-section');
+                viewRegister.classList.remove('hidden-section'); viewRegister.classList.add('active-section');
+                tabRegister.classList.add('bg-white', 'text-[#005a9c]', 'shadow-sm'); tabRegister.classList.remove('text-slate-500');
+                tabLogin.classList.remove('bg-white', 'text-[#005a9c]', 'shadow-sm'); tabLogin.classList.add('text-slate-500');
+            } else {
+                viewRegister.classList.add('hidden-section'); viewRegister.classList.remove('active-section');
+                viewLogin.classList.remove('hidden-section'); viewLogin.classList.add('active-section');
+                tabLogin.classList.add('bg-white', 'text-[#005a9c]', 'shadow-sm'); tabLogin.classList.remove('text-slate-500');
+                tabRegister.classList.remove('bg-white', 'text-[#005a9c]', 'shadow-sm'); tabRegister.classList.add('text-slate-500');
+            }
         }
 
-        // --- RESET PASSWORD LOGIC ---
-        const forgotModal = document.getElementById('forgot-password-modal');
-        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
-            e.preventDefault();
-            forgotModal.classList.remove('hidden');
-        });
-        document.getElementById('close-reset-modal').addEventListener('click', () => {
-            forgotModal.classList.add('hidden');
-        });
-
-        document.getElementById('reset-password-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('reset-email').value;
-            const btnText = document.getElementById('reset-btn-text');
-            const spinner = document.getElementById('reset-spinner');
-
-            btnText.classList.add('hidden');
-            spinner.classList.remove('hidden');
-
-            sendPasswordResetEmail(auth, email)
-                .then(() => {
-                    showToast('Link reset password telah dikirim ke email Anda.', 'success');
-                    forgotModal.classList.add('hidden');
-                })
-                .catch((error) => {
-                    showToast(`Gagal: ${error.message}`, 'error');
-                })
-                .finally(() => {
-                    btnText.classList.remove('hidden');
-                    spinner.classList.add('hidden');
-                });
-        });
-
-        // --- AUTHENTICATION LOGIC ---
+        tabLogin.onclick = () => switchTab('login');
+        tabRegister.onclick = () => switchTab('register');
         
-        // 1. LOGIN
-        document.getElementById('login-form').addEventListener('submit', (e) => {
+        // Auto-switch jika ada parameter di URL
+        if (mode === 'register') switchTab('register');
+
+        // --- TOAST FUNCTION ---
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const div = document.createElement('div');
+            div.className = `toast ${type === 'error' ? 'toast-error' : 'toast-success'}`;
+            div.innerHTML = `<div class="font-bold text-slate-800">${type === 'error' ? 'Gagal' : 'Berhasil'}</div><div class="text-sm text-slate-600">${msg}</div>`;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 4000);
+        }
+
+        // --- LOGIN LOGIC ---
+        document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const spin = btn.querySelector('.spinner');
+            btn.disabled = true; spin.classList.remove('hidden');
+
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
-            const btn = e.target.querySelector('button');
-            const spinner = btn.querySelector('.login-spinner');
-            const text = btn.querySelector('span');
 
-            btn.disabled = true;
-            text.textContent = 'Memproses...';
-            spinner.classList.remove('hidden');
+            try {
+                const cred = await signInWithEmailAndPassword(auth, email, password);
+                // Cek Role di Database
+                const docRef = doc(db, "users", cred.user.uid);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const role = docSnap.data().role;
+                    showToast(`Login sukses! Mengalihkan ke ${role}...`);
+                    setTimeout(() => window.location.href = `${role}/index.html`, 1500);
+                } else {
+                    throw new Error("Data user tidak ditemukan di database.");
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+                btn.disabled = false; spin.classList.add('hidden');
+            }
+        };
 
-            signInWithEmailAndPassword(auth, email, password)
-                .then(async (cred) => {
-                    // Cek Role di Firestore untuk Redirect
-                    const docRef = doc(db, "users", cred.user.uid);
-                    const docSnap = await getDoc(docRef);
-                    
-                    if (docSnap.exists()) {
-                        const role = docSnap.data().role;
-                        showToast(`Berhasil masuk! Mengalihkan ke halaman ${role}...`, 'success');
-                        
-                        // DELAY SEBENTAR AGAR TOAST TERBACA
-                        setTimeout(() => {
-                            if (role === 'admin') {
-                                window.location.href = 'admin/index.html'; // Folder Admin
-                            } else {
-                                window.location.href = 'siswa/index.html'; // Folder Siswa
-                            }
-                        }, 1500);
-                    } else {
-                        // Kasus aneh jika user di Auth ada tapi di Firestore tidak ada
-                        showToast('Data profil tidak ditemukan. Hubungi admin.', 'error');
-                        btn.disabled = false;
-                        text.textContent = 'Masuk Portal';
-                        spinner.classList.add('hidden');
-                    }
-                })
-                .catch((error) => {
-                    let msg = "Gagal masuk.";
-                    if(error.code === 'auth/invalid-credential') msg = "Email atau password salah.";
-                    showToast(msg, 'error');
-                    btn.disabled = false;
-                    text.textContent = 'Masuk Portal';
-                    spinner.classList.add('hidden');
-                });
-        });
-
-        // 2. REGISTER
-        document.getElementById('register-form').addEventListener('submit', (e) => {
+        // --- REGISTER LOGIC ---
+        document.getElementById('register-form').onsubmit = async (e) => {
             e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const spin = btn.querySelector('.spinner');
+            btn.disabled = true; spin.classList.remove('hidden');
+
             const name = document.getElementById('reg-name').value;
             const email = document.getElementById('reg-email').value;
             const phone = document.getElementById('reg-phone').value;
             const password = document.getElementById('reg-password').value;
-            
-            const btn = e.target.querySelector('button');
-            const spinner = btn.querySelector('.reg-spinner');
-            const text = btn.querySelector('span');
 
-            btn.disabled = true;
-            text.textContent = 'Mendaftarkan...';
-            spinner.classList.remove('hidden');
-
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((cred) => {
-                    // Simpan data dasar ke Firestore
-                    const newUser = {
-                        name: name,
-                        email: email,
-                        phone: phone,
-                        role: 'siswa', // Default role
-                        currentStage: 'Pendaftaran Awal',
-                        createdAt: serverTimestamp(),
-                        isArchived: false,
-                        isRejected: false
-                    };
-                    
-                    return setDoc(doc(db, "users", cred.user.uid), newUser);
-                })
-                .then(() => {
-                    showToast('Akun berhasil dibuat! Mengalihkan...', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'siswa/index.html';
-                    }, 1500);
-                })
-                .catch((error) => {
-                    let msg = error.message;
-                    if(error.code === 'auth/email-already-in-use') msg = "Email sudah terdaftar. Silakan login.";
-                    showToast(msg, 'error');
-                    btn.disabled = false;
-                    text.textContent = 'Buat Akun';
-                    spinner.classList.add('hidden');
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+                // Simpan Data Awal Siswa
+                await setDoc(doc(db, "users", cred.user.uid), {
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    role: 'siswa',
+                    currentStage: 'Pendaftaran Awal',
+                    createdAt: serverTimestamp(),
+                    isRejected: false,
+                    isArchived: false
                 });
-        });
-
-        // Cek jika user sudah login sebelumnya
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // Opsional: Redirect otomatis jika user membuka halaman login padahal sudah login
-                // const docSnap = await getDoc(doc(db, "users", user.uid));
-                // if(docSnap.exists()) {
-                //     const role = docSnap.data().role;
-                //     window.location.href = role === 'admin' ? 'admin/index.html' : 'siswa/index.html';
-                // }
+                showToast("Akun berhasil dibuat! Mengalihkan...");
+                setTimeout(() => window.location.href = 'siswa/index.html', 1500);
+            } catch (error) {
+                showToast(error.message, 'error');
+                btn.disabled = false; spin.classList.add('hidden');
             }
-        });
-
+        };
     </script>
 </body>
 </html>
