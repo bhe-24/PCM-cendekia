@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Siswa - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+
+        /* Loader & Transitions */
+        .page-loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #0f172a; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Modal Transition */
+        .modal { transition: opacity 0.3s ease, transform 0.3s ease; opacity: 0; pointer-events: none; transform: scale(0.95); }
+        .modal.active { opacity: 1; pointer-events: auto; transform: scale(1); }
+        
+        /* Mobile Overlay */
+        #mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; display: none; }
+        aside { transition: transform 0.3s ease-in-out; }
+        @media (max-width: 768px) {
+            aside { position: fixed; inset-y: 0; left: 0; transform: translateX(-100%); z-index: 50; width: 80%; max-width: 300px; }
+            aside.open { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <div id="loader" class="page-loader">
+        <div class="spinner mb-4"></div>
+        <p class="text-slate-900 font-bold text-sm animate-pulse">Memuat Data Siswa...</p>
+    </div>
+
+    <div id="edit-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm modal">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col m-4">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 class="font-bold text-xl text-slate-800" id="modal-name">Nama Siswa</h3>
+                    <p class="text-xs text-slate-500" id="modal-email">email@siswa.com</p>
+                </div>
+                <button id="close-modal" class="text-slate-400 hover:text-red-500 transition"><i class="fas fa-times text-2xl"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><span class="block text-slate-400 text-xs uppercase font-bold">Telepon</span><span id="modal-phone" class="font-medium">-</span></div>
+                    <div><span class="block text-slate-400 text-xs uppercase font-bold">Umur</span><span id="modal-age" class="font-medium">-</span></div>
+                    <div class="col-span-2"><span class="block text-slate-400 text-xs uppercase font-bold">Motivasi</span><p id="modal-motivation" class="bg-slate-50 p-2 rounded border border-slate-100 mt-1 italic">-</p></div>
+                </div>
+
+                <div id="answers-section" class="hidden border-t border-slate-100 pt-4">
+                    <h4 class="font-bold text-slate-700 mb-3"><i class="fas fa-file-alt mr-2"></i>Jawaban Tugas</h4>
+                    <div id="answers-container" class="space-y-3"></div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-4">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Ubah Status / Tahapan</label>
+                    <select id="stage-selector" class="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 mb-3">
+                        <option value="Pendaftaran Awal">Pendaftaran Awal</option>
+                        <option value="Seleksi">Seleksi (Buka Soal)</option>
+                        <option value="Daftar Ulang">Daftar Ulang (Lolos Seleksi)</option>
+                        <option value="Dapat Nomor ID">Dapat Nomor ID (Resmi)</option>
+                        <option value="Seleksi Kelas">Seleksi Kelas</option>
+                        <option value="Pekan Orientasi">Pekan Orientasi</option>
+                    </select>
+
+                    <div class="flex items-center gap-2 mb-3">
+                        <input type="checkbox" id="reject-checkbox" class="w-4 h-4 text-red-600 rounded">
+                        <label for="reject-checkbox" class="text-sm font-semibold text-red-600">Tolak Pendaftaran Siswa Ini</label>
+                    </div>
+                    <textarea id="reject-reason" class="w-full p-2 border border-red-200 bg-red-50 rounded-lg text-sm hidden" placeholder="Alasan penolakan (Wajib diisi jika ditolak)..."></textarea>
+                    
+                    <div id="class-link-section" class="hidden mt-2">
+                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Link Grup Kelas (WhatsApp)</label>
+                         <input type="url" id="class-link-input" class="w-full p-2 border rounded" placeholder="https://chat.whatsapp.com/...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                <button id="delete-btn" class="px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-bold">Hapus Data</button>
+                <button id="save-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-bold shadow-lg">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <aside id="sidebar" class="bg-slate-900 text-slate-300 flex flex-col h-full md:w-64 md:transform-none flex-shrink-0">
+        <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-user-shield"></i></div>
+                <h1 class="font-bold text-lg text-white">Admin Panel</h1>
+            </div>
+            <button id="close-sidebar" class="md:hidden text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="index.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
+                <i class="fas fa-chart-pie w-5 text-center"></i> Ringkasan
+            </a>
+            <a href="siswa.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 bg-blue-600 text-white font-bold shadow-lg shadow-blue-900/50">
+                <i class="fas fa-users w-5 text-center"></i> Data Siswa
+            </a>
+            <a href="tugas.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
+                <i class="fas fa-tasks w-5 text-center"></i> Kelola Tugas
+            </a>
+            <a href="chat.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
+                <i class="fas fa-envelope w-5 text-center"></i> Pesan
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-800 bg-slate-900">
+            <button id="logout-btn" class="w-full px-4 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 hover:text-white text-sm font-medium transition flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> Keluar
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full relative w-full overflow-hidden">
+        
+        <header class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0 shadow-sm">
+            <div class="font-bold text-slate-800 text-lg">Manajemen Siswa</div>
+            <button id="open-sidebar" class="text-slate-600 w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100"><i class="fas fa-bars text-xl"></i></button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            <div class="max-w-7xl mx-auto">
+                
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="relative w-full md:w-96">
+                        <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="search-input" class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Cari nama atau email...">
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <select id="filter-stage" class="px-4 py-2 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer">
+                            <option value="all">Semua Tahap</option>
+                            <option value="Pendaftaran Awal">Menunggu Seleksi</option>
+                            <option value="Seleksi">Sedang Seleksi</option>
+                            <option value="Daftar Ulang">Daftar Ulang</option>
+                            <option value="Rejected">Ditolak</option>
+                        </select>
+                        <button onclick="window.location.reload()" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center text-slate-600 transition"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 uppercase font-bold text-xs border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4">Nama Siswa</th>
+                                    <th class="px-6 py-4">Status / Tahap</th>
+                                    <th class="px-6 py-4 text-center">Tugas</th>
+                                    <th class="px-6 py-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="students-table-body" class="divide-y divide-slate-100">
+                                </tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 text-xs text-slate-400 text-center">
+                        Menampilkan semua data (Realtime)
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676", storageBucket: "mading-cf676.appspot.com", messagingSenderId: "72175203671", appId: "1:72175203671:web:7a0676a55beb64bc96ba12" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let allStudents = [];
+        let currentEditingId = null;
+
+        // AUTH CHECK
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) window.location.href = '../login.html';
+            else {
+                // Fetch Data Siswa
+                await fetchStudents();
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            }
+        });
+
+        // 1. FETCH DATA
+        async function fetchStudents() {
+            const q = query(collection(db, "users"), where("role", "==", "siswa"), orderBy("createdAt", "desc"));
+            const snapshot = await getDocs(q);
+            
+            allStudents = [];
+            snapshot.forEach(doc => {
+                allStudents.push({ id: doc.id, ...doc.data() });
+            });
+            
+            renderTable(allStudents);
+        }
+
+        // 2. RENDER TABLE
+        function renderTable(data) {
+            const tbody = document.getElementById('students-table-body');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400">Tidak ada data siswa ditemukan.</td></tr>`;
+                return;
+            }
+
+            data.forEach(s => {
+                // Badge Logic
+                let badgeClass = "bg-slate-100 text-slate-600";
+                let statusText = s.currentStage;
+                
+                if (s.isRejected) { badgeClass = "bg-red-100 text-red-600"; statusText = "Ditolak"; }
+                else if (s.currentStage === "Pendaftaran Awal") badgeClass = "bg-yellow-100 text-yellow-700";
+                else if (s.currentStage === "Daftar Ulang") badgeClass = "bg-green-100 text-green-700";
+                else if (s.currentStage === "Dapat Nomor ID") badgeClass = "bg-blue-100 text-blue-700";
+
+                // Task Logic (Count Answers)
+                const selAns = s.selectionAnswers ? Object.keys(s.selectionAnswers).length : 0;
+                const oriAns = s.orientationAnswers ? Object.keys(s.orientationAnswers).length : 0;
+                const totalAns = selAns + oriAns;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <div class="font-bold text-slate-700">${s.name}</div>
+                        <div class="text-xs text-slate-400">${s.email}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${badgeClass}">${statusText}</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        ${totalAns > 0 ? `<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100">${totalAns} Jawaban</span>` : '<span class="text-xs text-slate-300">-</span>'}
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <button class="edit-btn px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-900 shadow-sm transition" data-id="${s.id}">
+                            <i class="fas fa-cog mr-1"></i> Kelola
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Attach Event Listeners to Buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.onclick = () => openModal(btn.dataset.id);
+            });
+        }
+
+        // 3. MODAL LOGIC (OPEN)
+        function openModal(id) {
+            const student = allStudents.find(s => s.id === id);
+            if(!student) return;
+
+            currentEditingId = id;
+            
+            // Fill Basic Info
+            document.getElementById('modal-name').textContent = student.name;
+            document.getElementById('modal-email').textContent = student.email;
+            document.getElementById('modal-phone').textContent = student.phone || '-';
+            document.getElementById('modal-age').textContent = (student.age || '-') + ' Tahun';
+            document.getElementById('modal-motivation').textContent = student.motivation || 'Tidak ada motivasi diisi.';
+            
+            // Set Controls
+            document.getElementById('stage-selector').value = student.currentStage || "Pendaftaran Awal";
+            document.getElementById('class-link-input').value = student.classLink || "";
+            
+            const rejectBox = document.getElementById('reject-checkbox');
+            const rejectReason = document.getElementById('reject-reason');
+            
+            rejectBox.checked = student.isRejected || false;
+            rejectReason.value = student.rejectionReason || "";
+            
+            if (student.isRejected) rejectReason.classList.remove('hidden'); 
+            else rejectReason.classList.add('hidden');
+
+            // Handle Class Link Visibility
+            handleStageChange(); 
+
+            // RENDER JAWABAN TUGAS (Sederhana)
+            const ansContainer = document.getElementById('answers-container');
+            const ansSection = document.getElementById('answers-section');
+            ansContainer.innerHTML = '';
+            
+            let hasAnswers = false;
+            // Gabungkan semua jawaban
+            const allAns = { ...student.selectionAnswers, ...student.orientationAnswers };
+            
+            if (Object.keys(allAns).length > 0) {
+                hasAnswers = true;
+                ansSection.classList.remove('hidden');
+                for (const [key, val] of Object.entries(allAns)) {
+                    ansContainer.innerHTML += `
+                        <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                            <p class="text-xs font-bold text-slate-400 mb-1">ID Soal: ${key}</p>
+                            <p class="text-sm text-slate-700 italic">"${val}"</p>
+                        </div>
+                    `;
+                }
+            } else {
+                ansSection.classList.add('hidden');
+            }
+
+            // Show Modal
+            const modal = document.getElementById('edit-modal');
+            modal.classList.add('active');
+        }
+
+        // 4. MODAL LOGIC (ACTIONS)
+        
+        // Toggle Reject Reason
+        document.getElementById('reject-checkbox').onchange = (e) => {
+            const reason = document.getElementById('reject-reason');
+            if(e.target.checked) reason.classList.remove('hidden');
+            else reason.classList.add('hidden');
+        };
+
+        // Toggle Class Link Input
+        document.getElementById('stage-selector').onchange = handleStageChange;
+        
+        function handleStageChange() {
+            const val = document.getElementById('stage-selector').value;
+            const sec = document.getElementById('class-link-section');
+            if (val === 'Seleksi Kelas') sec.classList.remove('hidden');
+            else sec.classList.add('hidden');
+        }
+
+        // Save Changes
+        document.getElementById('save-btn').onclick = async () => {
+            if(!currentEditingId) return;
+            const btn = document.getElementById('save-btn');
+            const originalText = btn.textContent;
+            btn.textContent = "Menyimpan..."; btn.disabled = true;
+
+            const newStage = document.getElementById('stage-selector').value;
+            const isRejected = document.getElementById('reject-checkbox').checked;
+            const reason = document.getElementById('reject-reason').value;
+            const classLink = document.getElementById('class-link-input').value;
+
+            try {
+                const updates = {
+                    currentStage: newStage,
+                    isRejected: isRejected,
+                    rejectionReason: isRejected ? reason : null,
+                    classLink: (newStage === 'Seleksi Kelas') ? classLink : null
+                };
+
+                await updateDoc(doc(db, "users", currentEditingId), updates);
+                
+                alert("Data berhasil diperbarui!");
+                document.getElementById('edit-modal').classList.remove('active');
+                fetchStudents(); // Refresh table
+            } catch(e) {
+                console.error(e);
+                alert("Gagal menyimpan.");
+            } finally {
+                btn.textContent = originalText; btn.disabled = false;
+            }
+        };
+
+        // Delete User
+        document.getElementById('delete-btn').onclick = async () => {
+            if(!confirm("YAKIN HAPUS SISWA INI? Data tidak bisa dikembalikan.")) return;
+            try {
+                await deleteDoc(doc(db, "users", currentEditingId));
+                alert("Siswa dihapus.");
+                document.getElementById('edit-modal').classList.remove('active');
+                fetchStudents();
+            } catch(e) {
+                alert("Gagal menghapus.");
+            }
+        };
+
+        // Close Modal
+        document.getElementById('close-modal').onclick = () => {
+            document.getElementById('edit-modal').classList.remove('active');
+        };
+
+        // FILTER LOGIC
+        document.getElementById('search-input').oninput = filterData;
+        document.getElementById('filter-stage').onchange = filterData;
+
+        function filterData() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const stage = document.getElementById('filter-stage').value;
+
+            const filtered = allStudents.filter(s => {
+                const matchSearch = s.name.toLowerCase().includes(search) || s.email.toLowerCase().includes(search);
+                let matchStage = true;
+                
+                if (stage === 'Rejected') matchStage = s.isRejected;
+                else if (stage !== 'all') matchStage = s.currentStage === stage && !s.isRejected;
+
+                return matchSearch && matchStage;
+            });
+
+            renderTable(filtered);
+        }
+
+        // Sidebar Logic
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        document.getElementById('open-sidebar').onclick = () => { sidebar.classList.add('open'); overlay.style.display = 'block'; };
+        document.getElementById('close-sidebar').onclick = () => { sidebar.classList.remove('open'); overlay.style.display = 'none'; };
+        overlay.onclick = () => { sidebar.classList.remove('open'); overlay.style.display = 'none'; };
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
+
+    </script>
+</body>
+</html>
