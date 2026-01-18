@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesan Masuk - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+
+        /* Loader */
+        .page-loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #0f172a; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Mobile Sidebar Overlay */
+        #mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; display: none; }
+        aside { transition: transform 0.3s ease-in-out; }
+        @media (max-width: 768px) {
+            aside { position: fixed; inset-y: 0; left: 0; transform: translateX(-100%); z-index: 50; width: 80%; max-width: 300px; }
+            aside.open { transform: translateX(0); }
+        }
+
+        /* Chat Bubbles */
+        .chat-bg { background-color: #f8fafc; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
+        .bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; position: relative; font-size: 0.9rem; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        
+        /* ADMIN (Saya) -> Kanan, Biru Tua */
+        .bubble-me { background-color: #1e293b; color: white; margin-left: auto; border-bottom-right-radius: 2px; }
+        .bubble-me .meta { color: #94a3b8; }
+
+        /* SISWA (Lawan) -> Kiri, Putih */
+        .bubble-other { background-color: white; color: #1e293b; margin-right: auto; border-bottom-left-radius: 2px; border: 1px solid #e2e8f0; }
+        .bubble-other .meta { color: #64748b; }
+
+        .meta { font-size: 0.7rem; margin-top: 4px; display: block; text-align: right; }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <div id="loader" class="page-loader">
+        <div class="spinner mb-4"></div>
+        <p class="text-slate-900 font-bold text-sm animate-pulse">Memuat Pesan...</p>
+    </div>
+
+    <div id="mobile-overlay"></div>
+
+    <aside id="sidebar" class="bg-slate-900 text-slate-300 flex flex-col h-full md:w-64 md:transform-none flex-shrink-0">
+        <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-user-shield"></i></div>
+                <h1 class="font-bold text-lg text-white">Admin Panel</h1>
+            </div>
+            <button id="close-sidebar" class="md:hidden text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="index.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
+                <i class="fas fa-chart-pie w-5 text-center"></i> Ringkasan
+            </a>
+            <a href="siswa.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
+                <i class="fas fa-users w-5 text-center"></i> Data Siswa
+            </a>
+            <a href="tugas.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
+                <i class="fas fa-tasks w-5 text-center"></i> Kelola Tugas
+            </a>
+            <a href="chat.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 bg-blue-600 text-white font-bold shadow-lg shadow-blue-900/50">
+                <i class="fas fa-envelope w-5 text-center"></i> Pesan
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-800 bg-slate-900">
+            <button id="logout-btn" class="w-full px-4 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 hover:text-white text-sm font-medium transition flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> Keluar
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full relative w-full overflow-hidden bg-white">
+        
+        <header id="mobile-header" class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0 shadow-sm">
+            <div class="font-bold text-slate-800 text-lg">Pesan Masuk</div>
+            <button id="open-sidebar" class="text-slate-600 w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100"><i class="fas fa-bars text-xl"></i></button>
+        </header>
+
+        <div class="flex h-full overflow-hidden relative">
+            
+            <div id="user-list-panel" class="w-full md:w-80 lg:w-96 border-r border-slate-200 bg-white flex flex-col h-full absolute md:relative z-10">
+                <div class="p-4 border-b border-slate-100">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="search-chat" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cari siswa...">
+                    </div>
+                </div>
+                <div id="users-container" class="flex-1 overflow-y-auto">
+                    <div class="p-8 text-center text-slate-400 text-sm">Memuat percakapan...</div>
+                </div>
+            </div>
+
+            <div id="chat-window-panel" class="flex-1 flex flex-col h-full bg-slate-50 w-full absolute md:relative z-20 transform translate-x-full md:translate-x-0 transition-transform duration-300">
+                
+                <div class="bg-white border-b border-slate-200 p-4 flex items-center justify-between shadow-sm flex-shrink-0">
+                    <div class="flex items-center gap-3">
+                        <button id="back-to-list" class="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-600 mr-1">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm" id="active-user-initial">?</div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm md:text-base" id="active-user-name">Pilih Siswa</h3>
+                            <p class="text-xs text-slate-500" id="active-user-status">untuk mulai membalas</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="messages-area" class="flex-1 overflow-y-auto p-4 chat-bg space-y-3">
+                    <div id="chat-empty-state" class="h-full flex flex-col items-center justify-center text-slate-400">
+                        <i class="fas fa-paper-plane text-4xl mb-4 opacity-30"></i>
+                        <p>Pilih percakapan dari daftar di sebelah kiri.</p>
+                    </div>
+                </div>
+
+                <div id="input-area" class="p-4 bg-white border-t border-slate-200 hidden">
+                    <form id="reply-form" class="flex gap-2">
+                        <input type="text" id="reply-input" class="flex-1 border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ketik balasan..." autocomplete="off">
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676", storageBucket: "mading-cf676.appspot.com", messagingSenderId: "72175203671", appId: "1:72175203671:web:7a0676a55beb64bc96ba12" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let activeChatUserId = null;
+        let unsubscribeActiveChat = null;
+        let allMessages = []; // Store raw messages
+
+        // AUTH CHECK
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) window.location.href = '../login.html';
+            else {
+                const u = await getDoc(doc(db, "users", user.uid));
+                if(u.data().role !== 'admin') window.location.href = '../login.html';
+                
+                initMessagingSystem();
+            }
+        });
+
+        // 1. SYSTEM INIT (Listen to ALL messages)
+        function initMessagingSystem() {
+            const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
+            
+            onSnapshot(q, (snapshot) => {
+                const loader = document.getElementById('loader');
+                allMessages = [];
+                snapshot.forEach(doc => allMessages.push({ id: doc.id, ...doc.data() }));
+
+                renderUserList();
+                
+                // Jika sedang membuka chat, render ulang pesannya juga (untuk update realtime)
+                if (activeChatUserId) {
+                    renderChatMessages(activeChatUserId);
+                }
+
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+            });
+        }
+
+        // 2. RENDER USER LIST (Left Panel)
+        function renderUserList() {
+            const container = document.getElementById('users-container');
+            const searchVal = document.getElementById('search-chat').value.toLowerCase();
+            
+            // Group messages by User ID
+            const usersMap = {};
+
+            allMessages.forEach(msg => {
+                if (!usersMap[msg.userId]) {
+                    usersMap[msg.userId] = {
+                        name: msg.userName || 'Tanpa Nama',
+                        lastMsg: msg.content,
+                        time: msg.timestamp,
+                        unreadCount: 0,
+                        uid: msg.userId
+                    };
+                } else {
+                    // Update last message info
+                    usersMap[msg.userId].lastMsg = msg.content;
+                    usersMap[msg.userId].time = msg.timestamp;
+                }
+
+                // Count unread (sender = student AND read = false)
+                if (msg.sender === 'student' && !msg.read) {
+                    usersMap[msg.userId].unreadCount++;
+                }
+            });
+
+            // Convert to Array & Sort by Time (Newest First)
+            let userList = Object.values(usersMap).sort((a, b) => {
+                const tA = a.time ? a.time.toMillis() : 0;
+                const tB = b.time ? b.time.toMillis() : 0;
+                return tB - tA; 
+            });
+
+            // Filter Search
+            if (searchVal) {
+                userList = userList.filter(u => u.name.toLowerCase().includes(searchVal));
+            }
+
+            // Render HTML
+            container.innerHTML = '';
+            if (userList.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-sm text-slate-400">Tidak ada pesan.</div>`;
+                return;
+            }
+
+            userList.forEach(u => {
+                const isActive = u.uid === activeChatUserId;
+                const timeStr = u.time ? u.time.toDate().toLocaleDateString() : '';
+                
+                const div = document.createElement('div');
+                div.className = `p-4 border-b border-slate-50 cursor-pointer transition hover:bg-slate-50 ${isActive ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''}`;
+                div.onclick = () => openChat(u);
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="font-bold text-sm text-slate-800 ${u.unreadCount > 0 ? 'text-black' : ''}">${u.name}</h4>
+                        <span class="text-[10px] text-slate-400">${timeStr}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <p class="text-xs text-slate-500 truncate w-3/4">${u.lastMsg}</p>
+                        ${u.unreadCount > 0 ? `<span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">${u.unreadCount}</span>` : ''}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // 3. OPEN CHAT (Right Panel)
+        window.openChat = async (user) => {
+            activeChatUserId = user.uid;
+            
+            // UI Updates
+            document.getElementById('active-user-name').textContent = user.name;
+            document.getElementById('active-user-initial').textContent = user.name.charAt(0).toUpperCase();
+            document.getElementById('active-user-status').textContent = 'Percakapan Siswa';
+            document.getElementById('chat-empty-state').classList.add('hidden');
+            document.getElementById('input-area').classList.remove('hidden');
+
+            // Mobile Transition
+            if (window.innerWidth < 768) {
+                document.getElementById('user-list-panel').classList.add('hidden'); // Sembunyikan list
+                document.getElementById('chat-window-panel').classList.remove('translate-x-full'); // Geser chat masuk
+            }
+
+            // Render Messages
+            renderChatMessages(user.uid);
+            
+            // Mark as Read (Batch Update)
+            markMessagesAsRead(user.uid);
+            
+            // Re-render list (untuk hilangkan badge unread dan set active state)
+            renderUserList(); 
+        };
+
+        function renderChatMessages(uid) {
+            const container = document.getElementById('messages-area');
+            
+            // Filter pesan hanya untuk user ini
+            const userMsgs = allMessages.filter(m => m.userId === uid);
+            
+            container.innerHTML = '';
+            
+            userMsgs.forEach(msg => {
+                const isMe = msg.sender === 'admin'; // Saya Admin
+                const date = msg.timestamp ? msg.timestamp.toDate() : new Date();
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                const div = document.createElement('div');
+                div.className = "flex w-full mb-3";
+
+                const bubble = document.createElement('div');
+                bubble.className = `bubble ${isMe ? 'bubble-me' : 'bubble-other'}`;
+                bubble.innerHTML = `
+                    <p>${msg.content}</p>
+                    <span class="meta">${timeStr}</span>
+                `;
+
+                div.appendChild(bubble);
+                container.appendChild(div);
+            });
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 4. SEND REPLY
+        document.getElementById('reply-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('reply-input');
+            const text = input.value.trim();
+            if(!text || !activeChatUserId) return;
+
+            input.value = '';
+
+            try {
+                // Ambil nama user aktif dari list/dom untuk data
+                const userName = document.getElementById('active-user-name').textContent;
+                
+                await addDoc(collection(db, "messages"), {
+                    content: text,
+                    userId: activeChatUserId,
+                    userName: userName,
+                    sender: 'admin',
+                    read: true, // Pesan sendiri dianggap terbaca
+                    timestamp: serverTimestamp()
+                });
+                // onSnapshot akan otomatis update UI
+            } catch (err) {
+                alert("Gagal kirim pesan.");
+            }
+        };
+
+        // 5. MARK AS READ UTILS
+        async function markMessagesAsRead(uid) {
+            // Cari pesan dari student yg belum dibaca
+            const unreadMsgs = allMessages.filter(m => m.userId === uid && m.sender === 'student' && !m.read);
+            
+            if (unreadMsgs.length === 0) return;
+
+            const batch = writeBatch(db);
+            unreadMsgs.forEach(msg => {
+                const ref = doc(db, "messages", msg.id);
+                batch.update(ref, { read: true });
+            });
+
+            await batch.commit();
+        }
+
+        // 6. UI HELPERS (Mobile Back Button & Search)
+        document.getElementById('back-to-list').onclick = () => {
+            document.getElementById('user-list-panel').classList.remove('hidden');
+            document.getElementById('chat-window-panel').classList.add('translate-x-full');
+            activeChatUserId = null; // Deselect
+            renderUserList();
+        };
+
+        document.getElementById('search-chat').oninput = renderUserList;
+
+        // Sidebar Logic
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        document.getElementById('open-sidebar').onclick = () => { sidebar.classList.add('open'); overlay.style.display = 'block'; };
+        document.getElementById('close-sidebar').onclick = () => { sidebar.classList.remove('open'); overlay.style.display = 'none'; };
+        overlay.onclick = () => { sidebar.classList.remove('open'); overlay.style.display = 'none'; };
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
+
+    </script>
+</body>
+</html>
