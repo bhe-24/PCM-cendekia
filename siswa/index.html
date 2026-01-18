@@ -6,534 +6,357 @@
     <title>Dashboard Siswa - Cendekia Aksara</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         /* Loader */
-        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #005a9c; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        .page-loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #005a9c; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* Timeline Styles */
-        .timeline-line { position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; z-index: 0; }
-        .timeline-item { position: relative; padding-left: 40px; padding-bottom: 2rem; z-index: 10; }
-        .timeline-dot { position: absolute; left: 0; top: 0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; border: 4px solid #f8fafc; }
+        .timeline-line { position: absolute; left: 19px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; z-index: 0; }
+        .timeline-item { position: relative; padding-left: 50px; padding-bottom: 2rem; z-index: 10; }
+        .timeline-dot { position: absolute; left: 0; top: 0; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; background: white; border: 2px solid #e2e8f0; font-size: 0.8rem; }
+        .timeline-dot.active { background: #005a9c; border-color: #005a9c; color: white; box-shadow: 0 0 0 4px rgba(0, 90, 156, 0.2); }
+        .timeline-dot.done { background: #10b981; border-color: #10b981; color: white; }
+
+        /* Mobile Sidebar Overlay */
+        #mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; display: none; }
         
-        /* Message Bubble */
-        .msg-bubble { max-width: 80%; padding: 10px 15px; border-radius: 12px; margin-bottom: 8px; font-size: 0.9rem; position: relative; }
-        .msg-me { background-color: #005a9c; color: white; margin-left: auto; border-bottom-right-radius: 2px; }
-        .msg-admin { background-color: #e2e8f0; color: #1e293b; margin-right: auto; border-bottom-left-radius: 2px; }
-        
-        /* Mobile Navigation */
+        /* Sidebar Transition */
+        aside { transition: transform 0.3s ease-in-out; }
         @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .sidebar.active { display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; background: white; }
+            aside { position: fixed; inset-y: 0; left: 0; transform: translateX(-100%); z-index: 50; width: 80%; max-width: 300px; }
+            aside.open { transform: translateX(0); }
         }
     </style>
 </head>
-<body class="text-slate-800">
+<body class="text-slate-800 h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <div id="initial-loader" class="fixed inset-0 bg-white z-[9999] flex flex-col items-center justify-center">
-        <div class="loader w-12 h-12 mb-4 border-t-blue-600"></div>
-        <p class="text-slate-500 text-sm font-medium animate-pulse">Memuat Portal Siswa...</p>
+    <div id="loader" class="page-loader">
+        <div class="spinner mb-4"></div>
+        <p class="text-slate-500 font-medium text-sm animate-pulse">Memuat Data Siswa...</p>
     </div>
 
-    <div id="completion-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-user-edit text-yellow-600 text-2xl"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-slate-800">Satu Langkah Lagi!</h2>
-                <p class="text-slate-500">Mohon lengkapi data diri Anda untuk melanjutkan proses seleksi.</p>
-            </div>
-            <form id="completion-form" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nama Lengkap</label><input type="text" id="comp-name" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></div>
-                    <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Umur</label><input type="number" id="comp-age" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></div>
-                </div>
-                <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nomor WhatsApp</label><input type="tel" id="comp-phone" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></div>
-                <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Alamat Domisili</label><textarea id="comp-address" rows="2" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea></div>
-                <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Motivasi Menulis</label><textarea id="comp-motivation" rows="3" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Mengapa Anda ingin bergabung?"></textarea></div>
-                
-                <button type="submit" class="w-full bg-[#005a9c] text-white font-bold py-3 rounded-lg hover:bg-[#004b80] transition flex justify-center items-center gap-2">
-                    <span>Simpan & Lanjutkan</span>
-                    <div class="loader hidden" style="width:16px; height:16px; border-width:2px; border-top-color:white;"></div>
-                </button>
-            </form>
-        </div>
-    </div>
+    <div id="mobile-overlay"></div>
 
-    <div class="flex h-screen overflow-hidden">
-        
-        <aside class="sidebar w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col transition-all duration-300">
-            <div class="p-6 border-b border-slate-100 flex items-center gap-3">
-                <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-graduation-cap"></i></div>
+    <aside id="sidebar" class="bg-white border-r border-slate-200 flex flex-col h-full md:w-64 md:transform-none flex-shrink-0">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-[#005a9c] text-white p-2 rounded-lg"><i class="fas fa-graduation-cap"></i></div>
                 <h1 class="font-bold text-lg text-slate-800">Portal Siswa</h1>
             </div>
-            
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <button onclick="switchTab('dashboard')" class="nav-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition active-nav bg-blue-50 text-blue-700 font-semibold" data-tab="dashboard">
-                    <i class="fas fa-home w-5"></i> Beranda
-                </button>
-                <button onclick="switchTab('tasks')" class="nav-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition" data-tab="tasks">
-                    <i class="fas fa-clipboard-list w-5"></i> Tugas Saya
-                </button>
-                <button onclick="switchTab('chat')" class="nav-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition" data-tab="chat">
-                    <i class="fas fa-comments w-5"></i> Chat Admin
-                </button>
-            </nav>
+            <button id="close-sidebar" class="md:hidden text-slate-400 hover:text-slate-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="index.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 bg-blue-50 text-[#005a9c] font-bold">
+                <i class="fas fa-home w-5 text-center"></i> Beranda
+            </a>
+            <a href="tugas.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 hover:text-[#005a9c] transition font-medium">
+                <i class="fas fa-clipboard-list w-5 text-center"></i> Tugas Saya
+            </a>
+            <a href="chat.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 hover:text-[#005a9c] transition font-medium">
+                <i class="fas fa-comments w-5 text-center"></i> Chat Admin
+            </a>
+        </nav>
 
-            <div class="p-4 border-t border-slate-100">
-                <div class="flex items-center gap-3 mb-4 px-2">
-                    <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 font-bold" id="user-initial">U</div>
-                    <div class="overflow-hidden">
-                        <p class="text-sm font-bold text-slate-800 truncate" id="sidebar-name">Loading...</p>
-                        <p class="text-xs text-slate-500 truncate">Siswa</p>
+        <div class="p-4 border-t border-slate-100">
+            <div class="flex items-center gap-3 mb-4 px-2">
+                <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 font-bold" id="user-initial">?</div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold text-slate-800 truncate" id="sidebar-name">Memuat...</p>
+                    <p class="text-xs text-slate-500 truncate">Siswa Aktif</p>
+                </div>
+            </div>
+            <button id="logout-btn" class="w-full px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium transition flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> Keluar
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full relative w-full">
+        
+        <header class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+            <div class="font-bold text-slate-800 text-lg">Cendekia Aksara</div>
+            <button id="open-sidebar" class="text-slate-600 w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 bg-[#f8fafc]">
+            <div class="max-w-4xl mx-auto">
+                
+                <div class="mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-slate-900">Selamat Datang, <br><span id="welcome-name" class="text-[#005a9c]">Siswa</span>! 👋</h2>
+                    <p class="text-slate-500 mt-2">Pantau progres belajar dan status pendaftaran Anda di sini.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 mb-8 relative overflow-hidden group hover:shadow-md transition">
+                    <div class="absolute top-0 right-0 w-40 h-40 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
+                    
+                    <div class="relative z-10 flex flex-col md:flex-row gap-6 md:items-center">
+                        <div id="status-icon-container" class="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center text-3xl text-[#005a9c] flex-shrink-0">
+                            <i id="status-icon" class="fas fa-user-clock"></i>
+                        </div>
+                        
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Status Saat Ini</p>
+                            <h3 id="current-stage-title" class="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Memuat Status...</h3>
+                            <p id="current-stage-desc" class="text-slate-600 leading-relaxed">Mohon tunggu sebentar, kami sedang mengambil data terbaru Anda.</p>
+                            
+                            <div id="action-container" class="mt-4 hidden">
+                                </div>
+                        </div>
                     </div>
                 </div>
-                <button id="logout-btn" class="w-full px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium transition flex items-center justify-center gap-2">
-                    <i class="fas fa-sign-out-alt"></i> Keluar
-                </button>
-            </div>
-        </aside>
 
-        <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#f8fafc] relative">
-            <header class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20">
-                <div class="font-bold text-slate-800">Cendekia Aksara</div>
-                <button id="mobile-menu-btn" class="text-slate-600"><i class="fas fa-bars text-xl"></i></button>
-            </header>
-
-            <div class="flex-1 overflow-y-auto p-4 md:p-8" id="main-content">
-                
-                <div id="view-dashboard" class="view-section animate-fade-in">
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-bold text-slate-800">Halo, <span id="welcome-name">Siswa</span>! 👋</h2>
-                        <p class="text-slate-500">Selamat datang di panel pembelajaran Anda.</p>
-                    </div>
-
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-10 -mt-10 blur-2xl"></div>
-                        <div class="relative z-10">
-                            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Status Saat Ini</p>
-                            <div class="flex items-center gap-4">
-                                <div id="status-icon-bg" class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-sm bg-blue-100 text-blue-600">
-                                    <i id="status-icon" class="fas fa-user-check"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl font-bold text-slate-800" id="current-stage-text">Memuat...</h3>
-                                    <p class="text-slate-500 text-sm mt-1" id="stage-desc">Mohon tunggu sebentar.</p>
-                                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                        <div class="flex items-center gap-2 mb-6">
+                            <i class="fas fa-route text-slate-400"></i>
+                            <h3 class="font-bold text-lg text-slate-800">Jalur Penerimaan</h3>
+                        </div>
+                        
+                        <div class="relative pl-2" id="timeline-container">
+                            <div class="timeline-line"></div>
                             </div>
-                            <div id="action-area" class="mt-6 pt-6 border-t border-slate-100 hidden">
-                                </div>
-                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                            <h3 class="font-bold text-lg text-slate-800 mb-6">Perjalanan Anda</h3>
-                            <div class="relative pl-2" id="timeline-container">
-                                <div class="timeline-line"></div>
-                                </div>
-                        </div>
-
-                        <div class="bg-gradient-to-br from-[#005a9c] to-[#004b80] rounded-2xl p-6 text-white shadow-lg h-fit">
+                    <div class="space-y-6">
+                        <div class="bg-gradient-to-br from-[#005a9c] to-[#004b80] rounded-2xl p-6 text-white shadow-lg">
                             <div class="flex justify-between items-start mb-4">
-                                <h3 class="font-bold text-lg">Info Penting</h3>
+                                <h3 class="font-bold text-lg">Papan Info</h3>
                                 <i class="fas fa-bullhorn opacity-50"></i>
                             </div>
-                            <div class="space-y-4 text-blue-100 text-sm">
-                                <p>Pastikan notifikasi WhatsApp Anda aktif untuk menerima pengumuman mendesak.</p>
-                                <div class="bg-white/10 p-3 rounded-lg">
-                                    <p class="font-semibold text-white mb-1">Butuh Bantuan?</p>
-                                    <p class="text-xs">Gunakan menu "Chat Admin" jika mengalami kendala teknis.</p>
-                                </div>
+                            <div class="text-sm text-blue-100 space-y-3">
+                                <p>📢 Pastikan nomor WhatsApp yang terdaftar selalu aktif.</p>
+                                <p>🗓️ Batas pengumpulan tugas biasanya pukul 23.59 WIB.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-800 mb-4">Akses Cepat</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <a href="tugas.html" class="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition border border-slate-100">
+                                    <i class="fas fa-tasks text-xl mb-2"></i>
+                                    <span class="text-xs font-bold">Tugas</span>
+                                </a>
+                                <a href="chat.html" class="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl hover:bg-green-50 hover:text-green-600 transition border border-slate-100">
+                                    <i class="fas fa-comments text-xl mb-2"></i>
+                                    <span class="text-xs font-bold">Bantuan</span>
+                                </a>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="view-tasks" class="view-section hidden">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-6">Daftar Tugas</h2>
-                    <div id="tasks-container" class="space-y-4">
-                        <div class="text-center py-10 bg-white rounded-xl border border-dashed border-slate-300">
-                            <i class="fas fa-spinner fa-spin text-slate-400 text-2xl mb-3"></i>
-                            <p class="text-slate-500">Memuat tugas...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="view-chat" class="view-section hidden h-[calc(100vh-140px)] flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-blue-600 shadow-sm">
-                                <i class="fas fa-headset"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-slate-800">Admin Cendekia</h3>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                                    <span class="text-xs text-slate-500">Online</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 bg-[#f1f5f9] space-y-3">
-                        </div>
-
-                    <form id="chat-form" class="p-4 bg-white border-t border-slate-100 flex gap-2">
-                        <input type="text" id="chat-input" class="flex-1 border border-slate-200 rounded-full px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 focus:bg-white transition" placeholder="Tulis pesan..." autocomplete="off">
-                        <button type="submit" class="bg-[#005a9c] text-white w-10 h-10 rounded-full hover:bg-[#004b80] flex items-center justify-center shadow-lg transition transform hover:scale-105">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </form>
                 </div>
 
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, addDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIG (SAMA SEPERTI SEBELUMNYA)
+        // FIREBASE CONFIG
         const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676", storageBucket: "mading-cf676.appspot.com", messagingSenderId: "72175203671", appId: "1:72175203671:web:7a0676a55beb64bc96ba12" };
-        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentUser = null;
-        let userData = null;
         const STAGES = ["Pendaftaran Awal", "Seleksi", "Daftar Ulang", "Dapat Nomor ID", "Seleksi Kelas", "Pekan Orientasi"];
-        
-        // --- AUTH & INITIALIZATION ---
+
+        // 1. CEK AUTH & REDIRECT
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
-                window.location.href = '../login.html'; // TENDANG KE LOGIN
-                return;
-            }
+                window.location.href = '../login.html'; // Belum login? Tendang keluar
+            } else {
+                // Ambil Data User Realtime
+                onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        
+                        // Cek Role (Keamanan)
+                        if(data.role === 'admin') { window.location.href = '../admin/index.html'; return; }
 
-            currentUser = user;
-            const userRef = doc(db, "users", user.uid);
-
-            // Listen to Realtime Data
-            onSnapshot(userRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    userData = docSnap.data();
-                    
-                    // Security Check: Kalau admin nyasar ke sini
-                    if(userData.role === 'admin') {
-                        window.location.href = '../admin/index.html';
-                        return;
+                        // Render Halaman
+                        renderUI(data, user.uid);
+                        
+                        // Sembunyikan Loader
+                        document.getElementById('loader').style.opacity = '0';
+                        setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
                     }
-
-                    // Hide Loading Screen
-                    document.getElementById('initial-loader').classList.add('hidden');
-
-                    // 1. Cek Kelengkapan Data
-                    checkDataCompletion();
-
-                    // 2. Update UI
-                    updateProfileUI();
-                    updateStageUI();
-                    updateTasksUI(); // Refresh task list
-                }
-            });
-            
-            // Listen to Chat
-            setupChatListener(user.uid);
+                });
+            }
         });
 
-        // --- UI FUNCTIONS ---
-        
-        function checkDataCompletion() {
-            // Cek field wajib
-            const isComplete = userData.name && userData.phone && userData.age && userData.address && userData.motivation;
-            const modal = document.getElementById('completion-modal');
-            
-            if (!isComplete) {
-                modal.classList.remove('hidden');
-                // Pre-fill
-                if(userData.name) document.getElementById('comp-name').value = userData.name;
-                if(userData.phone) document.getElementById('comp-phone').value = userData.phone;
-            } else {
-                modal.classList.add('hidden');
-            }
-        }
+        // 2. RENDER UI FUNCTION
+        function renderUI(data, uid) {
+            // Header & Sidebar Info
+            document.getElementById('welcome-name').textContent = data.name;
+            document.getElementById('sidebar-name').textContent = data.name;
+            document.getElementById('user-initial').textContent = data.name.charAt(0).toUpperCase();
 
-        function updateProfileUI() {
-            document.getElementById('sidebar-name').textContent = userData.name;
-            document.getElementById('welcome-name').textContent = userData.name.split(' ')[0]; // Nama depan
-            document.getElementById('user-initial').textContent = userData.name.charAt(0).toUpperCase();
-        }
-
-        function updateStageUI() {
-            const currentStage = userData.currentStage || STAGES[0];
-            const isRejected = userData.isRejected;
-            
-            const stageText = document.getElementById('current-stage-text');
-            const stageDesc = document.getElementById('stage-desc');
-            const iconBg = document.getElementById('status-icon-bg');
+            // Status Card Logic
+            const title = document.getElementById('current-stage-title');
+            const desc = document.getElementById('current-stage-desc');
+            const iconBox = document.getElementById('status-icon-container');
             const icon = document.getElementById('status-icon');
-            const actionArea = document.getElementById('action-area');
+            const actionContainer = document.getElementById('action-container');
             
-            actionArea.innerHTML = ''; // Reset actions
-            actionArea.classList.add('hidden');
+            actionContainer.innerHTML = ''; // Reset tombol aksi
+            actionContainer.classList.add('hidden');
 
-            if (isRejected) {
-                stageText.textContent = "Mohon Maaf";
-                stageText.classList.add('text-red-600');
-                stageDesc.textContent = userData.rejectionReason || "Anda belum lolos seleksi kali ini.";
-                iconBg.className = "w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-sm bg-red-100 text-red-600";
+            if (data.isRejected) {
+                // Tampilan DITOLAK
+                title.textContent = "Mohon Maaf";
+                title.className = "text-2xl md:text-3xl font-bold text-red-600 mb-2";
+                desc.textContent = data.rejectionReason || "Anda belum lolos seleksi tahap ini.";
+                iconBox.className = "w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center text-3xl text-red-600 flex-shrink-0";
                 icon.className = "fas fa-times-circle";
             } else {
-                stageText.textContent = currentStage;
-                stageText.classList.remove('text-red-600');
-                
-                // Set Icon & Desc based on stage
-                if(currentStage === "Pendaftaran Awal") {
-                    stageDesc.textContent = "Data Anda sedang diverifikasi admin.";
+                // Tampilan NORMAL
+                title.textContent = data.currentStage;
+                title.className = "text-2xl md:text-3xl font-bold text-slate-900 mb-2";
+                iconBox.className = "w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center text-3xl text-[#005a9c] flex-shrink-0";
+
+                if (data.currentStage === "Pendaftaran Awal") {
+                    desc.textContent = "Data Anda sedang diverifikasi oleh admin. Harap tunggu info selanjutnya.";
                     icon.className = "fas fa-user-clock";
-                } else if(currentStage === "Seleksi") {
-                    stageDesc.textContent = "Silakan kerjakan tugas seleksi di menu Tugas.";
+                } 
+                else if (data.currentStage === "Seleksi") {
+                    desc.textContent = "Selamat! Anda lolos administrasi. Silakan kerjakan tugas seleksi.";
                     icon.className = "fas fa-pen-nib";
-                    actionArea.classList.remove('hidden');
-                    actionArea.innerHTML = `<button onclick="switchTab('tasks')" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Kerjakan Tugas</button>`;
-                } else if(currentStage === "Daftar Ulang") {
-                    stageDesc.textContent = "Selamat! Anda lolos seleksi.";
+                    actionContainer.classList.remove('hidden');
+                    actionContainer.innerHTML = `<a href="tugas.html" class="inline-block px-6 py-3 bg-[#005a9c] text-white font-bold rounded-lg hover:bg-[#004b80] transition">Kerjakan Tugas</a>`;
+                }
+                else if (data.currentStage === "Daftar Ulang") {
+                    desc.textContent = "Anda dinyatakan LOLOS SELEKSI! Segera lakukan daftar ulang.";
                     icon.className = "fas fa-check-circle";
-                    iconBg.className = "w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-sm bg-green-100 text-green-600";
+                    iconBox.className = "w-20 h-20 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0";
                     
-                    if(!userData.hasReRegistered) {
-                        actionArea.classList.remove('hidden');
-                        actionArea.innerHTML = `<button id="btn-reregister" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">Konfirmasi Daftar Ulang</button>`;
-                        setTimeout(() => document.getElementById('btn-reregister').onclick = handleReRegister, 100);
+                    if(!data.hasReRegistered) {
+                        actionContainer.classList.remove('hidden');
+                        const btn = document.createElement('button');
+                        btn.className = "px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition";
+                        btn.textContent = "Konfirmasi Daftar Ulang";
+                        btn.onclick = () => handleReRegister(uid);
+                        actionContainer.appendChild(btn);
                     } else {
-                        stageDesc.textContent = "Konfirmasi diterima. Menunggu Nomor ID.";
+                        desc.textContent = "Terima kasih sudah daftar ulang. Menunggu penerbitan Nomor ID.";
                     }
-                } else if(currentStage === "Dapat Nomor ID") {
-                    stageDesc.textContent = `NIS Anda: ${userData.studentIdNumber}`;
+                }
+                else if (data.currentStage === "Dapat Nomor ID") {
+                    desc.innerHTML = `Nomor Induk Siswa (NIS) Anda: <span class="font-mono font-bold bg-slate-100 px-2 py-1 rounded">${data.studentIdNumber}</span>`;
                     icon.className = "fas fa-id-card";
-                } else if(currentStage === "Seleksi Kelas") {
-                    if(userData.classLink) {
-                        stageDesc.textContent = "Kelas telah ditentukan.";
-                        actionArea.classList.remove('hidden');
-                        actionArea.innerHTML = `<a href="${userData.classLink}" target="_blank" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium inline-flex items-center gap-2"><i class="fab fa-whatsapp"></i> Gabung Grup Kelas</a>`;
-                    } else {
-                        stageDesc.textContent = "Sedang dalam pembagian kelas.";
+                }
+                else if (data.currentStage === "Seleksi Kelas") {
+                    desc.textContent = data.classLink ? "Kelas telah ditentukan. Silakan bergabung." : "Sedang dalam proses pembagian kelas.";
+                    icon.className = "fas fa-chalkboard-teacher";
+                    if(data.classLink) {
+                        actionContainer.classList.remove('hidden');
+                        actionContainer.innerHTML = `<a href="${data.classLink}" target="_blank" class="inline-block px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition"><i class="fab fa-whatsapp"></i> Gabung Grup Kelas</a>`;
                     }
+                }
+                else if (data.currentStage === "Pekan Orientasi") {
+                     desc.textContent = "Selamat datang di tahap orientasi siswa baru.";
+                     icon.className = "fas fa-flag";
+                     actionContainer.classList.remove('hidden');
+                     actionContainer.innerHTML = `<a href="tugas.html" class="inline-block px-6 py-3 bg-[#005a9c] text-white font-bold rounded-lg hover:bg-[#004b80] transition">Lihat Tugas Orientasi</a>`;
                 }
             }
 
             // Render Timeline
-            const timelineContainer = document.getElementById('timeline-container');
-            const timelineContent = STAGES.map((stage, idx) => {
-                const currentIdx = STAGES.indexOf(currentStage);
-                let color = "bg-slate-200 border-slate-200 text-slate-400"; // Pending
-                if (idx < currentIdx) color = "bg-green-500 border-green-500 text-white"; // Done
-                if (idx === currentIdx) color = isRejected ? "bg-red-500 border-red-500 text-white" : "bg-blue-600 border-blue-600 text-white"; // Active
-
-                return `
-                    <div class="timeline-item">
-                        <div class="timeline-dot ${color}">
-                            <i class="fas ${idx < currentIdx ? 'fa-check' : 'fa-circle text-[8px]'}"></i>
-                        </div>
-                        <h4 class="font-bold text-sm ${idx === currentIdx ? 'text-blue-800' : 'text-slate-600'}">${stage}</h4>
-                    </div>
-                `;
-            }).join('');
-            
-            // Add vertical line inside
-            timelineContainer.innerHTML = `<div class="timeline-line"></div>` + timelineContent;
+            renderTimeline(data.currentStage, data.isRejected);
         }
 
-        async function updateTasksUI() {
-            const container = document.getElementById('tasks-container');
-            const stage = userData.currentStage;
+        function renderTimeline(currentStage, isRejected) {
+            const container = document.getElementById('timeline-container');
+            const currentIndex = STAGES.indexOf(currentStage);
             
-            // Fetch Global Tasks
-            const tasksDoc = await getDoc(doc(db, 'config', 'tasks'));
-            let tasks = [];
-            let answers = {};
-            let taskType = '';
+            // Hapus isi timeline lama kecuali garis
+            const line = container.querySelector('.timeline-line');
+            container.innerHTML = ''; 
+            container.appendChild(line);
 
-            if(stage === 'Seleksi') {
-                tasks = tasksDoc.data()?.selection || [];
-                answers = userData.selectionAnswers || {};
-                taskType = 'selection';
-            } else if (stage === 'Pekan Orientasi') {
-                tasks = tasksDoc.data()?.orientation || [];
-                answers = userData.orientationAnswers || {};
-                taskType = 'orientation';
-            }
+            STAGES.forEach((stage, index) => {
+                let dotClass = "timeline-dot"; // Default (abu-abu)
+                let textClass = "text-slate-500";
+                let icon = `<i class="fas fa-circle text-[6px] text-slate-300"></i>`; // Titik kecil
 
-            if (tasks.length === 0 || (stage !== 'Seleksi' && stage !== 'Pekan Orientasi')) {
-                container.innerHTML = `<div class="bg-white p-8 rounded-xl text-center border border-slate-200"><img src="https://illustrations.popsy.co/gray/surr-list.svg" class="h-32 mx-auto mb-4 opacity-50"><p class="text-slate-500">Tidak ada tugas aktif saat ini.</p></div>`;
-                return;
-            }
+                if (index < currentIndex) {
+                    // Tahap yang SUDAH LEWAT (Hijau)
+                    dotClass += " done";
+                    textClass = "text-slate-800 font-medium";
+                    icon = `<i class="fas fa-check"></i>`;
+                } 
+                else if (index === currentIndex) {
+                    // Tahap SEKARANG (Biru/Merah)
+                    if (isRejected) {
+                        dotClass = "timeline-dot bg-red-500 border-red-500 text-white box-shadow-none"; 
+                        icon = `<i class="fas fa-times"></i>`;
+                        textClass = "text-red-600 font-bold";
+                    } else {
+                        dotClass += " active";
+                        textClass = "text-[#005a9c] font-bold";
+                        icon = `<i class="fas fa-map-marker-alt"></i>`;
+                    }
+                }
 
-            container.innerHTML = tasks.map(task => {
-                const isAnswered = answers[task.id];
-                return `
-                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-slate-800">${task.title || 'Tugas Seleksi'}</h3>
-                                <p class="text-slate-600 mt-1">${task.question || task.description}</p>
-                            </div>
-                            ${isAnswered ? '<span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Terkirim</span>' : '<span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">Wajib</span>'}
-                        </div>
-                        
-                        ${isAnswered 
-                            ? `<div class="bg-slate-50 p-3 rounded-lg border border-slate-200"><p class="text-xs text-slate-500 mb-1">Jawaban Anda:</p><p class="text-sm text-slate-700 italic">"${isAnswered}"</p></div>`
-                            : `<form onsubmit="window.submitTask(event, '${taskType}', '${task.id}')">
-                                <textarea name="answer" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-3 bg-slate-50 focus:bg-white transition" rows="3" placeholder="Tulis jawaban Anda di sini..." required></textarea>
-                                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">Kirim Jawaban</button>
-                               </form>`
-                        }
-                    </div>
+                const item = document.createElement('div');
+                item.className = "timeline-item";
+                item.innerHTML = `
+                    <div class="${dotClass}">${icon}</div>
+                    <h4 class="${textClass} text-sm">${stage}</h4>
                 `;
-            }).join('');
+                container.appendChild(item);
+            });
         }
 
-        // --- ACTIONS ---
-        
-        // Form Completion Submit
-        document.getElementById('completion-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
-            const loader = btn.querySelector('.loader');
-            btn.disabled = true; loader.classList.remove('hidden');
-
-            try {
-                await updateDoc(doc(db, "users", currentUser.uid), {
-                    name: document.getElementById('comp-name').value,
-                    phone: document.getElementById('comp-phone').value,
-                    age: document.getElementById('comp-age').value,
-                    address: document.getElementById('comp-address').value,
-                    motivation: document.getElementById('comp-motivation').value
-                });
-                document.getElementById('completion-modal').classList.add('hidden');
-                // SweetAlert or Toast could be here, but standard alert is safe for now inside modal logic
-                alert("Data berhasil disimpan!"); 
-            } catch (err) {
-                console.error(err);
-                alert("Gagal menyimpan data.");
-            } finally {
-                btn.disabled = false; loader.classList.add('hidden');
-            }
-        });
-
-        // Re-Register Action
-        window.handleReRegister = async () => {
-            if(!confirm("Konfirmasi daftar ulang?")) return;
-            const nis = `CA-${new Date().getFullYear()}-${currentUser.uid.substring(0,4).toUpperCase()}`;
-            await updateDoc(doc(db, "users", currentUser.uid), {
+        // Logic Daftar Ulang
+        async function handleReRegister(uid) {
+            if(!confirm("Apakah Anda yakin ingin melakukan konfirmasi daftar ulang?")) return;
+            const nis = `CA-${new Date().getFullYear()}-${uid.substring(0,4).toUpperCase()}`;
+            await updateDoc(doc(db, "users", uid), {
                 hasReRegistered: true,
                 studentIdNumber: nis,
-                currentStage: "Dapat Nomor ID" // Auto move stage visually
+                currentStage: "Dapat Nomor ID"
             });
-        };
-
-        // Submit Task Global Function
-        window.submitTask = async (e, type, taskId) => {
-            e.preventDefault();
-            const answer = e.target.answer.value;
-            const btn = e.target.querySelector('button');
-            btn.textContent = "Mengirim..."; btn.disabled = true;
-
-            try {
-                const field = type === 'selection' ? `selectionAnswers.${taskId}` : `orientationAnswers.${taskId}`;
-                await updateDoc(doc(db, "users", currentUser.uid), {
-                    [field]: answer
-                });
-                alert("Jawaban terkirim!");
-            } catch (err) {
-                alert("Gagal mengirim.");
-                btn.textContent = "Kirim Jawaban"; btn.disabled = false;
-            }
-        };
-
-        // Chat System
-        function setupChatListener(uid) {
-            const chatContainer = document.getElementById('chat-messages');
-            const q = query(collection(db, "messages"), where("userId", "==", uid), orderBy("timestamp", "asc"));
-            
-            onSnapshot(q, (snapshot) => {
-                chatContainer.innerHTML = snapshot.docs.map(doc => {
-                    const msg = doc.data();
-                    const isMe = msg.sender === 'student';
-                    const time = msg.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) || '...';
-                    return `
-                        <div class="msg-bubble ${isMe ? 'msg-me' : 'msg-admin'}">
-                            <p>${msg.content}</p>
-                            <span class="text-[10px] opacity-70 block text-right mt-1">${time}</span>
-                        </div>
-                    `;
-                }).join('');
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            });
-
-            document.getElementById('chat-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const input = document.getElementById('chat-input');
-                if(!input.value.trim()) return;
-                
-                await addDoc(collection(db, "messages"), {
-                    userId: uid,
-                    userName: userData.name,
-                    content: input.value,
-                    sender: 'student',
-                    read: false,
-                    timestamp: serverTimestamp()
-                });
-                input.value = '';
-            });
+            alert("Berhasil Daftar Ulang!");
         }
 
-        // Logout
-        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+        // 3. SIDEBAR TOGGLE LOGIC (MOBILE)
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        const openBtn = document.getElementById('open-sidebar');
+        const closeBtn = document.getElementById('close-sidebar');
 
-        // Tab Switching Logic (Simple SPA inside Dashboard)
-        window.switchTab = (tabName) => {
-            // Hide all views
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            // Show selected view
-            document.getElementById(`view-${tabName}`).classList.remove('hidden');
-            
-            // Update Sidebar Active State
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-50', 'text-blue-700', 'font-semibold');
-                btn.classList.add('text-slate-600');
-            });
-            const activeBtn = document.querySelector(`.nav-btn[data-tab="${tabName}"]`);
-            if(activeBtn) {
-                activeBtn.classList.add('bg-blue-50', 'text-blue-700', 'font-semibold');
-                activeBtn.classList.remove('text-slate-600');
+        function toggleSidebar() {
+            const isOpen = sidebar.classList.contains('open');
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                overlay.style.display = 'none';
+            } else {
+                sidebar.classList.add('open');
+                overlay.style.display = 'block';
             }
+        }
 
-            // Close mobile menu if open
-            const sidebar = document.querySelector('.sidebar');
-            if(window.innerWidth < 768) sidebar.classList.remove('active');
-        };
+        openBtn.onclick = toggleSidebar;
+        closeBtn.onclick = toggleSidebar;
+        overlay.onclick = toggleSidebar;
 
-        // Mobile Menu Toggle
-        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('active');
-        });
+        // Logout
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
 
     </script>
 </body>
