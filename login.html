@@ -171,48 +171,44 @@
         };
 
         // --- REGISTER LOGIC ---
-        document.getElementById('register-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
-            const spin = btn.querySelector('.spinner');
-            btn.disabled = true; spin.classList.remove('hidden');
+        // --- BAGIAN INI ADA DI DALAM SCRIPT login.html ---
 
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const phone = document.getElementById('reg-phone').value;
-            const password = document.getElementById('reg-password').value;
+document.getElementById('login-form').onsubmit = async (e) => {
+    e.preventDefault();
+    showLoading('Memverifikasi...'); // Asumsi fungsi showLoading ada
+    const email = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
 
-            try {
-                const cred = await createUserWithEmailAndPassword(auth, email, password);
-                
-                // Tetap simpan data profil (untuk kebutuhan nama/hp), 
-                // tapi JANGAN TIMPA jika dokumen sudah ada (merge: true)
-                // Ini aman buat aplikasi lain.
-                const role = email.endsWith('@ac.id') ? 'admin' : 'siswa';
-                
-                await setDoc(doc(db, "users", cred.user.uid), {
-                    name: name,
-                    email: email,
-                    phone: phone,
-                    role: role, 
-                    // Hanya set stage jika siswa
-                    ...(role === 'siswa' && { currentStage: 'Pendaftaran Awal', isRejected: false }), 
-                    createdAt: serverTimestamp()
-                }, { merge: true }); // PENTING: merge: true mencegah data lama terhapus total
+    try {
+        const cred = await signInWithEmailAndPassword(auth, email, pass);
+        const docRef = doc(db, 'users', cred.user.uid);
+        const snap = await getDoc(docRef);
 
-                if (email.endsWith('@ac.id')) {
-                    window.location.href = `admin/index.html`;
-                } else {
-                    window.location.href = `siswa/index.html`;
-                }
-                
-            } catch (error) {
-                let msg = error.message;
-                if(error.code === 'auth/email-already-in-use') msg = "Email sudah terdaftar. Silakan login.";
-                showToast(msg, 'error');
-                btn.disabled = false; spin.classList.add('hidden');
+        if (snap.exists()) {
+            const data = snap.data();
+            const role = data.role; // Bisa 'siswa', 'admin', atau 'pengajar'
+
+            // LOGIKA BARU: Gabungkan 'admin' dan 'pengajar'
+            if (role === 'admin' || role === 'pengajar' || email.endsWith('@ac.id')) {
+                // Masuk ke Folder Admin Cendekia
+                window.location.href = 'admin/index.html';
+            } else {
+                // Masuk ke Folder Siswa Cendekia
+                window.location.href = 'siswa/index.html';
             }
-        };
+        } else {
+            // Jika data tidak ada (kasus langka), cek email
+            if (email.endsWith('@ac.id')) {
+                window.location.href = 'admin/index.html';
+            } else {
+                window.location.href = 'siswa/index.html';
+            }
+        }
+    } catch (error) {
+        hideLoading(); // Asumsi fungsi hideLoading ada
+        alert("Login Gagal: " + error.message);
+    }
+};
     </script>
 </body>
 </html>
