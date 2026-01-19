@@ -93,19 +93,21 @@
         </div>
     </div>
 
-    <script type="module">
+   <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Ganti config ini jika berbeda, tapi karena satu project, harusnya sama
         const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676", storageBucket: "mading-cf676.appspot.com", messagingSenderId: "72175203671", appId: "1:72175203671:web:7a0676a55beb64bc96ba12" };
+        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- TAB SWITCHER LOGIC ---
+        // --- TAB SWITCHER LOGIC (SAMA SEPERTI SEBELUMNYA) ---
         const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get('mode'); // Cek apakah ?mode=register
+        const mode = urlParams.get('mode');
         
         const tabLogin = document.getElementById('tab-login');
         const tabRegister = document.getElementById('tab-register');
@@ -128,8 +130,6 @@
 
         tabLogin.onclick = () => switchTab('login');
         tabRegister.onclick = () => switchTab('register');
-        
-        // Auto-switch jika ada parameter di URL
         if (mode === 'register') switchTab('register');
 
         // --- TOAST FUNCTION ---
@@ -142,7 +142,7 @@
             setTimeout(() => div.remove(), 4000);
         }
 
-        // --- LOGIN LOGIC ---
+        // --- LOGIN LOGIC (PERBAIKAN REDIRECT) ---
         document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
@@ -154,24 +154,51 @@
 
             try {
                 const cred = await signInWithEmailAndPassword(auth, email, password);
+                
                 // Cek Role di Database
                 const docRef = doc(db, "users", cred.user.uid);
                 const docSnap = await getDoc(docRef);
                 
                 if (docSnap.exists()) {
-                    const role = docSnap.data().role;
-                    showToast(`Login sukses! Mengalihkan ke ${role}...`);
-                    setTimeout(() => window.location.href = `${role}/index.html`, 1500);
+                    const userData = docSnap.data();
+                    const role = userData.role;
+
+                    // VALIDASI GANDA: Jika email @ac.id tapi di database masih 'siswa' (karena salah daftar sebelumnya),
+                    // Kita perbaiki datanya sekarang juga secara otomatis.
+                    if (email.endsWith('@ac.id') && role !== 'admin') {
+                        // Perbaiki Role di Database
+                        await setDoc(docRef, { role: 'admin' }, { merge: true });
+                        showToast(`Role diperbarui ke Admin. Mengalihkan...`);
+                        setTimeout(() => window.location.href = `admin/index.html`, 1500);
+                    } else {
+                        showToast(`Login sukses! Masuk sebagai ${role}...`);
+                        setTimeout(() => window.location.href = `${role}/index.html`, 1500);
+                    }
+
                 } else {
-                    throw new Error("Data user tidak ditemukan di database.");
+                    // Jika user ada di Auth tapi tidak ada di Firestore (Mungkin dari aplikasi lain)
+                    // Kita buatkan data profil baru berdasarkan emailnya
+                    const autoRole = email.endsWith('@ac.id') ? 'admin' : 'siswa';
+                    
+                    await setDoc(docRef, {
+                        email: email,
+                        role: autoRole,
+                        createdAt: serverTimestamp()
+                    }, { merge: true });
+
+                    showToast(`Profil baru dibuat. Mengalihkan ke ${autoRole}...`);
+                    setTimeout(() => window.location.href = `${autoRole}/index.html`, 1500);
                 }
             } catch (error) {
-                showToast(error.message, 'error');
+                console.error(error);
+                let msg = error.message;
+                if(error.code === 'auth/invalid-credential') msg = "Email atau password salah.";
+                showToast(msg, 'error');
                 btn.disabled = false; spin.classList.add('hidden');
             }
         };
 
-        // --- REGISTER LOGIC ---
+        // --- REGISTER LOGIC (PERBAIKAN ROLE OTOMATIS) ---
         document.getElementById('register-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
@@ -183,23 +210,34 @@
             const phone = document.getElementById('reg-phone').value;
             const password = document.getElementById('reg-password').value;
 
+            // LOGIKA PENENTUAN ROLE
+            // Jika email berakhiran @ac.id, maka role = admin
+            // Selain itu, role = siswa
+            const determinedRole = email.endsWith('@ac.id') ? 'admin' : 'siswa';
+
             try {
                 const cred = await createUserWithEmailAndPassword(auth, email, password);
-                // Simpan Data Awal Siswa
+                
+                // Simpan Data dengan Role yang Benar
                 await setDoc(doc(db, "users", cred.user.uid), {
                     name: name,
                     email: email,
                     phone: phone,
-                    role: 'siswa',
-                    currentStage: 'Pendaftaran Awal',
+                    role: determinedRole, // <--- INI KUNCINYA
+                    currentStage: determinedRole === 'siswa' ? 'Pendaftaran Awal' : null, // Admin tidak butuh stage
                     createdAt: serverTimestamp(),
                     isRejected: false,
                     isArchived: false
                 });
-                showToast("Akun berhasil dibuat! Mengalihkan...");
-                setTimeout(() => window.location.href = 'siswa/index.html', 1500);
+
+                showToast(`Akun ${determinedRole} berhasil dibuat! Mengalihkan...`);
+                setTimeout(() => window.location.href = `${determinedRole}/index.html`, 1500);
+                
             } catch (error) {
-                showToast(error.message, 'error');
+                console.error(error);
+                let msg = error.message;
+                if(error.code === 'auth/email-already-in-use') msg = "Email sudah terdaftar. Silakan login.";
+                showToast(msg, 'error');
                 btn.disabled = false; spin.classList.add('hidden');
             }
         };
