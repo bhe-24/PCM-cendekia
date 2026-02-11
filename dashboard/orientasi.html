@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pekan Orientasi - Cendekia Aksara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { navy: { 800: '#001f3f', 900: '#00152b' }, mustard: { 400: '#FFDB58', 500: '#E1AD01' } }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col font-sans">
+
+    <header class="bg-navy-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center relative">
+            <div class="flex items-center w-1/4">
+                <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-10 w-10 rounded-full bg-white border-2 border-mustard-400 mr-3 object-cover shadow-md">
+            </div>
+            <div class="absolute left-1/2 transform -translate-x-1/2 text-center w-full md:w-auto">
+                <h1 class="text-sm md:text-lg font-bold text-mustard-400 tracking-wide uppercase truncate">PEKAN ORIENTASI</h1>
+            </div>
+            <div class="flex justify-end items-center w-1/4">
+                <a href="index.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition text-sm font-semibold border border-white/20">
+                    <i class="fas fa-arrow-left"></i> <span class="hidden md:inline">Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow max-w-5xl">
+
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-navy-800 mb-4">Selamat Datang, Calon Penulis Hebat!</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">Anda telah melewati seleksi ketat. Inilah alasan mengapa Cendekia Aksara adalah tempat terbaik untuk karyamu.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-mustard-500 text-center hover:-translate-y-2 transition duration-300">
+                <div class="w-16 h-16 bg-mustard-100 rounded-full flex items-center justify-center mx-auto mb-4 text-mustard-600 text-2xl">
+                    <i class="fas fa-certificate"></i>
+                </div>
+                <h3 class="font-bold text-lg text-navy-800">Sertifikasi Resmi</h3>
+                <p class="text-sm text-gray-500 mt-2">Kurikulum berstandar industri penerbitan nasional.</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-navy-800 text-center hover:-translate-y-2 transition duration-300">
+                <div class="w-16 h-16 bg-navy-100 rounded-full flex items-center justify-center mx-auto mb-4 text-navy-800 text-2xl">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="font-bold text-lg text-navy-800">Mentor Praktisi</h3>
+                <p class="text-sm text-gray-500 mt-2">Belajar langsung dari penulis novel best-seller.</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-mustard-500 text-center hover:-translate-y-2 transition duration-300">
+                <div class="w-16 h-16 bg-mustard-100 rounded-full flex items-center justify-center mx-auto mb-4 text-mustard-600 text-2xl">
+                    <i class="fas fa-book-reader"></i>
+                </div>
+                <h3 class="font-bold text-lg text-navy-800">Penerbitan Karya</h3>
+                <p class="text-sm text-gray-500 mt-2">Karya terbaik akan kami bantu terbitkan secara fisik/digital.</p>
+            </div>
+        </div>
+
+        <div id="meet-section" class="hidden bg-gradient-to-r from-red-600 to-red-800 rounded-2xl shadow-xl p-8 text-white mb-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
+            <div class="relative z-10">
+                <h3 class="text-2xl font-bold mb-2"><i class="fas fa-video mr-2"></i> Sesi Sosialisasi Live</h3>
+                <p class="text-red-100">Silakan bergabung untuk pengarahan awal tahun ajaran baru.</p>
+            </div>
+            <a id="btn-meet" href="#" target="_blank" class="relative z-10 mt-4 md:mt-0 bg-white text-red-600 px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition flex items-center gap-2 animate-bounce">
+                GABUNG GOOGLE MEET <i class="fas fa-external-link-alt"></i>
+            </a>
+            <i class="fas fa-broadcast-tower absolute -right-6 -bottom-6 text-9xl text-white opacity-10"></i>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+            <div class="bg-navy-800 p-6 text-white text-center">
+                <h3 class="text-xl font-bold">INFORMASI KELAS & ABSENSI</h3>
+                <p class="text-xs text-gray-300 mt-1">Disusun otomatis berdasarkan abjad nama siswa lolos.</p>
+            </div>
+            
+            <div class="p-8 text-center" id="class-loading">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-navy-800 mx-auto"></div>
+                <p class="mt-4 text-gray-500">Mencari data kelasmu...</p>
+            </div>
+
+            <div id="class-info" class="hidden p-8">
+                <div class="flex flex-col md:flex-row gap-8 items-center justify-center">
+                    
+                    <div class="bg-gray-50 border-2 border-dashed border-gray-300 p-6 rounded-xl w-full md:w-1/2 text-left">
+                        <p class="text-xs text-gray-500 uppercase font-bold tracking-widest mb-4">IDENTITAS SISWA</p>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-sm text-gray-500">Nama Lengkap</p>
+                                <p class="font-bold text-lg text-navy-800" id="info-nama">...</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Kelas</p>
+                                    <p class="font-bold text-2xl text-mustard-500" id="info-kelas">...</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">No. Absen</p>
+                                    <p class="font-bold text-2xl text-navy-800" id="info-absen">...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full md:w-1/2 text-center">
+                        <i class="fab fa-whatsapp text-6xl text-green-500 mb-4"></i>
+                        <h4 class="font-bold text-gray-800 mb-2">Grup WhatsApp Kelas</h4>
+                        <p class="text-sm text-gray-500 mb-6">Bergabunglah untuk mendapatkan materi dan tugas harian.</p>
+                        
+                        <a id="btn-wa-class" href="#" target="_blank" class="inline-block bg-green-500 text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-green-600 transition">
+                            MASUK GRUP KELAS <span id="label-kelas-wa"></span>
+                        </a>
+                        <p id="wa-pending" class="hidden text-red-500 text-sm font-bold bg-red-50 p-2 rounded">Link grup belum tersedia.</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <a id="help-btn" href="#" target="_blank" class="fixed bottom-6 right-6 bg-navy-800 text-white p-4 rounded-full shadow-2xl hover:bg-mustard-500 hover:text-navy-900 transition duration-300 z-50 flex items-center gap-2 group">
+        <i class="fas fa-headset text-2xl"></i>
+        <span class="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-in-out whitespace-nowrap font-bold">Bantuan Admin</span>
+    </a>
+
+    <footer class="bg-white border-t mt-auto py-6 text-center text-sm text-gray-500">
+        <p>&copy; 2024 Cendekia Aksara.</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let globalSettings = {};
+
+        // 1. MAIN LISTENER
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                
+                // Set Tombol Bantuan (Format: PO-001-ID)
+                const idShort = user.uid.substr(0, 5).toUpperCase();
+                const textMsg = encodeURIComponent(`PO-001-${idShort}\n\nPermisi Admin, saya ingin bertanya: `);
+                document.getElementById('help-btn').href = `https://wa.me/628895615630?text=${textMsg}`;
+
+                // Listen Settings dulu (untuk dapat link WA & Meet)
+                listenToSettings();
+                // Baru hitung kelas
+                calculateClassPlacement();
+            } else {
+                window.location.href = "../index.html";
+            }
+        });
+
+        // 2. LISTEN SETTINGS (Link Meet & WA)
+        function listenToSettings() {
+            onSnapshot(doc(db, "settings", "orientasi"), (doc) => {
+                if (doc.exists()) {
+                    globalSettings = doc.data();
+                    
+                    // Handle Google Meet
+                    const meetSec = document.getElementById('meet-section');
+                    const meetBtn = document.getElementById('btn-meet');
+                    
+                    if (globalSettings.meetLink && globalSettings.meetLink.trim() !== "") {
+                        meetSec.classList.remove('hidden');
+                        meetSec.classList.add('flex'); // Pakai flex biar rapi
+                        meetBtn.href = globalSettings.meetLink;
+                    } else {
+                        meetSec.classList.add('hidden');
+                        meetSec.classList.remove('flex');
+                    }
+                }
+            });
+        }
+
+        // 3. HITUNG PENEMPATAN KELAS (OTOMATIS A-Z)
+        async function calculateClassPlacement() {
+            // Ambil semua siswa yang nilainya > 80 (Lolos)
+            const q = query(collection(db, "students"), where("selectionScore", ">", 80));
+            const snapshot = await getDocs(q);
+            
+            let passedStudents = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                passedStudents.push({
+                    uid: doc.id, // Gunakan Doc ID sebagai UID
+                    nama: data.namaLengkap
+                });
+            });
+
+            // Urutkan A-Z (Case Insensitive)
+            passedStudents.sort((a, b) => a.nama.localeCompare(b.nama, undefined, {sensitivity: 'base'}));
+
+            // Cari Index User Saat Ini
+            const myIndex = passedStudents.findIndex(s => s.uid === currentUser.uid);
+
+            const loading = document.getElementById('class-loading');
+            const content = document.getElementById('class-info');
+
+            loading.classList.add('hidden');
+            content.classList.remove('hidden');
+
+            if (myIndex !== -1) {
+                // Tentukan Kelas
+                // 0-14 (15 orang) -> Kelas A
+                // 15-29 (15 orang) -> Kelas B
+                
+                let myClass = "";
+                let myAbsen = 0;
+                let waLink = "";
+
+                if (myIndex < 15) {
+                    myClass = "A";
+                    myAbsen = myIndex + 1;
+                    waLink = globalSettings.linkKelasA;
+                } else {
+                    myClass = "B";
+                    myAbsen = (myIndex - 15) + 1;
+                    waLink = globalSettings.linkKelasB;
+                }
+
+                // Render Info
+                document.getElementById('info-nama').innerText = currentUser.displayName;
+                document.getElementById('info-kelas').innerText = "KELAS " + myClass;
+                document.getElementById('info-absen').innerText = String(myAbsen).padStart(2, '0');
+                document.getElementById('label-kelas-wa').innerText = myClass;
+
+                // Handle Link WA
+                const btnWa = document.getElementById('btn-wa-class');
+                const pendingWa = document.getElementById('wa-pending');
+
+                if (waLink && waLink.trim() !== "") {
+                    btnWa.href = waLink;
+                    btnWa.classList.remove('hidden');
+                    pendingWa.classList.add('hidden');
+                } else {
+                    btnWa.classList.add('hidden');
+                    pendingWa.classList.remove('hidden');
+                }
+
+            } else {
+                // Kasus langka: Nilai > 80 tapi tidak masuk query (bug/cache)
+                // Atau User masuk halaman ini padahal tidak lolos
+                Swal.fire({icon: 'error', title: 'Data Tidak Ditemukan', text: 'Anda tidak terdaftar dalam daftar kelulusan.'})
+                .then(() => window.location.href = "index.html");
+            }
+        }
+    </script>
+</body>
+</html>
