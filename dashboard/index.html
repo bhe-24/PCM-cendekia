@@ -48,13 +48,16 @@
 
     <main class="container mx-auto px-4 py-8 flex-grow space-y-8">
 
-        <div id="info-board-container" class="hidden bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-navy-800">
+        <div id="info-board-container" class="bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-navy-800">
             <div class="p-6">
                 <div class="flex items-start gap-4">
                     <div class="text-3xl text-navy-800"><i class="fas fa-bullhorn"></i></div>
                     <div class="w-full">
                         <h2 class="text-xl font-bold text-gray-800 mb-2">Papan Informasi</h2>
-                        <div id="status-content"></div>
+                        <div id="status-content">
+                            <p class="text-gray-500 animate-pulse">Memuat status pendaftaran...</p>
+                        </div>
+                        <div id="quota-info" class="mt-2 text-sm font-bold text-navy-800"></div>
                     </div>
                 </div>
             </div>
@@ -63,25 +66,28 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             <div class="md:col-span-1">
-                <div class="bg-gradient-to-br from-navy-800 to-navy-900 rounded-xl shadow-xl p-6 text-white relative overflow-hidden">
+                <div id="student-card" class="bg-gradient-to-br from-navy-800 to-navy-900 rounded-xl shadow-xl p-6 text-white relative overflow-hidden transition-all duration-500">
                     <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-mustard-500 rounded-full opacity-20"></div>
                     
                     <div class="text-center mb-4">
                         <img id="card-foto" src="https://i.ibb.co/tMdJD76/default-avatar.png" class="h-20 w-20 rounded-full mx-auto border-4 border-white object-cover mb-3">
                         
-                        <h3 class="text-lg font-bold" id="card-nama">Memuat...</h3>
-                        
+                        <h3 class="text-lg font-bold" id="card-nama">...</h3>
                         <span id="label-status" class="bg-gray-500 text-white text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Memuat...</span>
                     </div>
                     
                     <div class="space-y-2 text-sm text-gray-300 border-t border-gray-600 pt-4">
                         <div class="flex justify-between">
-                            <span>ID Akun:</span>
+                            <span>ID Calon:</span>
                             <span class="text-white font-mono" id="card-id">...</span>
                         </div>
                         <div class="flex justify-between">
                             <span>Status:</span>
-                            <span class="text-white" id="text-status">...</span>
+                            <span class="text-white font-bold" id="text-status">...</span>
+                        </div>
+                        <div id="final-achievement" class="hidden mt-4 pt-4 border-t border-white/20 text-center">
+                            <p class="text-mustard-400 font-bold text-lg">SISWA RESMI</p>
+                            <p class="text-xs">Selamat Datang di Cendekia Aksara</p>
                         </div>
                     </div>
                 </div>
@@ -108,20 +114,23 @@
                         <div class="z-10 flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-400 shadow-sm shrink-0 border-4 border-white" id="icon-seleksi">
                             <i class="fas fa-brain text-xl"></i>
                         </div>
-                        <div>
+                        <div class="w-full">
                             <h4 class="font-bold text-gray-800">2. Tes Minat & Analisis Berpikir</h4>
-                            <p class="text-sm text-gray-500 mt-1">Studi kasus personal.</p>
+                            <p class="text-sm text-gray-500 mt-1">KKM Kelulusan: <span class="font-bold text-red-600">92</span></p>
                             <div id="step-2-action" class="mt-3"></div>
+                            
+                            <div id="result-card-container" class="mt-4"></div>
                         </div>
                     </div>
 
                     <div class="relative flex items-start gap-6">
-                        <div class="z-10 flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-400 shadow-sm shrink-0 border-4 border-white">
+                        <div class="z-10 flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-400 shadow-sm shrink-0 border-4 border-white" id="icon-orientasi">
                             <i class="fas fa-campground text-xl"></i>
                         </div>
                         <div>
                             <h4 class="font-bold text-gray-800">3. Pekan Orientasi Siswa</h4>
-                            <p class="text-sm text-gray-500 mt-1">Bergabung dengan Cendekia Aksara.</p>
+                            <p class="text-sm text-gray-500 mt-1">Khusus peserta yang dinyatakan Lolos.</p>
+                            <div id="step-3-action" class="mt-2"></div>
                         </div>
                     </div>
                 </div>
@@ -165,17 +174,17 @@
     </main>
 
     <footer class="bg-white border-t mt-8 py-6 text-center text-sm text-gray-500">
-        <p class="mb-2">&copy; 2024 Cendekia Aksara. Dibuat dengan ❤️ untuk Sastra Indonesia.</p>
+        <p class="mb-2">&copy; 2024 Cendekia Aksara.</p>
         <div class="space-x-4">
-            <a href="../privacy.html" class="hover:text-navy-800">Kebijakan Privasi</a>
-            <a href="#" class="hover:text-navy-800">Syarat & Ketentuan</a>
+            <a href="privacy.html" class="hover:text-navy-800">Kebijakan Privasi</a>
+            <a href="sk.html" class="hover:text-navy-800">Syarat & Ketentuan</a>
         </div>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
@@ -191,34 +200,34 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- 1. LISTENER UTAMA ---
+        // --- KONFIGURASI GLOBAL ---
+        const MAX_QUOTA = 30; // Maksimal 30 siswa
+        const PASSING_GRADE = 92; // Nilai minimal
+
+        let acceptedCount = 0;
+        let isQuotaFull = false;
+
+        // 1. CEK KUOTA (Hitung siswa yang nilainya > 92)
+        async function checkQuota() {
+            const q = query(collection(db, "students"), where("selectionScore", ">", PASSING_GRADE));
+            const querySnapshot = await getDocs(q);
+            acceptedCount = querySnapshot.size;
+            isQuotaFull = acceptedCount >= MAX_QUOTA;
+            
+            // Update UI Kuota di Papan Info
+            const quotaInfo = document.getElementById('quota-info');
+            if (isQuotaFull) {
+                quotaInfo.innerHTML = `<span class="text-red-600">🔴 KUOTA PENUH (${acceptedCount}/${MAX_QUOTA})</span>`;
+            } else {
+                quotaInfo.innerHTML = `<span class="text-green-600">🟢 Kuota Tersedia (${acceptedCount}/${MAX_QUOTA})</span>`;
+            }
+        }
+
+        // --- 2. LISTENER UTAMA ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // AUTO FIX NAMA KOSONG
-                if (!user.displayName) {
-                    const { value: namaBaru } = await Swal.fire({
-                        title: 'Data Akun Tidak Lengkap',
-                        text: 'Sepertinya akun ini dibuat dengan sistem lama. Silakan masukkan Nama Lengkap Anda.',
-                        input: 'text',
-                        inputPlaceholder: 'Contoh: Budi Santoso',
-                        allowOutsideClick: false,
-                        showCancelButton: false,
-                        confirmButtonText: 'Simpan Nama',
-                        confirmButtonColor: '#001f3f',
-                        inputValidator: (value) => {
-                            if (!value) return 'Nama tidak boleh kosong!';
-                        }
-                    });
-
-                    if (namaBaru) {
-                        Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
-                        await updateProfile(user, { displayName: namaBaru });
-                        window.location.reload();
-                        return;
-                    }
-                }
-
-                const displayName = user.displayName; 
+                // Load Basic Data
+                const displayName = user.displayName || "Siswa";
                 const userIdShort = "CA-" + user.uid.substr(0, 5).toUpperCase();
 
                 document.getElementById('header-nama').innerText = displayName;
@@ -230,6 +239,7 @@
                 document.getElementById('header-foto').src = photoUrl;
                 document.getElementById('card-foto').src = photoUrl;
 
+                await checkQuota(); // Cek kuota dulu
                 listenToStudentData(user);
                 listenToGlobalSettings();
 
@@ -238,62 +248,125 @@
             }
         });
 
-        // --- 2. DENGAR STATUS DATA SISWA ---
+        // --- 3. DENGAR DATA PRIBADI SISWA ---
         function listenToStudentData(user) {
             const studentRef = doc(db, "students", user.uid);
 
             onSnapshot(studentRef, (docSnap) => {
                 const labelStatus = document.getElementById('label-status');
                 const textStatus = document.getElementById('text-status');
+                const studentCard = document.getElementById('student-card');
+                
                 const step1Status = document.getElementById('step-1-status');
                 const step2Action = document.getElementById('step-2-action');
+                const resultCardContainer = document.getElementById('result-card-container');
+                const step3Action = document.getElementById('step-3-action');
+                
                 const iconSeleksi = document.getElementById('icon-seleksi');
+                const iconOrientasi = document.getElementById('icon-orientasi');
 
-                if (docSnap.exists()) {
-                    document.body.setAttribute('data-registered', 'true');
-
-                    labelStatus.className = "bg-mustard-500 text-navy-900 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider";
-                    labelStatus.innerText = "Siswa Terdaftar";
-                    textStatus.innerText = "Aktif";
-
-                    step1Status.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Data Lengkap</span>`;
-
-                    iconSeleksi.classList.remove('bg-gray-100', 'text-gray-400');
-                    iconSeleksi.classList.add('bg-mustard-100', 'text-mustard-600', 'animate-bounce');
-
-                    const data = docSnap.data();
-                    if (data.selectionScore === undefined || data.selectionScore === null) {
-                        step2Action.innerHTML = `
-                            <button onclick="startSelection()" class="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-bold shadow hover:bg-navy-900 transition">
-                                <i class="fas fa-pen-nib mr-2"></i>Ikuti Seleksi
-                            </button>
-                        `;
-                    } else {
-                        step2Action.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Seleksi Selesai</span>`;
-                        iconSeleksi.classList.remove('animate-bounce');
-                    }
-                } else {
+                // DEFAULT: Belum ada data
+                if (!docSnap.exists()) {
                     document.body.setAttribute('data-registered', 'false');
-
-                    labelStatus.className = "bg-gray-500 text-white text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider";
                     labelStatus.innerText = "Calon Siswa";
-                    textStatus.innerText = "Menunggu Kelengkapan Data";
-
+                    labelStatus.className = "bg-gray-500 text-white text-xs px-3 py-1 rounded-full font-bold uppercase";
                     step1Status.innerHTML = `<span class="text-red-500 text-sm font-bold"><i class="fas fa-exclamation-circle mr-1"></i> Belum Lengkap</span>`;
+                    return;
+                }
 
-                    step2Action.innerHTML = "";
-                    iconSeleksi.classList.add('bg-gray-100', 'text-gray-400');
-                    iconSeleksi.classList.remove('bg-mustard-100', 'text-mustard-600');
+                const data = docSnap.data();
+                document.body.setAttribute('data-registered', 'true');
+
+                // STEP 1: ADMIN - SELESAI
+                step1Status.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Data Lengkap</span>`;
+                
+                // STEP 2: TES SELEKSI
+                if (data.selectionScore === undefined || data.selectionScore === null) {
+                    // Belum Tes
+                    iconSeleksi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-mustard-100 text-mustard-600 shadow-sm shrink-0 border-4 border-white animate-bounce";
+                    step2Action.innerHTML = `
+                        <button onclick="startSelection()" class="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-bold shadow hover:bg-navy-900 transition">
+                            <i class="fas fa-pen-nib mr-2"></i>Mulai Ujian
+                        </button>`;
+                    resultCardContainer.innerHTML = "";
+                } else {
+                    // SUDAH TES - CEK SCORE
+                    iconSeleksi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 shadow-sm shrink-0 border-4 border-white";
+                    step2Action.innerHTML = `<span class="text-gray-500 text-sm font-bold">Ujian Selesai</span>`;
+
+                    const score = data.selectionScore;
+                    const isLolos = score > PASSING_GRADE;
+
+                    // KARTU HASIL (HIJAU / MERAH)
+                    if (isLolos) {
+                        resultCardContainer.innerHTML = `
+                            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded shadow-sm">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="font-bold text-green-800 text-lg">LOLOS SELEKSI</p>
+                                        <p class="text-green-700 text-sm">Nilai: <strong>${score}</strong> (Di atas KKM ${PASSING_GRADE})</p>
+                                        <p class="text-xs text-green-600 mt-1">Terdaftar sebagai calon siswa.</p>
+                                    </div>
+                                    <i class="fas fa-check-circle text-4xl text-green-500"></i>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // BUKA STEP 3 (ORIENTASI)
+                        if (!isQuotaFull || data.statusPenerimaan === "Diterima") { // Tetap hijau kalau dia termasuk yg diterima
+                            iconOrientasi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-mustard-100 text-mustard-600 shadow-sm shrink-0 border-4 border-white animate-pulse";
+                            step3Action.innerHTML = `
+                                <a href="orientasi.html" class="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-bold shadow hover:bg-green-700 transition block text-center">
+                                    Masuk Pekan Orientasi <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
+                            `;
+                        } else {
+                            step3Action.innerHTML = `<span class="text-red-500 font-bold text-sm">Maaf, Kuota Penuh.</span>`;
+                        }
+
+                    } else {
+                        // TIDAK LOLOS
+                        resultCardContainer.innerHTML = `
+                            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-sm">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="font-bold text-red-800 text-lg">TIDAK LOLOS</p>
+                                        <p class="text-red-700 text-sm">Nilai: <strong>${score}</strong> (Di bawah KKM ${PASSING_GRADE})</p>
+                                        <p class="text-xs text-red-600 mt-1">Jangan patah semangat, coba lagi tahun depan!</p>
+                                    </div>
+                                    <i class="fas fa-times-circle text-4xl text-red-500"></i>
+                                </div>
+                            </div>
+                        `;
+                        step3Action.innerHTML = `<span class="text-gray-400 text-sm font-bold"><i class="fas fa-lock"></i> Terkunci Permanen</span>`;
+                    }
+                }
+
+                // --- 4. STATUS AKHIR (KARTU HIJAU) ---
+                // Cek apakah Admin sudah validasi "Lulus" di database (field: isOfficialStudent = true)
+                if (data.isOfficialStudent === true) {
+                    // UBAH KARTU JADI HIJAU
+                    studentCard.classList.remove('from-navy-800', 'to-navy-900');
+                    studentCard.classList.add('from-green-600', 'to-green-800'); // Jadi Hijau Keren
+                    
+                    labelStatus.className = "bg-white text-green-700 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider";
+                    labelStatus.innerText = "SISWA RESMI";
+                    textStatus.innerText = "Angkatan 5";
+                    
+                    document.getElementById('final-achievement').classList.remove('hidden');
+                } else {
+                    // Masih Proses
+                    labelStatus.innerText = "Dalam Proses";
+                    textStatus.innerText = "Menunggu Tahapan";
                 }
             });
         }
 
-        // --- 3. DENGAR PENGUMUMAN ---
+        // --- 5. DENGAR PENGUMUMAN ---
         function listenToGlobalSettings() {
             const settingsRef = doc(db, "settings", "penerimaan");
 
             onSnapshot(settingsRef, (docSnap) => {
-                const infoBoardContainer = document.getElementById('info-board-container');
                 const infoBoardContent = document.getElementById('status-content');
                 const newsContainer = document.getElementById('news-container');
                 const newsList = document.getElementById('news-list');
@@ -301,49 +374,50 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     let htmlContent = "";
-                    let showInfo = false;
 
+                    // TEKS PENGUMUMAN (SELALU MUNCUL)
                     if (data.infoText && data.infoText.trim() !== "") {
-                        htmlContent += `<p class="text-navy-800 mb-3">${data.infoText}</p>`;
-                        showInfo = true;
+                        htmlContent += `<p class="text-navy-800 mb-3 font-medium">${data.infoText}</p>`;
+                    } else {
+                        htmlContent += `<p class="text-gray-500 mb-3 italic">Belum ada pengumuman khusus.</p>`;
                     }
 
+                    // STATUS PENDAFTARAN (Global Toggle + Kuota)
                     const isRegistered = document.body.getAttribute('data-registered') === 'true';
 
                     if (!isRegistered) {
-                        if (data.isOpen) {
-                            // !!! FIX LINK DAFTAR DI SINI !!!
+                        if (data.isOpen && !isQuotaFull) {
                             htmlContent += `
                                 <div class="mt-2 pt-2 border-t border-gray-200">
-                                    <p class="text-green-600 mb-2 font-bold text-sm">🟢 Pendaftaran Dibuka</p>
+                                    <p class="text-green-600 mb-2 font-bold text-sm">🟢 Pendaftaran Sedang Dibuka</p>
                                     <a href="daftar.html" class="inline-block bg-mustard-500 text-navy-900 px-6 py-2 rounded-lg font-bold shadow hover:bg-mustard-400 transition animate-pulse">
                                         Lengkapi Biodata Siswa <i class="fas fa-arrow-right ml-2"></i>
                                     </a>
                                 </div>`;
-                            showInfo = true;
+                        } else if (isQuotaFull) {
+                             htmlContent += `
+                                <div class="mt-2 pt-2 border-t border-gray-200">
+                                    <p class="text-red-600 font-bold text-sm">🔴 Pendaftaran Ditutup (Kuota Penuh)</p>
+                                    <p class="text-xs text-gray-500">Terima kasih atas antusiasme calon siswa.</p>
+                                </div>`;
                         } else {
                              htmlContent += `
                                 <div class="mt-2 pt-2 border-t border-gray-200">
-                                    <p class="text-red-600 font-bold text-sm">🔴 Pendaftaran Ditutup Sementara</p>
+                                    <p class="text-red-600 font-bold text-sm">🔴 Pendaftaran Belum Dibuka</p>
+                                    <p class="text-xs text-gray-500">Nantikan informasi selanjutnya.</p>
                                 </div>`;
-                             showInfo = true;
                         }
                     } else {
                         htmlContent += `
                             <div class="mt-2 pt-2 border-t border-gray-200">
-                                <p class="text-green-600 font-bold text-sm"><i class="fas fa-check"></i> Anda sudah terdaftar sebagai siswa!</p>
+                                <p class="text-blue-600 font-bold text-sm"><i class="fas fa-info-circle"></i> Ikuti tahapan seleksi di bawah.</p>
                             </div>
                         `;
-                        showInfo = true;
                     }
 
-                    if (showInfo) {
-                        infoBoardContainer.classList.remove('hidden');
-                        infoBoardContent.innerHTML = htmlContent;
-                    } else {
-                        infoBoardContainer.classList.add('hidden');
-                    }
+                    infoBoardContent.innerHTML = htmlContent;
 
+                    // KABAR SEKOLAH
                     if (data.kabarSekolah && Array.isArray(data.kabarSekolah) && data.kabarSekolah.length > 0) {
                         newsContainer.classList.remove('hidden');
                         newsList.innerHTML = data.kabarSekolah.map(news => `
@@ -352,8 +426,6 @@
                                 <span>${news}</span>
                             </li>
                         `).join('');
-                    } else {
-                        newsContainer.classList.add('hidden');
                     }
                 }
             });
@@ -361,16 +433,15 @@
 
         window.startSelection = function() {
             Swal.fire({
-                title: 'Mulai Seleksi?',
-                text: "Pastikan koneksi internet stabil.",
-                icon: 'question',
+                title: 'Siap Ujian?',
+                text: "Pastikan internet stabil. Tidak ada pengulangan.",
+                icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#001f3f',
                 confirmButtonText: 'Ya, Mulai',
                 cancelButtonColor: '#d33'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // !!! FIX LINK SELEKSI DI SINI !!!
                     window.location.href = "seleksi.html";
                 }
             });
