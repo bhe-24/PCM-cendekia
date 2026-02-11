@@ -143,7 +143,8 @@
     <script type="module">
         // Import Firebase dari CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+        // TAMBAHAN: updateProfile WAJIB ADA di sini
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-analytics.js";
 
         // Konfigurasi Firebase
@@ -236,7 +237,7 @@
             }
         }
 
-        // 3. Logic Register (Daftar Akun)
+        // 3. Logic Register (Daftar Akun) - REVISI PENTING DI SINI
         document.getElementById('form-register').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -257,14 +258,12 @@
             // Jika umur < 15 tahun
             if (age < 15) {
                 // Hitung sisa waktu
-                // Target: Tanggal lahir + 15 tahun
                 const targetDate = new Date(tglLahir);
                 targetDate.setFullYear(tglLahir.getFullYear() + 15);
                 
                 const diffTime = Math.abs(targetDate - today);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
                 
-                // Konversi sederhana ke Tahun/Bulan/Hari (Estimasi)
                 const yearsLeft = Math.floor(diffDays / 365);
                 const monthsLeft = Math.floor((diffDays % 365) / 30);
                 const daysLeft = Math.floor((diffDays % 365) % 30);
@@ -278,7 +277,7 @@
                         <b>${yearsLeft} Tahun, ${monthsLeft} Bulan, ${daysLeft} Hari</b>.
                     `,
                     confirmButtonText: 'Saya Mengerti',
-                    confirmButtonColor: '#E1AD01' // Mustard
+                    confirmButtonColor: '#E1AD01' 
                 });
                 return; // Stop proses
             }
@@ -294,23 +293,30 @@
             // Proses Firebase Auth
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Sukses Daftar
+                    const user = userCredential.user;
+
+                    // === PERBAIKAN PENTING: UPDATE DISPLAY NAME ===
+                    // Ini yang membuat nama langsung muncul di Dashboard
+                    return updateProfile(user, {
+                        displayName: nama,
+                        photoURL: "https://i.ibb.co/tMdJD76/default-avatar.png" // Foto Default
+                    });
+                })
+                .then(() => {
+                    // Jika Update Profile Sukses, Baru Tampilkan Alert Sukses
                     Swal.fire({
                         icon: 'success',
                         title: 'Pendaftaran Berhasil!',
-                        text: 'Akun Anda telah dibuat. Silakan login untuk melanjutkan ke Dashboard.',
-                        confirmButtonText: 'Ke Halaman Login',
+                        text: 'Akun Anda telah dibuat dengan nama: ' + nama,
+                        confirmButtonText: 'Masuk Dashboard',
                         confirmButtonColor: '#001f3f'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // Reset form & Pindah Tab
+                            // Langsung Login otomatis atau arahkan ke login tab
                             document.getElementById('form-register').reset();
                             switchTab('login');
                         }
                     });
-                    
-                    // TODO: Simpan data tambahan (Nama, Alamat, Telp) ke Database (Firestore/Realtime DB) di sini
-                    // Karena perintah hanya Auth, kita cukupkan di sini.
                 })
                 .catch((error) => {
                     const errorCode = error.code;
@@ -350,7 +356,7 @@
                     Swal.fire({
                         icon: 'success',
                         title: 'Login Berhasil!',
-                        text: 'Selamat datang kembali.',
+                        text: `Selamat datang kembali, ${user.displayName || 'Siswa'}`,
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
