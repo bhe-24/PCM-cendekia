@@ -200,9 +200,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- KONFIGURASI GLOBAL (UPDATE DI SINI) ---
+        // --- KONFIGURASI GLOBAL ---
         const MAX_QUOTA = 30; 
-        const PASSING_GRADE = 80; // <--- SUDAH DIGANTI JADI 80
+        const PASSING_GRADE = 80;
 
         let acceptedCount = 0;
         let isQuotaFull = false;
@@ -306,7 +306,22 @@
                             </div>
                         `;
                         
-                        if (!isQuotaFull || data.statusPenerimaan === "Diterima") {
+                        // --- LOGIKA STEP 3 (ORIENTASI) YANG DIPERBAIKI ---
+                        if (data.isOfficialStudent === true) {
+                            // JIKA SUDAH RESMI -> KARTU HIJAU & TETAP BISA AKSES
+                            iconOrientasi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 shadow-sm shrink-0 border-4 border-white";
+                            step3Action.innerHTML = `
+                                <div class="mt-2 text-center md:text-left">
+                                    <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold uppercase mb-2 inline-block">
+                                        <i class="fas fa-check-double"></i> Tahap Selesai
+                                    </span>
+                                    <a href="orientasi.html" class="text-navy-800 font-bold text-sm hover:text-mustard-500 underline block mt-1 transition">
+                                        <i class="fas fa-external-link-alt"></i> Akses Halaman Orientasi
+                                    </a>
+                                </div>
+                            `;
+                        } else if (!isQuotaFull || data.statusPenerimaan === "Diterima") {
+                            // JIKA BELUM RESMI TAPI LOLOS (MASIH MASA ORIENTASI)
                             iconOrientasi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-mustard-100 text-mustard-600 shadow-sm shrink-0 border-4 border-white animate-pulse";
                             step3Action.innerHTML = `
                                 <a href="orientasi.html" class="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-bold shadow hover:bg-green-700 transition block text-center">
@@ -334,7 +349,7 @@
                     }
                 }
 
-                // --- 4. STATUS SISWA RESMI ---
+                // --- 4. STATUS SISWA RESMI (KARTU UTAMA) ---
                 if (data.isOfficialStudent === true) {
                     studentCard.classList.remove('from-navy-800', 'to-navy-900');
                     studentCard.classList.add('from-green-600', 'to-green-800');
