@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tim Pengajar - Cendekia Aksara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { navy: { 800: '#001f3f', 900: '#00152b' }, mustard: { 400: '#FFDB58', 500: '#E1AD01' } }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col font-sans">
+
+    <header class="bg-navy-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center relative">
+            <div class="flex items-center w-1/4">
+                <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-10 w-10 rounded-full bg-white border-2 border-mustard-400 mr-3 object-cover shadow-md">
+            </div>
+            <div class="absolute left-1/2 transform -translate-x-1/2 text-center w-full md:w-auto">
+                <h1 class="text-sm md:text-lg font-bold text-mustard-400 tracking-wide uppercase truncate">TIM PENGAJAR</h1>
+            </div>
+            <div class="flex justify-end items-center w-1/4">
+                <a href="index.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition text-sm font-semibold border border-white/20">
+                    <i class="fas fa-arrow-left"></i> <span class="hidden md:inline">Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-12 flex-grow">
+        
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-navy-800 mb-2">Mengenal Mentor Kami</h2>
+            <p class="text-gray-600">Para praktisi dan akademisi yang siap membimbing perjalanan menulis Anda.</p>
+        </div>
+
+        <div id="loading-state" class="text-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-mustard-500 mx-auto mb-4"></div>
+            <p class="text-gray-500 font-bold">Memuat profil pengajar...</p>
+        </div>
+
+        <div id="empty-state" class="hidden text-center py-20 bg-white rounded-xl shadow-sm border border-gray-200">
+            <i class="fas fa-chalkboard-teacher text-6xl text-gray-200 mb-4"></i>
+            <p class="text-gray-400">Data pengajar belum dipublikasikan.</p>
+        </div>
+
+        <div id="staff-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hidden">
+            </div>
+
+    </main>
+
+    <footer class="bg-white border-t mt-auto py-6 text-center text-sm text-gray-500">
+        <p>&copy; 2024 Cendekia Aksara.</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Urutkan berdasarkan level (1=Kepsek paling atas), lalu nama
+        const q = query(collection(db, "staff_members"), orderBy("level", "asc"));
+
+        onSnapshot(q, (snapshot) => {
+            const loading = document.getElementById('loading-state');
+            const empty = document.getElementById('empty-state');
+            const grid = document.getElementById('staff-grid');
+
+            loading.classList.add('hidden');
+            grid.innerHTML = "";
+
+            if (snapshot.empty) {
+                empty.classList.remove('hidden');
+                grid.classList.add('hidden');
+            } else {
+                empty.classList.add('hidden');
+                grid.classList.remove('hidden');
+
+                snapshot.forEach((doc) => {
+                    const d = doc.data();
+                    
+                    // Logic Warna Badge Jabatan
+                    let badgeColor = "bg-blue-100 text-blue-700"; // Default (Guru)
+                    if (d.level == 1) badgeColor = "bg-mustard-100 text-navy-900 border border-mustard-400"; // Kepsek
+                    
+                    const card = document.createElement('div');
+                    card.className = "bg-white rounded-2xl shadow-lg overflow-hidden group hover:-translate-y-2 transition duration-300 border border-gray-100";
+                    
+                    card.innerHTML = `
+                        <div class="h-24 bg-navy-800 relative">
+                            <div class="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
+                                <img src="${d.foto || 'https://i.ibb.co/tMdJD76/default-avatar.png'}" 
+                                     class="w-24 h-24 rounded-full border-4 border-white object-cover shadow-md bg-white">
+                            </div>
+                        </div>
+                        <div class="pt-14 pb-8 px-6 text-center">
+                            <h3 class="text-xl font-bold text-navy-800 mb-1">${d.nama}</h3>
+                            <span class="inline-block ${badgeColor} px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
+                                ${d.jabatan}
+                            </span>
+                            <p class="text-gray-500 text-sm italic">"${d.bio || 'Siap membimbing generasi muda.'}"</p>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
