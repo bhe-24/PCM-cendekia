@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Saya - Cendekia Aksara</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
+
+    <header class="bg-navy-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center relative">
+            <div class="flex items-center w-1/4">
+                <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-10 w-10 rounded-full bg-white border-2 border-mustard-400 mr-3 object-cover shadow-md">
+            </div>
+            <div class="absolute left-1/2 transform -translate-x-1/2 text-center">
+                <h1 class="text-lg font-bold text-mustard-400 tracking-wide uppercase">PENGATURAN AKUN</h1>
+            </div>
+            <div class="flex justify-end items-center w-1/4">
+                <a href="index.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition text-sm font-semibold border border-white/20">
+                    <i class="fas fa-arrow-left"></i> <span class="hidden md:inline">Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="bg-gradient-to-r from-navy-900 to-navy-800 h-48 w-full absolute z-0"></div>
+
+    <main class="container mx-auto px-4 pt-20 pb-12 flex-grow max-w-4xl relative z-10">
+        
+        <div class="flex flex-col md:flex-row gap-6">
+            
+            <div class="w-full md:w-1/3">
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden text-center p-6 border-t-4 border-mustard-500">
+                    
+                    <div class="relative inline-block group mx-auto mb-4">
+                        <div class="relative w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-200 cursor-pointer" onclick="document.getElementById('file-upload').click()">
+                            <img id="profile-img" src="https://i.ibb.co/tMdJD76/default-avatar.png" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
+                                <i class="fas fa-camera text-white text-2xl mb-1"></i>
+                                <span class="text-white text-xs font-bold">Ubah Foto</span>
+                            </div>
+                        </div>
+                        <input type="file" id="file-upload" class="hidden" accept="image/*" onchange="uploadToImgBB(this)">
+                    </div>
+
+                    <h2 class="text-xl font-bold text-navy-800 mb-1" id="display-nama">Memuat...</h2>
+                    <p class="text-sm text-gray-500 mb-4" id="display-email">...</p>
+                    
+                    <div class="bg-blue-50 rounded-lg p-3 text-sm text-navy-800 font-medium border border-blue-100 mb-6">
+                        <i class="fas fa-id-badge mr-2 text-mustard-500"></i>
+                        ID: <span id="display-id" class="font-mono">...</span>
+                    </div>
+
+                    <button onclick="logout()" class="w-full border border-red-500 text-red-500 hover:bg-red-50 font-bold py-2 rounded-lg transition flex items-center justify-center gap-2">
+                        <i class="fas fa-sign-out-alt"></i> Keluar Akun
+                    </button>
+                </div>
+            </div>
+
+            <div class="w-full md:w-2/3">
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-navy-800 flex items-center gap-2">
+                            <i class="fas fa-user-edit text-mustard-500"></i> Edit Informasi
+                        </h3>
+                    </div>
+
+                    <div class="p-6">
+                        <form id="profile-form" class="space-y-5">
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Lengkap</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    <input type="text" id="input-nama" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-800 outline-none transition" required>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Terdaftar <span class="text-red-400 text-[10px]">(Tidak dapat diubah)</span></label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                    <input type="email" id="input-email" class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed" readonly>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Motto Hidup / Bio Singkat</label>
+                                <textarea id="input-bio" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-800 outline-none h-20" placeholder="Tuliskan kata-kata semangatmu di sini..."></textarea>
+                            </div>
+
+                            <div class="border-t border-gray-100 pt-4 mt-2">
+                                <h4 class="text-sm font-bold text-navy-800 mb-3"><i class="fas fa-shield-alt text-mustard-500 mr-1"></i> Keamanan</h4>
+                                <button type="button" onclick="resetPassword()" class="text-sm text-blue-600 font-bold hover:underline flex items-center gap-1">
+                                    <i class="fas fa-key"></i> Kirim Link Ganti Password ke Email
+                                </button>
+                            </div>
+
+                            <div class="pt-4">
+                                <button type="submit" class="w-full bg-navy-800 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-navy-900 transition flex items-center justify-center gap-2 group">
+                                    <span>SIMPAN PERUBAHAN</span>
+                                    <i class="fas fa-check-circle group-hover:scale-110 transition"></i>
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, updateProfile, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+        import { getFirestore, doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+
+        // Konfigurasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        let currentUser = null;
+
+        // 1. LOAD DATA SAAT MASUK
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const idShort = "CA-" + user.uid.substr(0, 5).toUpperCase();
+
+                // Isi Data di Kartu Kiri
+                document.getElementById('display-nama').innerText = user.displayName || "Siswa";
+                document.getElementById('display-email').innerText = user.email;
+                document.getElementById('display-id').innerText = idShort;
+                
+                // Isi Foto
+                const storedPhoto = localStorage.getItem('userProfilePhoto');
+                const photoUrl = storedPhoto || user.photoURL || "https://i.ibb.co/tMdJD76/default-avatar.png";
+                document.getElementById('profile-img').src = photoUrl;
+
+                // Isi Form Kanan
+                document.getElementById('input-nama').value = user.displayName || "";
+                document.getElementById('input-email').value = user.email;
+
+                // Ambil Bio/Motto dari Database (jika ada)
+                try {
+                    const docSnap = await getDoc(doc(db, "students", user.uid));
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.bio) document.getElementById('input-bio').value = data.bio;
+                    }
+                } catch (e) {
+                    console.log("Belum ada data bio");
+                }
+
+            } else {
+                window.location.href = "../index.html";
+            }
+        });
+
+        // 2. FUNGSI UPLOAD KE IMGBB (API KEY AKSARA)
+        window.uploadToImgBB = async function(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // Validasi ukuran (max 2MB biar aman)
+            if (file.size > 2 * 1024 * 1024) {
+                Swal.fire({icon: 'warning', text: 'Ukuran foto maksimal 2MB ya!'});
+                return;
+            }
+
+            Swal.fire({
+                title: 'Mengupload Foto...',
+                html: 'Sedang memproses gambar...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const formData = new FormData();
+            formData.append("image", file);
+
+            try {
+                const response = await fetch("https://api.imgbb.com/1/upload?key=2f45fcafb6dfb2dbae295499022ce476", {
+                    method: "POST",
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const imageUrl = data.data.url;
+                    
+                    // a. Update Auth Profile (Supaya di refresh tetap ada)
+                    await updateProfile(currentUser, { photoURL: imageUrl });
+                    
+                    // b. Update Firestore (Supaya Admin bisa lihat)
+                    await setDoc(doc(db, "students", currentUser.uid), { photoURL: imageUrl }, { merge: true });
+
+                    // c. Update Tampilan & Cache
+                    document.getElementById('profile-img').src = imageUrl;
+                    localStorage.setItem('userProfilePhoto', imageUrl); 
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Foto Keren!',
+                        text: 'Foto profil berhasil diperbarui.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    throw new Error("Gagal upload ke server gambar.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire({ icon: 'error', title: 'Gagal Upload', text: 'Pastikan koneksi lancar.' });
+            }
+        }
+
+        // 3. FUNGSI SIMPAN DATA (NAMA & BIO)
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newName = document.getElementById('input-nama').value;
+            const newBio = document.getElementById('input-bio').value;
+
+            if (!newName.trim()) {
+                Swal.fire({icon: 'warning', text: 'Nama tidak boleh kosong.'});
+                return;
+            }
+
+            Swal.fire({ title: 'Menyimpan Perubahan...', didOpen: () => Swal.showLoading() });
+
+            try {
+                // Update Auth (Nama)
+                await updateProfile(currentUser, { displayName: newName });
+                
+                // Update Firestore (Nama & Bio)
+                await setDoc(doc(db, "students", currentUser.uid), { 
+                    namaLengkap: newName,
+                    bio: newBio 
+                }, { merge: true });
+
+                // Update Tampilan Kiri
+                document.getElementById('display-nama').innerText = newName;
+
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: 'Profil Diperbarui!', 
+                    text: 'Data terbaru sudah tersimpan.',
+                    showConfirmButton: false, 
+                    timer: 1500 
+                });
+                
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: error.message });
+            }
+        });
+
+        // 4. RESET PASSWORD
+        window.resetPassword = async function() {
+            Swal.fire({
+                title: 'Ganti Password?',
+                text: `Kami akan mengirimkan link reset password ke email: ${currentUser.email}`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Kirim Link',
+                confirmButtonColor: '#001f3f',
+                cancelButtonText: 'Batal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({title: 'Mengirim...', didOpen: () => Swal.showLoading()});
+                    try {
+                        await sendPasswordResetEmail(auth, currentUser.email);
+                        Swal.fire({icon: 'success', title: 'Terkirim!', text: 'Cek kotak masuk atau spam di email Anda.'});
+                    } catch (error) {
+                        Swal.fire({icon: 'error', text: error.message});
+                    }
+                }
+            });
+        }
+
+        // 5. LOGOUT
+        window.logout = function() {
+            Swal.fire({
+                title: 'Yakin ingin keluar?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Keluar',
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    signOut(auth).then(() => {
+                        localStorage.removeItem('userProfilePhoto'); // Bersihkan cache
+                        window.location.href = "../index.html";
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
