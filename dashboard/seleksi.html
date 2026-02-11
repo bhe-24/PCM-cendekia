@@ -34,12 +34,12 @@
     <header class="bg-navy-800 text-white shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center relative">
             <div class="flex items-center w-1/4">
-                <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-10 w-10 rounded-full bg-white border-2 border-mustard-400 mr-3 shadow-md">
+                <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-10 w-10 rounded-full bg-white border-2 border-mustard-400 mr-3 shadow-md object-cover">
             </div>
 
             <div class="absolute left-1/2 transform -translate-x-1/2 text-center w-full md:w-auto">
                 <h1 class="text-sm md:text-lg font-bold text-mustard-400 tracking-wide uppercase truncate">
-                    UJIAN SELEKSI SISWA
+                    TAHAP SELEKSI MANDIRI
                 </h1>
             </div>
 
@@ -61,21 +61,21 @@
             
             <h2 class="text-2xl font-bold text-navy-800 mb-2">Tes Analisis & Literasi</h2>
             <p class="text-gray-600 mb-8 leading-relaxed text-sm">
-                Sistem kami akan membuatkan soal khusus berdasarkan minat menulismu.<br>
-                Soal ini menguji logika cerita, bukan sekadar hafalan.
+                Sistem kami akan menyiapkan materi soal berdasarkan minat dan profil menulismu.<br>
+                Ujian ini dirancang untuk menguji kedalaman logika dan teknik bercerita.
             </p>
             
             <div class="bg-blue-50 p-6 rounded-xl text-left mb-8 border border-blue-100">
                 <label class="block font-bold text-navy-800 mb-2 text-sm uppercase tracking-wide">
-                    Apa genre atau topik tulisan favoritmu?
+                    Apa topik atau genre tulisan yang ingin Anda pelajari lebih dalam?
                 </label>
-                <input type="text" id="minat-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 outline-none shadow-sm" placeholder="Contoh: Novel Fantasi, Puisi Alam, Cerita Detektif..." autocomplete="off">
-                <p class="text-xs text-gray-500 mt-2 italic">*AI akan membuat studi kasus berdasarkan jawaban ini.</p>
+                <input type="text" id="minat-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 outline-none shadow-sm" placeholder="Contoh: Novel Fantasi, Puisi Klasik, Penulisan Naskah..." autocomplete="off">
+                <p class="text-xs text-gray-500 mt-2 italic">*Materi studi kasus akan disesuaikan dengan pilihan ini.</p>
             </div>
 
             <button onclick="generateQuestions()" class="bg-navy-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-navy-900 transition shadow-lg w-full md:w-auto flex items-center justify-center gap-2 group">
-                <span>Mulai Seleksi Sekarang</span>
-                <i class="fas fa-rocket group-hover:translate-x-1 transition"></i>
+                <span>Dapatkan Pertanyaan Seleksi</span>
+                <i class="fas fa-file-alt group-hover:translate-x-1 transition"></i>
             </button>
         </div>
 
@@ -83,9 +83,9 @@
             <div class="relative w-24 h-24 mx-auto mb-6">
                 <div class="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
                 <div class="absolute inset-0 border-4 border-mustard-500 rounded-full border-t-transparent animate-spin"></div>
-                <i class="fas fa-magic absolute inset-0 flex items-center justify-center text-navy-800 text-xl"></i>
+                <i class="fas fa-pen-nib absolute inset-0 flex items-center justify-center text-navy-800 text-xl"></i>
             </div>
-            <h2 class="text-xl font-bold text-navy-800">Sedang Menyiapkan Berkas...</h2>
+            <h2 class="text-xl font-bold text-navy-800">Menyusun Lembar Ujian...</h2>
             <p class="text-gray-500 mt-3 animate-pulse text-sm" id="loading-text">Menghubungi server sekolah...</p>
         </div>
 
@@ -112,8 +112,7 @@
                     Memuat pertanyaan...
                 </div>
 
-                <div id="options-container" class="space-y-3">
-                    </div>
+                <div id="options-container" class="space-y-3"></div>
             </div>
 
             <div class="flex justify-between mt-8">
@@ -126,7 +125,7 @@
                 </button>
                 
                 <button onclick="finishExam()" id="btn-finish" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 shadow transition hidden flex items-center gap-2">
-                    Kirim Jawaban <i class="fas fa-paper-plane"></i>
+                    Selesaikan Ujian <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
         </div>
@@ -146,7 +145,6 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
-        // Konfigurasi Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
             authDomain: "mading-cf676.firebaseapp.com",
@@ -161,38 +159,30 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // State Variables
         let currentUser = null;
         let questions = [];
         let currentQuestionIndex = 0;
-        let userAnswers = {}; // Menyimpan jawaban user
-        let score = 0;
-
-        // 1. CEK AUTH & STATUS SELEKSI SAAT LOAD
+        let userAnswers = {};
+        
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                
-                // Cek Database: Apakah siswa sudah pernah ujian?
                 const docRef = doc(db, "students", user.uid);
                 const docSnap = await getDoc(docRef);
                 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    // Jika nilai sudah ada, berarti sudah selesai
                     if (data.selectionScore !== undefined && data.selectionScore !== null) {
                         Swal.fire({
                             icon: 'info',
-                            title: 'Ujian Selesai',
-                            text: 'Anda sudah menyelesaikan tahap seleksi. Silakan cek status di Dashboard.',
-                            confirmButtonColor: '#001f3f',
-                            allowOutsideClick: false
+                            title: 'Sesi Selesai',
+                            text: 'Anda sudah menyelesaikan tahap seleksi mandiri ini.',
+                            confirmButtonColor: '#001f3f'
                         }).then(() => {
-                            window.location.href = "index.html"; // Balik ke Dashboard
+                            window.location.href = "index.html"; 
                         });
                     }
                 } else {
-                    // Jika data siswa tidak ada (belum isi biodata)
                     Swal.fire({
                         icon: 'warning',
                         title: 'Data Belum Lengkap',
@@ -203,35 +193,21 @@
                     });
                 }
             } else {
-                // Belum Login
                 window.location.href = "../index.html";
             }
         });
 
-        // 2. FUNGSI GENERATE SOAL (Memanggil Backend Vercel)
         window.generateQuestions = async function() {
             const minat = document.getElementById('minat-input').value;
             if (!minat || minat.trim() === "") {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Mohon Diisi',
-                    text: 'Topik/Genre tulisan wajib diisi agar soal relevan dengan minatmu.',
-                    confirmButtonColor: '#E1AD01'
-                });
+                Swal.fire({icon: 'warning', title: 'Mohon Diisi', text: 'Tuliskan minat Anda agar sistem dapat menyesuaikan soal.', confirmButtonColor: '#E1AD01'});
                 return;
             }
 
-            // Tampilan Loading
             document.getElementById('screen-intro').classList.add('hidden');
             document.getElementById('screen-loading').classList.remove('hidden');
 
-            // Simulasi Teks Loading agar tidak bosan
-            const loadingTexts = [
-                "Menghubungi server pusat...", 
-                "Menganalisis gaya penulisan...", 
-                "Menyusun studi kasus literasi...", 
-                "Finalisasi dokumen soal..."
-            ];
+            const loadingTexts = ["Mengambil data profil...", "Mempersiapkan studi kasus...", "Menyusun lembar jawaban...", "Memvalidasi server kurikulum..."];
             let textIdx = 0;
             const textInterval = setInterval(() => {
                 document.getElementById('loading-text').innerText = loadingTexts[textIdx % loadingTexts.length];
@@ -239,81 +215,48 @@
             }, 1500);
 
             try {
-                // --- PANGGIL API VERCEL (AMANKAN API KEY) ---
-                // Pastikan file api/generate-soal.js sudah ada di folder Vercel
                 const response = await fetch('/api/generate-soal', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ minat: minat })
                 });
 
-                if (!response.ok) {
-                    throw new Error('Gagal menghubungi server soal.');
-                }
+                if (!response.ok) throw new Error('Gagal memproses materi.');
 
-                const data = await response.json();
-                
-                // Simpan soal ke variabel global
-                questions = data;
-
-                // Stop Loading & Mulai Kuis
+                questions = await response.json();
                 clearInterval(textInterval);
                 document.getElementById('screen-loading').classList.add('hidden');
                 document.getElementById('screen-quiz').classList.remove('hidden');
-                
                 renderQuestion();
 
             } catch (error) {
                 console.error(error);
                 clearInterval(textInterval);
-                
-                // Tampilkan Error dan tombol Reload
                 document.getElementById('screen-loading').classList.add('hidden');
                 document.getElementById('screen-intro').classList.remove('hidden');
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal Menyiapkan Soal',
-                    text: 'Terjadi gangguan koneksi atau server sedang sibuk. Silakan coba lagi.',
-                    confirmButtonText: 'Coba Lagi'
-                });
+                Swal.fire({icon: 'error', title: 'Koneksi Terganggu', text: 'Gagal mengambil materi ujian. Silakan coba lagi.'});
             }
         }
 
-        // 3. FUNGSI RENDER TAMPILAN SOAL
         function renderQuestion() {
             const q = questions[currentQuestionIndex];
-            
-            // Update Info Header
             document.getElementById('current-number').innerText = currentQuestionIndex + 1;
             document.getElementById('total-number').innerText = questions.length;
-            document.getElementById('kategori-soal').innerText = q.category || 'Literasi';
-            
-            // Update Progress Bar
-            const progressPercent = ((currentQuestionIndex + 1) / questions.length) * 100;
-            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
-
-            // Render Teks Soal (Pakai Marked.js biar rapi kalau ada bold/italic dari AI)
+            document.getElementById('kategori-soal').innerText = q.category || 'Materi Literasi';
+            document.getElementById('progress-bar').style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
             document.getElementById('question-text').innerHTML = marked.parse(q.question);
 
-            // Render Pilihan Jawaban
             const container = document.getElementById('options-container');
             container.innerHTML = '';
 
             q.options.forEach((opt, idx) => {
                 const btn = document.createElement('div');
-                // Styling Card
                 btn.className = `option-card border-2 border-gray-200 rounded-lg p-4 cursor-pointer transition font-medium text-gray-700 flex items-start gap-3 select-none`;
-                
-                // Cek apakah opsi ini sedang dipilih?
-                if (userAnswers[currentQuestionIndex] === idx) {
-                    btn.classList.add('selected');
-                }
-
-                // Event Klik
-                btn.onclick = () => selectAnswer(idx);
-                
-                // Isi Konten Card (Huruf A/B/C/D + Teks)
+                if (userAnswers[currentQuestionIndex] === idx) btn.classList.add('selected');
+                btn.onclick = () => {
+                    userAnswers[currentQuestionIndex] = idx;
+                    renderQuestion();
+                };
                 btn.innerHTML = `
                     <div class="option-letter bg-gray-100 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-bold shrink-0 mt-0.5 transition-colors">
                         ${String.fromCharCode(65 + idx)}
@@ -323,10 +266,7 @@
                 container.appendChild(btn);
             });
 
-            // Kontrol Tombol Navigasi
             document.getElementById('btn-prev').disabled = currentQuestionIndex === 0;
-            
-            // Cek apakah ini soal terakhir?
             if (currentQuestionIndex === questions.length - 1) {
                 document.getElementById('btn-next').classList.add('hidden');
                 document.getElementById('btn-finish').classList.remove('hidden');
@@ -336,23 +276,9 @@
             }
         }
 
-        // 4. PILIH JAWABAN
-        window.selectAnswer = function(idx) {
-            userAnswers[currentQuestionIndex] = idx;
-            renderQuestion(); // Render ulang untuk update warna pilihan
-        }
-
-        // 5. NAVIGASI (NEXT/PREV)
         window.nextQuestion = function() {
-            // Validasi: Harus pilih jawaban dulu
             if (userAnswers[currentQuestionIndex] === undefined) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Isi Jawaban Dulu',
-                    text: 'Pilih salah satu jawaban sebelum lanjut.',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                Swal.fire({icon: 'warning', text: 'Pilih salah satu jawaban.', timer: 1000, showConfirmButton: false});
                 return;
             }
             currentQuestionIndex++;
@@ -364,73 +290,37 @@
             renderQuestion();
         }
 
-        // 6. SELESAI & SIMPAN KE DATABASE
         window.finishExam = async function() {
-            // Validasi soal terakhir
-            if (userAnswers[currentQuestionIndex] === undefined) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Isi Jawaban Dulu',
-                    text: 'Pilih salah satu jawaban sebelum mengirim.',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-                return;
-            }
+            if (userAnswers[currentQuestionIndex] === undefined) return;
 
-            // Hitung Skor (Client Side Calculation)
             let correctCount = 0;
             questions.forEach((q, idx) => {
-                if (userAnswers[idx] === q.correct_answer) {
-                    correctCount++;
-                }
+                if (userAnswers[idx] === q.correct_answer) correctCount++;
             });
 
             const finalScore = Math.round((correctCount / questions.length) * 100);
-
-            // Tampilkan Loading
-            Swal.fire({
-                title: 'Mengirim Jawaban...',
-                html: 'Mohon jangan tutup halaman ini.',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
+            Swal.fire({title: 'Mengirim Jawaban...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
 
             try {
-                // Simpan ke Firestore
                 await updateDoc(doc(db, "students", currentUser.uid), {
-                    selectionScore: finalScore,           // Nilai (0-100)
-                    selectionAnswers: userAnswers,        // Jawaban siswa
-                    selectionTopic: document.getElementById('minat-input').value, // Topik yang dipilih
-                    completedAt: new Date().toISOString(),// Waktu selesai
-                    statusSeleksi: "Selesai"              // Penanda status
+                    selectionScore: finalScore,
+                    selectionTopic: document.getElementById('minat-input').value,
+                    completedAt: new Date().toISOString(),
+                    statusSeleksi: "Selesai"
                 });
 
-                // Sukses
                 Swal.fire({
                     icon: 'success',
-                    title: 'Seleksi Selesai!',
-                    html: `
-                        Jawabanmu berhasil dikirim.<br>
-                        Sistem mencatat minatmu pada topik: <b>${document.getElementById('minat-input').value}</b>.
-                    `,
-                    confirmButtonText: 'Kembali ke Dashboard',
+                    title: 'Ujian Selesai!',
+                    text: 'Jawaban Anda telah tersimpan di server kami.',
+                    confirmButtonText: 'Ke Dashboard',
                     confirmButtonColor: '#001f3f'
-                }).then(() => {
-                    window.location.href = "index.html";
-                });
+                }).then(() => { window.location.href = "index.html"; });
 
             } catch (error) {
-                console.error(error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal Menyimpan',
-                    text: 'Koneksi internet terputus. Silakan coba tekan tombol Kirim lagi.',
-                    confirmButtonText: 'Oke'
-                });
+                Swal.fire({icon: 'error', title: 'Gagal Mengirim', text: 'Periksa koneksi internet Anda.'});
             }
         }
     </script>
-
 </body>
 </html>
