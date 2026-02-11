@@ -135,25 +135,25 @@
             </div>
 
             <div class="md:col-span-2 grid grid-cols-2 gap-4">
-                <a href="dashboard/tugas.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
+                <a href="tugas.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
                     <div class="bg-red-100 text-red-600 w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
                         <i class="fas fa-book"></i>
                     </div>
                     <span class="text-sm font-bold text-gray-700">Tugas</span>
                 </a>
-                <a href="dashboard/bantuan.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
+                <a href="bantuan.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
                     <div class="bg-purple-100 text-purple-600 w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
                         <i class="fas fa-headset"></i>
                     </div>
                     <span class="text-sm font-bold text-gray-700">Bantuan</span>
                 </a>
-                <a href="dashboard/alumni.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
+                <a href="alumni.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
                     <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
                     <span class="text-sm font-bold text-gray-700">Alumni</span>
                 </a>
-                <a href="dashboard/pengajar.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
+                <a href="pengajar.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
                     <div class="bg-teal-100 text-teal-600 w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
                         <i class="fas fa-chalkboard-teacher"></i>
                     </div>
@@ -167,14 +167,13 @@
     <footer class="bg-white border-t mt-8 py-6 text-center text-sm text-gray-500">
         <p class="mb-2">&copy; 2024 Cendekia Aksara. Dibuat dengan ❤️ untuk Sastra Indonesia.</p>
         <div class="space-x-4">
-            <a href="privacy.html" class="hover:text-navy-800">Kebijakan Privasi</a>
+            <a href="../privacy.html" class="hover:text-navy-800">Kebijakan Privasi</a>
             <a href="#" class="hover:text-navy-800">Syarat & Ketentuan</a>
         </div>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-        // TAMBAHAN: updateProfile untuk memperbaiki nama yang kosong
         import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
         import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
@@ -195,12 +194,11 @@
         // --- 1. LISTENER UTAMA ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // >>> PERBAIKAN OTOMATIS: CEK APAKAH NAMA KOSONG? <<<
+                // AUTO FIX NAMA KOSONG
                 if (!user.displayName) {
-                    // Jika nama kosong, paksa user isi sekarang juga!
                     const { value: namaBaru } = await Swal.fire({
                         title: 'Data Akun Tidak Lengkap',
-                        text: 'Sepertinya akun ini dibuat dengan sistem lama. Silakan masukkan Nama Lengkap Anda agar kartu siswa bisa dicetak.',
+                        text: 'Sepertinya akun ini dibuat dengan sistem lama. Silakan masukkan Nama Lengkap Anda.',
                         input: 'text',
                         inputPlaceholder: 'Contoh: Budi Santoso',
                         allowOutsideClick: false,
@@ -208,28 +206,21 @@
                         confirmButtonText: 'Simpan Nama',
                         confirmButtonColor: '#001f3f',
                         inputValidator: (value) => {
-                            if (!value) {
-                                return 'Nama tidak boleh kosong!'
-                            }
+                            if (!value) return 'Nama tidak boleh kosong!';
                         }
                     });
 
                     if (namaBaru) {
-                        // Simpan Nama ke Akun Firebase
                         Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
                         await updateProfile(user, { displayName: namaBaru });
-                        
-                        // Reload halaman agar nama muncul
                         window.location.reload();
                         return;
                     }
                 }
 
-                // >>> JIKA NAMA SUDAH ADA, LANJUTKAN NORMAL <<<
                 const displayName = user.displayName; 
                 const userIdShort = "CA-" + user.uid.substr(0, 5).toUpperCase();
 
-                // Tempel Data ke Tampilan
                 document.getElementById('header-nama').innerText = displayName;
                 document.getElementById('card-nama').innerText = displayName;
                 document.getElementById('card-id').innerText = userIdShort;
@@ -239,7 +230,6 @@
                 document.getElementById('header-foto').src = photoUrl;
                 document.getElementById('card-foto').src = photoUrl;
 
-                // Jalankan Listener Database
                 listenToStudentData(user);
                 listenToGlobalSettings();
 
@@ -260,7 +250,6 @@
                 const iconSeleksi = document.getElementById('icon-seleksi');
 
                 if (docSnap.exists()) {
-                    // === DATA LENGKAP ===
                     document.body.setAttribute('data-registered', 'true');
 
                     labelStatus.className = "bg-mustard-500 text-navy-900 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider";
@@ -284,7 +273,6 @@
                         iconSeleksi.classList.remove('animate-bounce');
                     }
                 } else {
-                    // === DATA BELUM LENGKAP ===
                     document.body.setAttribute('data-registered', 'false');
 
                     labelStatus.className = "bg-gray-500 text-white text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider";
@@ -324,10 +312,11 @@
 
                     if (!isRegistered) {
                         if (data.isOpen) {
+                            // !!! FIX LINK DAFTAR DI SINI !!!
                             htmlContent += `
                                 <div class="mt-2 pt-2 border-t border-gray-200">
                                     <p class="text-green-600 mb-2 font-bold text-sm">🟢 Pendaftaran Dibuka</p>
-                                    <a href="/dashboard/daftar.html" class="inline-block bg-mustard-500 text-navy-900 px-6 py-2 rounded-lg font-bold shadow hover:bg-mustard-400 transition animate-pulse">
+                                    <a href="daftar.html" class="inline-block bg-mustard-500 text-navy-900 px-6 py-2 rounded-lg font-bold shadow hover:bg-mustard-400 transition animate-pulse">
                                         Lengkapi Biodata Siswa <i class="fas fa-arrow-right ml-2"></i>
                                     </a>
                                 </div>`;
@@ -381,7 +370,8 @@
                 cancelButtonColor: '#d33'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = "dashboard/seleksi.html";
+                    // !!! FIX LINK SELEKSI DI SINI !!!
+                    window.location.href = "seleksi.html";
                 }
             });
         }
