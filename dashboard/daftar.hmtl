@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulir Pendaftaran - Cendekia Aksara</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col font-sans text-gray-800">
+
+    <header class="bg-navy-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center relative">
+            
+            <div class="flex items-center w-1/4">
+                <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-10 w-auto mr-3">
+            </div>
+
+            <div class="absolute left-1/2 transform -translate-x-1/2 text-center w-full md:w-auto">
+                <h1 class="text-sm md:text-lg font-bold text-mustard-400 tracking-wide uppercase truncate">
+                    Formulir Registrasi Siswa
+                </h1>
+            </div>
+
+            <div class="flex justify-end items-center w-1/4">
+                <a href="index.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition text-sm font-semibold border border-white/20">
+                    <i class="fas fa-arrow-left"></i>
+                    <span class="hidden md:inline">Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow max-w-4xl">
+        
+        <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold text-navy-800">Lengkapi Data Diri Anda</h2>
+            <p class="text-gray-500 mt-2">Mohon isi data dengan sebenar-benarnya untuk keperluan administrasi sekolah.</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg border-t-4 border-mustard-500 overflow-hidden">
+            
+            <form id="registrationForm" onsubmit="handleRegistration(event)" class="p-8 space-y-8">
+                
+                <div>
+                    <h3 class="flex items-center text-lg font-bold text-navy-800 mb-4 pb-2 border-b">
+                        <span class="bg-navy-800 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">1</span>
+                        Identitas Personal
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Lengkap (Sesuai KTP/Kartu Pelajar) <span class="text-red-500">*</span></label>
+                            <input type="text" id="nama_lengkap" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 focus:border-transparent outline-none transition" placeholder="Nama Lengkap Anda" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Pena (Opsional)</label>
+                            <input type="text" id="nama_pena" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 focus:border-transparent outline-none transition" placeholder="Contoh: Pena Senja">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Tempat, Tanggal Lahir <span class="text-red-500">*</span></label>
+                            <div class="flex gap-2">
+                                <input type="text" class="w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 outline-none" placeholder="Kota" required>
+                                <input type="date" class="w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 outline-none" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Jenis Kelamin <span class="text-red-500">*</span></label>
+                            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 outline-none bg-white" required>
+                                <option value="">-- Pilih --</option>
+                                <option value="L">Laki-laki</option>
+                                <option value="P">Perempuan</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Alamat Domisili Lengkap <span class="text-red-500">*</span></label>
+                        <textarea class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 outline-none h-24" placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota/Kabupaten" required></textarea>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="flex items-center text-lg font-bold text-navy-800 mb-4 pb-2 border-b">
+                        <span class="bg-navy-800 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">2</span>
+                        Kontak & Media Sosial
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2"><i class="fab fa-whatsapp text-green-500 mr-1"></i> Nomor WhatsApp Aktif <span class="text-red-500">*</span></label>
+                            <input type="tel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 outline-none" placeholder="08xxxxxxxxxx" required>
+                            <p class="text-xs text-gray-500 mt-1">Digunakan untuk undangan masuk ke Grup Kelas.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2"><i class="fab fa-instagram text-pink-500 mr-1"></i> Username Instagram</label>
+                            <div class="flex">
+                                <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">@</span>
+                                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-mustard-400 outline-none" placeholder="username_anda">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="flex items-center text-lg font-bold text-navy-800 mb-4 pb-2 border-b">
+                        <span class="bg-navy-800 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">3</span>
+                        Minat & Motivasi
+                    </h3>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Seberapa sering Anda menulis? <span class="text-red-500">*</span></label>
+                            <div class="flex flex-wrap gap-4">
+                                <label class="flex items-center space-x-2 cursor-pointer bg-gray-50 px-4 py-2 rounded-lg border hover:border-mustard-500">
+                                    <input type="radio" name="freq" value="pemula" class="text-navy-800 focus:ring-mustard-400" required>
+                                    <span class="text-sm">Pemula (Belum pernah)</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer bg-gray-50 px-4 py-2 rounded-lg border hover:border-mustard-500">
+                                    <input type="radio" name="freq" value="jarang" class="text-navy-800 focus:ring-mustard-400">
+                                    <span class="text-sm">Jarang (Kadang-kadang)</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer bg-gray-50 px-4 py-2 rounded-lg border hover:border-mustard-500">
+                                    <input type="radio" name="freq" value="sering" class="text-navy-800 focus:ring-mustard-400">
+                                    <span class="text-sm">Sering (Hobi rutin)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Genre Cerita Favorit <span class="text-red-500">*</span></label>
+                            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 outline-none bg-white" required>
+                                <option value="">-- Pilih Genre --</option>
+                                <option value="romance">Romansa / Drama</option>
+                                <option value="fantasy">Fantasi / Sci-Fi</option>
+                                <option value="horor">Horor / Misteri</option>
+                                <option value="comedy">Komedi</option>
+                                <option value="sliceoflife">Slice of Life (Kehidupan Sehari-hari)</option>
+                                <option value="lainnya">Lainnya</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Alasan Ingin Bergabung (Motivasi) <span class="text-red-500">*</span></label>
+                            <textarea class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mustard-400 outline-none h-32" placeholder="Ceritakan kenapa Anda ingin belajar menulis di Cendekia Aksara..." required></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Jawaban ini akan membantu kami mengenal Anda lebih baik.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-gray-200">
+                    <div class="flex items-start gap-3 mb-6">
+                        <input type="checkbox" id="agreement" required class="mt-1 w-4 h-4 text-navy-800 border-gray-300 rounded focus:ring-mustard-400">
+                        <label for="agreement" class="text-sm text-gray-600">
+                            Saya menyatakan bahwa data yang saya isi adalah benar. Saya bersedia mengikuti seluruh rangkaian seleksi dan aturan sekolah Cendekia Aksara.
+                        </label>
+                    </div>
+
+                    <button type="submit" class="w-full bg-navy-800 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-navy-900 transition flex items-center justify-center gap-2 group">
+                        <span class="group-hover:scale-105 transition">KIRIM PENDAFTARAN</span>
+                        <i class="fas fa-paper-plane group-hover:translate-x-1 transition"></i>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t mt-12 py-6 text-center text-sm text-gray-500">
+        <p class="mb-2">&copy; 2024 Cendekia Aksara. Hak Cipta Dilindungi.</p>
+        <div class="space-x-4">
+            <a href="../privacy.html" class="hover:text-navy-800">Kebijakan Privasi</a>
+            <a href="#" class="hover:text-navy-800">Syarat & Ketentuan</a>
+        </div>
+    </footer>
+
+    <script type="module">
+        // Import Firebase (Hanya Auth untuk cek user, nanti Firestore untuk simpan)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+        
+        // Konfigurasi Firebase (Sama seperti sebelumnya)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Auto-fill Nama jika User Login
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const namaInput = document.getElementById('nama_lengkap');
+                if(user.displayName && !namaInput.value) {
+                    namaInput.value = user.displayName;
+                }
+            } else {
+                // Jika belum login, tendang ke index utama
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Akses Ditolak',
+                    text: 'Silakan login terlebih dahulu.',
+                    confirmButtonColor: '#001f3f'
+                }).then(() => {
+                    window.location.href = "../index.html";
+                });
+            }
+        });
+
+        // Handle Submit Form
+        window.handleRegistration = function(event) {
+            event.preventDefault();
+
+            // 1. Tampilkan Loading
+            Swal.fire({
+                title: 'Sedang Mengirim Data...',
+                html: 'Mohon tunggu, formulir Anda sedang diproses oleh sistem.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // 2. Simulasi Proses Simpan ke Database (Delay 2 Detik)
+            setTimeout(() => {
+                // Di sini nanti kode aslinya: await addDoc(collection(db, "students"), { ...data });
+                
+                // 3. Tampilkan Sukses
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pendaftaran Berhasil!',
+                    text: 'Data Anda telah tersimpan. Silakan lanjutkan ke tahap Seleksi.',
+                    confirmButtonText: 'Kembali ke Dashboard',
+                    confirmButtonColor: '#001f3f'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Redirect kembali ke Dashboard Index
+                        // Nanti di Dashboard Index, status 'isUserRegistered' akan berubah jadi true (logic database)
+                        window.location.href = "/dahsboard/index.html";
+                    }
+                });
+
+            }, 2000);
+        }
+    </script>
+
+</body>
+</html>
