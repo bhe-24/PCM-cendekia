@@ -38,7 +38,7 @@
                 <a href="profil.html" class="flex items-center gap-3 hover:bg-navy-900 p-2 rounded-lg transition group">
                     <div class="text-right hidden md:block">
                         <p class="text-xs text-gray-300">Halo,</p>
-                        <p class="text-sm font-bold text-mustard-400 group-hover:text-white transition" id="header-nama">Memuat...</p>
+                        <p class="text-sm font-bold text-mustard-400 group-hover:text-white transition" id="header-nama">...</p>
                     </div>
                     <img id="header-foto" src="https://i.ibb.co/tMdJD76/default-avatar.png" class="h-10 w-10 rounded-full object-cover border-2 border-mustard-500 shadow-sm">
                 </a>
@@ -54,8 +54,7 @@
                     <div class="text-3xl text-navy-800"><i class="fas fa-bullhorn"></i></div>
                     <div class="w-full">
                         <h2 class="text-xl font-bold text-gray-800 mb-2">Papan Informasi</h2>
-                        <div id="status-content">
-                            </div>
+                        <div id="status-content"></div>
                     </div>
                 </div>
             </div>
@@ -66,19 +65,21 @@
             <div class="md:col-span-1">
                 <div class="bg-gradient-to-br from-navy-800 to-navy-900 rounded-xl shadow-xl p-6 text-white relative overflow-hidden">
                     <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-mustard-500 rounded-full opacity-20"></div>
+                    
                     <div class="text-center mb-4">
                         <img id="card-foto" src="https://i.ibb.co/tMdJD76/default-avatar.png" class="h-20 w-20 rounded-full mx-auto border-4 border-white object-cover mb-3">
-                        <h3 class="text-lg font-bold" id="card-nama">Memuat...</h3>
-                        <span id="label-status" class="bg-gray-500 text-white text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Memuat Data...</span>
+                        <h3 class="text-lg font-bold" id="card-nama">...</h3>
+                        <span id="label-status" class="bg-gray-500 text-white text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Cek Status...</span>
                     </div>
+                    
                     <div class="space-y-2 text-sm text-gray-300 border-t border-gray-600 pt-4">
                         <div class="flex justify-between">
-                            <span>ID Calon:</span>
-                            <span class="text-white font-mono" id="card-id">-</span>
+                            <span>ID Akun:</span>
+                            <span class="text-white font-mono" id="card-id">...</span>
                         </div>
                         <div class="flex justify-between">
                             <span>Status:</span>
-                            <span class="text-white" id="text-status">-</span>
+                            <span class="text-white" id="text-status">...</span>
                         </div>
                     </div>
                 </div>
@@ -95,7 +96,7 @@
                         </div>
                         <div>
                             <h4 class="font-bold text-gray-800">1. Pendaftaran Administrasi</h4>
-                            <p class="text-sm text-gray-500 mt-1">Mengisi formulir data diri dan motivasi.</p>
+                            <p class="text-sm text-gray-500 mt-1">Mengisi formulir data diri lengkap.</p>
                             <div id="step-1-status" class="mt-2"></div>
                         </div>
                     </div>
@@ -106,7 +107,7 @@
                         </div>
                         <div>
                             <h4 class="font-bold text-gray-800">2. Tes Minat & Analisis Berpikir</h4>
-                            <p class="text-sm text-gray-500 mt-1">Studi kasus & kuis interaktif.</p>
+                            <p class="text-sm text-gray-500 mt-1">Studi kasus personal dengan AI.</p>
                             <div id="step-2-action" class="mt-3"></div>
                         </div>
                     </div>
@@ -117,7 +118,7 @@
                         </div>
                         <div>
                             <h4 class="font-bold text-gray-800">3. Pekan Orientasi Siswa</h4>
-                            <p class="text-sm text-gray-500 mt-1">Pengenalan lingkungan sekolah.</p>
+                            <p class="text-sm text-gray-500 mt-1">Siap menjadi bagian Cendekia Aksara.</p>
                         </div>
                     </div>
                 </div>
@@ -127,8 +128,7 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div id="news-container" class="md:col-span-2 bg-blue-50 border border-blue-200 rounded-xl p-6 hidden">
                 <h3 class="font-bold text-navy-800 mb-3"><i class="fas fa-info-circle mr-2"></i>Kabar Sekolah</h3>
-                <ul class="space-y-2 text-sm text-gray-700" id="news-list">
-                    </ul>
+                <ul class="space-y-2 text-sm text-gray-700" id="news-list"></ul>
             </div>
 
             <div class="md:col-span-2 grid grid-cols-2 gap-4">
@@ -172,7 +172,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
-        // Import Firestore
         import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
         // Konfigurasi Firebase
@@ -190,32 +189,38 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- LISTENER UTAMA ---
+        // --- LISTENER UTAMA (Cek Login) ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // 1. Tampilkan Data Auth Dasar
-                document.getElementById('header-nama').innerText = user.displayName || "Siswa";
-                document.getElementById('card-nama').innerText = user.displayName || "Siswa";
+                // 1. TAMPILKAN DATA AKUN SECEPATNYA (User sudah punya akun)
+                const displayName = user.displayName || "Siswa Cendekia";
+                const userIdShort = "CA-" + user.uid.substr(0, 5).toUpperCase();
                 
-                const storedPhoto = localStorage.getItem('userProfilePhoto');
-                if (storedPhoto || user.photoURL) {
-                    const photo = storedPhoto || user.photoURL;
-                    document.getElementById('header-foto').src = photo;
-                    document.getElementById('card-foto').src = photo;
-                }
+                // Isi Header
+                document.getElementById('header-nama').innerText = displayName;
+                
+                // Isi Kartu (Data Dasar dari Akun)
+                document.getElementById('card-nama').innerText = displayName;
+                document.getElementById('card-id').innerText = userIdShort;
 
-                // 2. Mulai Listener Real-Time
+                // Foto Profil
+                const storedPhoto = localStorage.getItem('userProfilePhoto');
+                const photoUrl = storedPhoto || user.photoURL || "https://i.ibb.co/tMdJD76/default-avatar.png";
+                document.getElementById('header-foto').src = photoUrl;
+                document.getElementById('card-foto').src = photoUrl;
+
+                // 2. Cek Detail Tambahan di Database (Real-Time)
                 listenToGlobalSettings(user);
-                listenToStudentData(user);
+                listenToStudentData(user, userIdShort);
 
             } else {
+                // Kalau belum login, tendang keluar
                 window.location.href = "../index.html"; 
             }
         });
 
-        // --- FUNGSI 1: DENGAR SETTING GLOBAL & PENGUMUMAN ---
+        // --- FUNGSI 1: DENGAR PENGUMUMAN ADMIN ---
         function listenToGlobalSettings(user) {
-            // Path: settings/penerimaan
             const settingsRef = doc(db, "settings", "penerimaan");
 
             onSnapshot(settingsRef, (docSnap) => {
@@ -227,18 +232,17 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     
-                    // A. Logic Papan Informasi (Pengumuman + Tombol Daftar)
+                    // --- Bagian Papan Info ---
                     let htmlContent = "";
                     let hasContent = false;
 
-                    // 1. Teks Pengumuman Admin
+                    // Teks Pengumuman Admin
                     if (data.infoText && data.infoText.trim() !== "") {
                         htmlContent += `<p class="text-navy-800 mb-3">${data.infoText}</p>`;
                         hasContent = true;
                     }
 
-                    // 2. Tombol Daftar (Hanya jika Status BUKA & user BELUM daftar)
-                    // Kita cek atribut data-registered di body (di-set oleh fungsi studentData)
+                    // Cek Status User (dari atribut body) untuk tampilkan tombol daftar
                     const isRegistered = document.body.getAttribute('data-registered') === 'true';
                     
                     if (!isRegistered) {
@@ -247,7 +251,7 @@
                                 <div class="mt-2 pt-2 border-t">
                                     <p class="text-green-600 mb-2 font-bold text-sm">🟢 Pendaftaran DIBUKA</p>
                                     <a href="dashboard/daftar.html" class="inline-block bg-mustard-500 text-navy-900 px-6 py-2 rounded-lg font-bold shadow hover:bg-mustard-400 transition animate-pulse">
-                                        Daftarkan Diri Sekarang <i class="fas fa-arrow-right ml-2"></i>
+                                        Lengkapi Formulir Pendaftaran <i class="fas fa-arrow-right ml-2"></i>
                                     </a>
                                 </div>`;
                             hasContent = true;
@@ -256,14 +260,10 @@
                                 <div class="mt-2 pt-2 border-t">
                                     <p class="text-red-600 font-bold text-sm">🔴 Pendaftaran DITUTUP Sementara</p>
                                 </div>`;
-                             hasContent = true; // Tetap tampilkan pesan tutup
+                             hasContent = true;
                         }
-                    } else {
-                        // Jika sudah terdaftar, info global diganti sapaan personal (di handle studentData)
-                        // Tapi jika ada infoText penting, tetap tampilkan di atas
                     }
 
-                    // Render Papan Info
                     if (hasContent && !isRegistered) {
                         infoBoardContainer.classList.remove('hidden');
                         infoBoardContent.innerHTML = htmlContent;
@@ -271,7 +271,7 @@
                         infoBoardContainer.classList.add('hidden');
                     }
 
-                    // B. Logic Kabar Sekolah
+                    // --- Bagian Kabar Sekolah ---
                     if (data.kabarSekolah && Array.isArray(data.kabarSekolah) && data.kabarSekolah.length > 0) {
                         newsContainer.classList.remove('hidden');
                         newsList.innerHTML = data.kabarSekolah.map(news => `
@@ -285,94 +285,91 @@
                     }
 
                 } else {
-                    // Jika dokumen setting belum dibuat admin, sembunyikan semua
                     infoBoardContainer.classList.add('hidden');
                     newsContainer.classList.add('hidden');
                 }
             });
         }
 
-        // --- FUNGSI 2: DENGAR DATA SISWA PRIBADI ---
-        function listenToStudentData(user) {
-            // Path: students/{uid}
+        // --- FUNGSI 2: DENGAR DATA SISWA (LENGKAP ATAU BELUM) ---
+        function listenToStudentData(user, userIdShort) {
             const studentRef = doc(db, "students", user.uid);
 
             onSnapshot(studentRef, (docSnap) => {
                 const step1Status = document.getElementById('step-1-status');
                 const step2Action = document.getElementById('step-2-action');
                 const iconSeleksi = document.getElementById('icon-seleksi');
-                const cardId = document.getElementById('card-id');
                 const labelStatus = document.getElementById('label-status');
                 const textStatus = document.getElementById('text-status');
                 const infoBoardContainer = document.getElementById('info-board-container');
                 const infoBoardContent = document.getElementById('status-content');
 
                 if (docSnap.exists()) {
-                    // === SISWA SUDAH MENDAFTAR ===
+                    // === SUDAH ISI FORMULIR (LENGKAP) ===
                     const data = docSnap.data();
-                    document.body.setAttribute('data-registered', 'true'); // Flag untuk fungsi Settings
+                    document.body.setAttribute('data-registered', 'true');
 
-                    // Update Kartu
+                    // Update Kartu (Status Berubah)
                     labelStatus.className = "bg-mustard-500 text-navy-900 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider";
                     labelStatus.innerText = "Siswa Terdaftar";
-                    textStatus.innerText = "Aktif";
-                    cardId.innerText = "CA-" + user.uid.substr(0, 5).toUpperCase();
+                    textStatus.innerText = "Aktif / Menunggu Seleksi";
 
-                    // Update Papan Info (Override Info Global)
+                    // Update Info Board (Override Global)
                     infoBoardContainer.classList.remove('hidden');
-                    // Kita gabung info dari admin (jika ada) dengan status pendaftaran
                     infoBoardContent.innerHTML = `
-                        <div class="bg-green-50 p-3 rounded-lg border border-green-200">
-                            <p class="text-navy-800 font-bold mb-1">Halo, ${data.namaLengkap || user.displayName}!</p>
-                            <p class="text-sm text-gray-600">Berkas pendaftaranmu sudah kami terima. Silakan lanjut ke tahap seleksi.</p>
+                        <div class="bg-green-50 p-4 rounded-lg border border-green-200 flex items-center gap-3">
+                            <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                            <div>
+                                <p class="text-navy-800 font-bold">Halo, ${data.namaLengkap || user.displayName}!</p>
+                                <p class="text-sm text-gray-600">Berkas pendaftaranmu aman. Silakan lanjut tes di bawah ini.</p>
+                            </div>
                         </div>
                     `;
 
-                    // Update Step 1 (Selesai)
-                    step1Status.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Berhasil Terdaftar</span>`;
+                    // Checklist Step 1
+                    step1Status.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Data Lengkap</span>`;
 
                     // Logic Step 2 (Seleksi)
                     iconSeleksi.classList.remove('bg-gray-100', 'text-gray-400');
                     iconSeleksi.classList.add('bg-mustard-100', 'text-mustard-600', 'animate-bounce');
 
-                    // Cek apakah sudah mengerjakan seleksi? (Misal field: selectionScore)
                     if (data.selectionScore === undefined || data.selectionScore === null) {
-                        // Belum Seleksi
+                        // Belum ikut tes
                         step2Action.innerHTML = `
                             <button onclick="startSelection()" class="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-bold shadow hover:bg-navy-900 transition">
                                 <i class="fas fa-pen-nib mr-2"></i>Ikuti Seleksi
                             </button>
                         `;
                     } else {
-                        // Sudah Seleksi
+                        // Sudah ikut tes
                         step2Action.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Seleksi Selesai</span>`;
-                        iconSeleksi.classList.remove('animate-bounce'); // Stop bounce
+                        iconSeleksi.classList.remove('animate-bounce');
                     }
 
                 } else {
-                    // === SISWA BELUM MENDAFTAR (Data di Firestore tidak ada) ===
+                    // === BELUM ISI FORMULIR (CUMA PUNYA AKUN) ===
                     document.body.setAttribute('data-registered', 'false');
                     
+                    // Kartu tetap ada nama & ID, tapi statusnya minta lengkapi
                     labelStatus.className = "bg-gray-500 text-white text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider";
-                    labelStatus.innerText = "Belum Terdaftar";
-                    textStatus.innerText = "Menunggu Pendaftaran";
-                    cardId.innerText = "-";
+                    labelStatus.innerText = "Belum Lengkap";
+                    textStatus.innerText = "Harap Isi Formulir";
 
-                    step1Status.innerHTML = `<span class="text-red-500 text-sm font-bold"><i class="fas fa-clock mr-1"></i> Belum Mendaftar</span>`;
-                    step2Action.innerHTML = ""; // Kosongkan tombol seleksi
+                    // Checklist Step 1 Merah
+                    step1Status.innerHTML = `<span class="text-red-500 text-sm font-bold"><i class="fas fa-exclamation-circle mr-1"></i> Formulir Kosong</span>`;
                     
-                    // Icon seleksi mati
+                    // Seleksi Mati
+                    step2Action.innerHTML = "";
                     iconSeleksi.classList.add('bg-gray-100', 'text-gray-400');
                     iconSeleksi.classList.remove('bg-mustard-100', 'text-mustard-600', 'animate-bounce');
                 }
             });
         }
 
-        // Fungsi Global Navigasi Seleksi
         window.startSelection = function() {
             Swal.fire({
                 title: 'Siap Mengikuti Seleksi?',
-                text: "Anda akan diarahkan ke halaman tes minat & analisis. Pastikan koneksi internet lancar.",
+                text: "Anda akan diarahkan ke halaman tes minat & analisis.",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#001f3f',
