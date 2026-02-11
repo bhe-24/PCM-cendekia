@@ -29,13 +29,11 @@
             <div class="flex items-center w-1/4">
                 <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-12 w-12 rounded-full object-cover border-2 border-mustard-400 mr-3 shadow-md bg-white">
             </div>
-            
             <div class="absolute left-1/2 transform -translate-x-1/2 text-center">
                 <h1 class="text-lg md:text-xl font-bold text-mustard-400 tracking-wide uppercase">
                     Penerimaan Cendekia Muda
                 </h1>
             </div>
-
             <div class="flex justify-end items-center w-1/4">
                 <a href="profil.html" class="flex items-center gap-3 hover:bg-navy-900 p-2 rounded-lg transition group">
                     <div class="text-right hidden md:block">
@@ -71,7 +69,7 @@
                     <div class="text-center mb-4">
                         <img id="card-foto" src="https://i.ibb.co/tMdJD76/default-avatar.png" class="h-20 w-20 rounded-full mx-auto border-4 border-white object-cover mb-3">
                         
-                        <h3 class="text-lg font-bold" id="card-nama">...</h3>
+                        <h3 class="text-lg font-bold" id="card-nama">Memuat...</h3>
                         
                         <span id="label-status" class="bg-gray-500 text-white text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Memuat...</span>
                     </div>
@@ -101,7 +99,7 @@
                         </div>
                         <div>
                             <h4 class="font-bold text-gray-800">1. Pendaftaran Administrasi</h4>
-                            <p class="text-sm text-gray-500 mt-1">Melengkapi biodata dan motivasi.</p>
+                            <p class="text-sm text-gray-500 mt-1">Isi formulir biodata lengkap.</p>
                             <div id="step-1-status" class="mt-2"></div>
                         </div>
                     </div>
@@ -176,10 +174,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+        // TAMBAHAN: updateProfile untuk memperbaiki nama yang kosong
+        import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
         import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
-        // Konfigurasi Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
             authDomain: "mading-cf676.firebaseapp.com",
@@ -194,26 +192,54 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- 1. LISTENER UTAMA (Cek Siapa yang Login) ---
-        onAuthStateChanged(auth, (user) => {
+        // --- 1. LISTENER UTAMA ---
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // >>> LOGIC PATEN (Langsung Tampil tanpa Database) <<<
-                // Nama dan ID diambil dari Akun Google/Login Auth
-                const displayName = user.displayName || "Siswa Cendekia";
-                const userIdShort = "CA-" + user.uid.substr(0, 5).toUpperCase(); // ID Unik dari UID
+                // >>> PERBAIKAN OTOMATIS: CEK APAKAH NAMA KOSONG? <<<
+                if (!user.displayName) {
+                    // Jika nama kosong, paksa user isi sekarang juga!
+                    const { value: namaBaru } = await Swal.fire({
+                        title: 'Data Akun Tidak Lengkap',
+                        text: 'Sepertinya akun ini dibuat dengan sistem lama. Silakan masukkan Nama Lengkap Anda agar kartu siswa bisa dicetak.',
+                        input: 'text',
+                        inputPlaceholder: 'Contoh: Budi Santoso',
+                        allowOutsideClick: false,
+                        showCancelButton: false,
+                        confirmButtonText: 'Simpan Nama',
+                        confirmButtonColor: '#001f3f',
+                        inputValidator: (value) => {
+                            if (!value) {
+                                return 'Nama tidak boleh kosong!'
+                            }
+                        }
+                    });
 
-                // Tempel ke Kartu
+                    if (namaBaru) {
+                        // Simpan Nama ke Akun Firebase
+                        Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
+                        await updateProfile(user, { displayName: namaBaru });
+                        
+                        // Reload halaman agar nama muncul
+                        window.location.reload();
+                        return;
+                    }
+                }
+
+                // >>> JIKA NAMA SUDAH ADA, LANJUTKAN NORMAL <<<
+                const displayName = user.displayName; 
+                const userIdShort = "CA-" + user.uid.substr(0, 5).toUpperCase();
+
+                // Tempel Data ke Tampilan
                 document.getElementById('header-nama').innerText = displayName;
-                document.getElementById('card-nama').innerText = displayName; // Nama Paten
-                document.getElementById('card-id').innerText = userIdShort;   // ID Paten
-
-                // Foto Profil
+                document.getElementById('card-nama').innerText = displayName;
+                document.getElementById('card-id').innerText = userIdShort;
+                
                 const storedPhoto = localStorage.getItem('userProfilePhoto');
                 const photoUrl = storedPhoto || user.photoURL || "https://i.ibb.co/tMdJD76/default-avatar.png";
                 document.getElementById('header-foto').src = photoUrl;
                 document.getElementById('card-foto').src = photoUrl;
 
-                // >>> BARU CEK DATABASE (Untuk Status "Lengkap" atau "Belum") <<<
+                // Jalankan Listener Database
                 listenToStudentData(user);
                 listenToGlobalSettings();
 
@@ -222,7 +248,7 @@
             }
         });
 
-        // --- 2. DENGAR STATUS DATA SISWA (Real-Time) ---
+        // --- 2. DENGAR STATUS DATA SISWA ---
         function listenToStudentData(user) {
             const studentRef = doc(db, "students", user.uid);
 
@@ -233,24 +259,19 @@
                 const step2Action = document.getElementById('step-2-action');
                 const iconSeleksi = document.getElementById('icon-seleksi');
 
-                // Kita pakai atribut di body untuk memberi tahu fungsi lain status user
                 if (docSnap.exists()) {
-                    // === JIKA DATA ADA (SUDAH ISI FORM) ===
+                    // === DATA LENGKAP ===
                     document.body.setAttribute('data-registered', 'true');
 
-                    // Update Status Kartu
                     labelStatus.className = "bg-mustard-500 text-navy-900 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider";
                     labelStatus.innerText = "Siswa Terdaftar";
                     textStatus.innerText = "Aktif";
 
-                    // Step 1: Centang Hijau
                     step1Status.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Data Lengkap</span>`;
 
-                    // Step 2: Buka Akses Seleksi
                     iconSeleksi.classList.remove('bg-gray-100', 'text-gray-400');
                     iconSeleksi.classList.add('bg-mustard-100', 'text-mustard-600', 'animate-bounce');
 
-                    // Cek sudah seleksi atau belum
                     const data = docSnap.data();
                     if (data.selectionScore === undefined || data.selectionScore === null) {
                         step2Action.innerHTML = `
@@ -262,20 +283,16 @@
                         step2Action.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Seleksi Selesai</span>`;
                         iconSeleksi.classList.remove('animate-bounce');
                     }
-
                 } else {
-                    // === JIKA DATA TIDAK ADA (BELUM ISI FORM) ===
+                    // === DATA BELUM LENGKAP ===
                     document.body.setAttribute('data-registered', 'false');
 
-                    // Status Kartu: Masih Calon
                     labelStatus.className = "bg-gray-500 text-white text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider";
                     labelStatus.innerText = "Calon Siswa";
                     textStatus.innerText = "Menunggu Kelengkapan Data";
 
-                    // Step 1: Peringatan Merah
                     step1Status.innerHTML = `<span class="text-red-500 text-sm font-bold"><i class="fas fa-exclamation-circle mr-1"></i> Belum Lengkap</span>`;
 
-                    // Step 2: Dikunci
                     step2Action.innerHTML = "";
                     iconSeleksi.classList.add('bg-gray-100', 'text-gray-400');
                     iconSeleksi.classList.remove('bg-mustard-100', 'text-mustard-600');
@@ -283,7 +300,7 @@
             });
         }
 
-        // --- 3. DENGAR PENGUMUMAN & TOMBOL DAFTAR ---
+        // --- 3. DENGAR PENGUMUMAN ---
         function listenToGlobalSettings() {
             const settingsRef = doc(db, "settings", "penerimaan");
 
@@ -295,22 +312,17 @@
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    
-                    // --- Logic Papan Info ---
                     let htmlContent = "";
                     let showInfo = false;
 
-                    // Teks Admin
                     if (data.infoText && data.infoText.trim() !== "") {
                         htmlContent += `<p class="text-navy-800 mb-3">${data.infoText}</p>`;
                         showInfo = true;
                     }
 
-                    // Cek Status User
                     const isRegistered = document.body.getAttribute('data-registered') === 'true';
 
                     if (!isRegistered) {
-                        // Kalau BELUM terdaftar, tampilkan tombol "Lengkapi Data"
                         if (data.isOpen) {
                             htmlContent += `
                                 <div class="mt-2 pt-2 border-t border-gray-200">
@@ -328,10 +340,9 @@
                              showInfo = true;
                         }
                     } else {
-                        // Kalau SUDAH terdaftar, sapa user
                         htmlContent += `
                             <div class="mt-2 pt-2 border-t border-gray-200">
-                                <p class="text-green-600 font-bold text-sm"><i class="fas fa-check"></i> Kamu sudah terdaftar!</p>
+                                <p class="text-green-600 font-bold text-sm"><i class="fas fa-check"></i> Anda sudah terdaftar sebagai siswa!</p>
                             </div>
                         `;
                         showInfo = true;
@@ -344,7 +355,6 @@
                         infoBoardContainer.classList.add('hidden');
                     }
 
-                    // --- Logic Kabar Sekolah ---
                     if (data.kabarSekolah && Array.isArray(data.kabarSekolah) && data.kabarSekolah.length > 0) {
                         newsContainer.classList.remove('hidden');
                         newsList.innerHTML = data.kabarSekolah.map(news => `
