@@ -6,9 +6,7 @@
     <title>Penerimaan Cendekia Muda - Cendekia Aksara</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script>
@@ -16,14 +14,8 @@
             theme: {
                 extend: {
                     colors: {
-                        navy: {
-                            800: '#001f3f', // Navy Utama
-                            900: '#00152b',
-                        },
-                        mustard: {
-                            400: '#FFDB58', // Mustard lembut
-                            500: '#E1AD01', // Mustard kuat
-                        }
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
                     }
                 }
             }
@@ -42,7 +34,7 @@
                 <h1 class="text-2xl font-bold tracking-wide text-mustard-400">PENERIMAAN CENDEKIA MUDA</h1>
                 <p class="text-xs text-gray-300 tracking-widest uppercase">Portal Resmi Cendekia Aksara</p>
             </div>
-            <img src="https://imgur.com/5Srjyo4.png" alt="Logo Cendekia Aksara" class="h-12 w-auto drop-shadow-md">
+            <img src="https://imgur.com/5Srjyo4.png" alt="Logo Cendekia Aksara" class="h-12 w-12 rounded-full object-cover bg-white border-2 border-mustard-400 drop-shadow-md">
         </div>
     </header>
 
@@ -60,9 +52,9 @@
                 <div class="border-t border-mustard-500 w-16 pt-4"></div>
             </div>
 
-            <div class="w-full md:w-7/12 p-8 bg-glass">
+            <div class="w-full md:w-7/12 p-8 bg-glass relative">
                 
-                <div class="flex justify-center mb-8 border-b">
+                <div id="auth-tabs" class="flex justify-center mb-8 border-b">
                     <button onclick="switchTab('login')" id="tab-login" class="w-1/2 pb-3 font-bold text-navy-800 border-b-4 border-navy-800 focus:outline-none transition">Masuk</button>
                     <button onclick="switchTab('register')" id="tab-register" class="w-1/2 pb-3 font-medium text-gray-500 hover:text-navy-800 focus:outline-none transition">Daftar Akun</button>
                 </div>
@@ -79,10 +71,13 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fas fa-lock"></i></span>
-                            <input type="password" id="login-password" class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-mustard-400 focus:outline-none" placeholder="******" required>
+                            <input type="password" id="login-password" class="w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-mustard-400 focus:outline-none" placeholder="******" required>
+                            <button type="button" onclick="togglePassword('login-password', 'eye-login')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-navy-800 focus:outline-none">
+                                <i class="fas fa-eye" id="eye-login"></i>
+                            </button>
                         </div>
                         <div class="text-right mt-1">
-                            <a href="#" onclick="forgotPassword()" class="text-xs text-navy-800 hover:text-mustard-500 font-semibold">Lupa Password?</a>
+                            <a href="#" onclick="switchTab('forgot')" class="text-xs text-navy-800 hover:text-mustard-500 font-semibold">Lupa Password?</a>
                         </div>
                     </div>
                     <button type="submit" class="w-full bg-navy-800 text-white py-3 rounded-lg font-bold hover:bg-navy-900 transition shadow-lg flex justify-center items-center gap-2">
@@ -120,13 +115,48 @@
 
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">Password</label>
-                        <input type="password" id="reg-password" class="w-full px-3 py-2 border rounded focus:ring-1 focus:ring-mustard-400 outline-none" placeholder="Minimal 6 karakter" required>
+                        <div class="relative">
+                            <input type="password" id="reg-password" class="w-full px-3 py-2 border rounded focus:ring-1 focus:ring-mustard-400 outline-none pr-10" placeholder="Minimal 6 karakter" required>
+                            <button type="button" onclick="togglePassword('reg-password', 'eye-reg')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-navy-800 focus:outline-none">
+                                <i class="fas fa-eye" id="eye-reg"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="w-full bg-mustard-500 text-navy-900 py-3 rounded-lg font-bold hover:bg-mustard-400 transition shadow-lg">
                         DAFTAR AKUN BARU
                     </button>
                 </form>
+
+                <div id="form-forgot" class="hidden">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-key text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-navy-800">Reset Password</h3>
+                        <p class="text-sm text-gray-500 mt-1">Masukkan email akun Anda. Kami akan mengirimkan link untuk membuat password baru.</p>
+                    </div>
+
+                    <form id="form-reset-action" class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Email Terdaftar</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fas fa-envelope"></i></span>
+                                <input type="email" id="reset-email" class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-mustard-400 focus:outline-none" placeholder="nama@email.com" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-navy-800 text-white py-3 rounded-lg font-bold hover:bg-navy-900 transition shadow-lg">
+                            KIRIM LINK RESET
+                        </button>
+
+                        <div class="text-center">
+                            <button type="button" onclick="switchTab('login')" class="text-sm text-gray-500 hover:text-navy-800 font-semibold">
+                                <i class="fas fa-arrow-left mr-1"></i> Kembali ke Login
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
             </div>
         </div>
@@ -141,13 +171,10 @@
     </footer>
 
     <script type="module">
-        // Import Firebase dari CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-        // TAMBAHAN: updateProfile WAJIB ADA di sini
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-analytics.js";
 
-        // Konfigurasi Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
             authDomain: "mading-cf676.firebaseapp.com",
@@ -158,86 +185,62 @@
             measurementId: "G-590P9LLK7J"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
         const auth = getAuth(app);
 
-        // --- GLOBAL FUNCTIONS (Exposed to Window) ---
-        
-        // 1. Logic Switch Tab (Login <-> Register)
+        // --- 1. LOGIC TOGGLE PASSWORD (Show/Hide) ---
+        window.togglePassword = function(fieldId, iconId) {
+            const input = document.getElementById(fieldId);
+            const icon = document.getElementById(iconId);
+            
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
+
+        // --- 2. LOGIC SWITCH TAB (Login / Register / Forgot) ---
         window.switchTab = function(tab) {
             const loginForm = document.getElementById('form-login');
             const regForm = document.getElementById('form-register');
+            const forgotForm = document.getElementById('form-forgot');
+            
             const loginTab = document.getElementById('tab-login');
             const regTab = document.getElementById('tab-register');
+            const tabContainer = document.getElementById('auth-tabs');
 
-            if (tab === 'login') {
-                loginForm.classList.remove('hidden');
-                regForm.classList.add('hidden');
-                
-                loginTab.classList.add('text-navy-800', 'border-navy-800', 'border-b-4');
-                loginTab.classList.remove('text-gray-500');
-                
-                regTab.classList.remove('text-navy-800', 'border-navy-800', 'border-b-4');
-                regTab.classList.add('text-gray-500');
+            // Reset tampilan
+            loginForm.classList.add('hidden');
+            regForm.classList.add('hidden');
+            forgotForm.classList.add('hidden');
+            
+            // Tampilkan Tab Container (Kecuali mode forgot)
+            if (tab === 'forgot') {
+                tabContainer.classList.add('hidden'); // Sembunyikan tab di mode forgot
+                forgotForm.classList.remove('hidden');
             } else {
-                loginForm.classList.add('hidden');
-                regForm.classList.remove('hidden');
+                tabContainer.classList.remove('hidden');
                 
-                regTab.classList.add('text-navy-800', 'border-navy-800', 'border-b-4');
-                regTab.classList.remove('text-gray-500');
-                
-                loginTab.classList.remove('text-navy-800', 'border-navy-800', 'border-b-4');
-                loginTab.classList.add('text-gray-500');
-            }
-        }
-
-        // 2. Logic Lupa Password
-        window.forgotPassword = async function() {
-            const { value: email } = await Swal.fire({
-                title: 'Lupa Password?',
-                text: 'Masukkan alamat email yang terdaftar. Kami akan mengirimkan link reset password.',
-                input: 'email',
-                inputPlaceholder: 'nama@email.com',
-                showCancelButton: true,
-                confirmButtonText: 'Kirim Link',
-                cancelButtonText: 'Batal',
-                confirmButtonColor: '#001f3f',
-                cancelButtonColor: '#d33',
-                customClass: {
-                    popup: 'rounded-xl'
+                if (tab === 'login') {
+                    loginForm.classList.remove('hidden');
+                    // Style Tab Login Aktif
+                    loginTab.className = "w-1/2 pb-3 font-bold text-navy-800 border-b-4 border-navy-800 focus:outline-none transition";
+                    regTab.className = "w-1/2 pb-3 font-medium text-gray-500 hover:text-navy-800 focus:outline-none transition";
+                } else if (tab === 'register') {
+                    regForm.classList.remove('hidden');
+                    // Style Tab Register Aktif
+                    regTab.className = "w-1/2 pb-3 font-bold text-navy-800 border-b-4 border-navy-800 focus:outline-none transition";
+                    loginTab.className = "w-1/2 pb-3 font-medium text-gray-500 hover:text-navy-800 focus:outline-none transition";
                 }
-            });
-
-            if (email) {
-                Swal.fire({
-                    title: 'Mengirim...',
-                    allowOutsideClick: false,
-                    didOpen: () => { Swal.showLoading() }
-                });
-
-                sendPasswordResetEmail(auth, email)
-                    .then(() => {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Email Terkirim!',
-                            text: `Silakan cek kotak masuk atau folder spam di ${email} untuk mereset password Anda.`,
-                            confirmButtonColor: '#001f3f'
-                        });
-                    })
-                    .catch((error) => {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal Mengirim',
-                            text: error.message,
-                            confirmButtonColor: '#d33'
-                        });
-                    });
             }
         }
 
-        // 3. Logic Register (Daftar Akun) - REVISI PENTING DI SINI
+        // --- 3. LOGIC REGISTER (Wajib pakai updateProfile) ---
         document.getElementById('form-register').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -246,121 +249,74 @@
             const email = document.getElementById('reg-email').value;
             const password = document.getElementById('reg-password').value;
 
-            // -- LOGIKA CEK UMUR --
+            // Cek Umur
             const tglLahir = new Date(tglLahirVal);
             const today = new Date();
             let age = today.getFullYear() - tglLahir.getFullYear();
             const m = today.getMonth() - tglLahir.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < tglLahir.getDate())) {
-                age--;
-            }
+            if (m < 0 || (m === 0 && today.getDate() < tglLahir.getDate())) age--;
 
-            // Jika umur < 15 tahun
             if (age < 15) {
-                // Hitung sisa waktu
-                const targetDate = new Date(tglLahir);
-                targetDate.setFullYear(tglLahir.getFullYear() + 15);
-                
-                const diffTime = Math.abs(targetDate - today);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                
-                const yearsLeft = Math.floor(diffDays / 365);
-                const monthsLeft = Math.floor((diffDays % 365) / 30);
-                const daysLeft = Math.floor((diffDays % 365) % 30);
-
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Mohon Maaf 🙏',
-                    html: `
-                        Anda belum memenuhi syarat usia minimal (15 Tahun).<br><br>
-                        Silakan kembali lagi dalam waktu:<br>
-                        <b>${yearsLeft} Tahun, ${monthsLeft} Bulan, ${daysLeft} Hari</b>.
-                    `,
-                    confirmButtonText: 'Saya Mengerti',
-                    confirmButtonColor: '#E1AD01' 
+                    title: 'Mohon Maaf',
+                    text: 'Minimal usia pendaftar adalah 15 Tahun.',
+                    confirmButtonColor: '#E1AD01'
                 });
-                return; // Stop proses
+                return;
             }
 
-            // Jika Lolos Umur -> Loading
-            Swal.fire({
-                title: 'Mendaftarkan Akun...',
-                html: 'Mohon tunggu sebentar, sistem sedang memproses data Anda.',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading() }
-            });
+            Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
 
-            // Proses Firebase Auth
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
-
-                    // === PERBAIKAN PENTING: UPDATE DISPLAY NAME ===
-                    // Ini yang membuat nama langsung muncul di Dashboard
+                    // Update Nama Langsung ke Akun
                     return updateProfile(user, {
                         displayName: nama,
-                        photoURL: "https://i.ibb.co/tMdJD76/default-avatar.png" // Foto Default
+                        photoURL: "https://i.ibb.co/tMdJD76/default-avatar.png"
                     });
                 })
                 .then(() => {
-                    // Jika Update Profile Sukses, Baru Tampilkan Alert Sukses
                     Swal.fire({
                         icon: 'success',
-                        title: 'Pendaftaran Berhasil!',
-                        text: 'Akun Anda telah dibuat dengan nama: ' + nama,
+                        title: 'Berhasil!',
+                        text: 'Akun ' + nama + ' berhasil dibuat.',
                         confirmButtonText: 'Masuk Dashboard',
                         confirmButtonColor: '#001f3f'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // Langsung Login otomatis atau arahkan ke login tab
+                            // Clear form & switch to login visual
                             document.getElementById('form-register').reset();
                             switchTab('login');
                         }
                     });
                 })
                 .catch((error) => {
-                    const errorCode = error.code;
-                    let errorMessage = error.message;
-                    
-                    if (errorCode === 'auth/email-already-in-use') {
-                        errorMessage = "Email ini sudah terdaftar sebelumnya.";
-                    }
-
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Gagal Mendaftar',
-                        text: errorMessage,
-                        confirmButtonColor: '#d33'
-                    });
+                    let msg = error.message;
+                    if(error.code === 'auth/email-already-in-use') msg = "Email sudah terdaftar.";
+                    Swal.fire({icon: 'error', title: 'Gagal', text: msg, confirmButtonColor: '#d33'});
                 });
         });
 
-        // 4. Logic Login (Masuk)
+        // --- 4. LOGIC LOGIN ---
         document.getElementById('form-login').addEventListener('submit', function(e) {
             e.preventDefault();
-            
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
 
-            Swal.fire({
-                title: 'Sedang Masuk...',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading() }
-            });
+            Swal.fire({title: 'Masuk...', didOpen: () => Swal.showLoading()});
 
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Signed in 
                     const user = userCredential.user;
-                    
                     Swal.fire({
                         icon: 'success',
                         title: 'Login Berhasil!',
-                        text: `Selamat datang kembali, ${user.displayName || 'Siswa'}`,
+                        text: `Selamat datang, ${user.displayName || 'Siswa'}`,
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
-                        // Cek Domain Admin
                         if (email.includes('@ac.id')) {
                             window.location.href = "admin/index.html";
                         } else {
@@ -369,12 +325,31 @@
                     });
                 })
                 .catch((error) => {
+                    Swal.fire({icon: 'error', title: 'Gagal Masuk', text: 'Email atau password salah.', confirmButtonColor: '#d33'});
+                });
+        });
+
+        // --- 5. LOGIC RESET PASSWORD (Di Halaman Form Baru) ---
+        document.getElementById('form-reset-action').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('reset-email').value;
+
+            Swal.fire({title: 'Mengirim...', didOpen: () => Swal.showLoading()});
+
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
                     Swal.fire({
-                        icon: 'error',
-                        title: 'Gagal Masuk',
-                        text: 'Email atau password salah. Silakan coba lagi.',
-                        confirmButtonColor: '#d33'
+                        icon: 'success',
+                        title: 'Email Terkirim!',
+                        text: `Silakan cek inbox/spam email ${email} untuk reset password.`,
+                        confirmButtonText: 'Kembali Login',
+                        confirmButtonColor: '#001f3f'
+                    }).then(() => {
+                        switchTab('login');
                     });
+                })
+                .catch((error) => {
+                    Swal.fire({icon: 'error', title: 'Gagal', text: error.message, confirmButtonColor: '#d33'});
                 });
         });
 
