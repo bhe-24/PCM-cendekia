@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Pengajar - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex font-sans">
+
+    <aside class="w-64 bg-gray-900 text-white flex flex-col fixed h-full hidden md:flex">
+        <div class="p-6 font-bold text-xl text-yellow-400">ADMIN PANEL</div>
+        <nav class="flex-grow p-4 space-y-2">
+            <a href="index.html" class="block px-4 py-2 hover:bg-gray-800 rounded">Dashboard Utama</a>
+            <a href="alumni.html" class="block px-4 py-2 hover:bg-gray-800 rounded">Kelola Alumni</a>
+            <a href="#" class="block px-4 py-2 bg-gray-800 rounded text-yellow-400 font-bold">Kelola Pengajar</a>
+        </nav>
+    </aside>
+
+    <main class="flex-grow md:ml-64 p-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Manajemen Tenaga Pendidik</h1>
+
+        <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+            <h2 class="text-lg font-bold mb-4 border-b pb-2">Tambah / Edit Staff</h2>
+            <form id="form-staff" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <div>
+                    <label class="block text-sm font-bold mb-1">Nama Lengkap & Gelar</label>
+                    <input type="text" id="nama" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none" required placeholder="Contoh: Dr. Budi Santoso, M.Pd">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold mb-1">Jabatan</label>
+                    <input type="text" id="jabatan" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none" required placeholder="Contoh: Kepala Sekolah">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold mb-1">Tingkatan (Urutan Tampil)</label>
+                    <select id="level" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="1">Level 1 - Kepala Sekolah (Paling Atas)</option>
+                        <option value="2">Level 2 - Wakil / Koordinator</option>
+                        <option value="3" selected>Level 3 - Tenaga Pendidik / Mentor</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold mb-1">Foto Profil</label>
+                    <input type="file" id="foto" class="w-full border p-2 rounded" accept="image/*" required>
+                    <p class="text-xs text-gray-500 mt-1">Otomatis upload ke server.</p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold mb-1">Bio Singkat / Motto</label>
+                    <input type="text" id="bio" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Kata-kata mutiara singkat...">
+                </div>
+
+                <div class="md:col-span-2">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 w-full transition shadow-lg">
+                        <i class="fas fa-plus mr-2"></i> Tambahkan Pengajar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h2 class="text-lg font-bold mb-4">Struktur Organisasi</h2>
+            <div id="list-staff" class="space-y-3">
+                <p class="text-center text-gray-500">Memuat data...</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, orderBy, query } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 1. TAMBAH STAFF
+        document.getElementById('form-staff').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('foto');
+            const file = fileInput.files[0];
+
+            if (!file) return;
+
+            Swal.fire({title: 'Memproses...', html: 'Mengupload foto & menyimpan data...', didOpen: () => Swal.showLoading()});
+
+            const formData = new FormData();
+            formData.append("image", file);
+
+            try {
+                // Upload ImgBB
+                const res = await fetch("https://api.imgbb.com/1/upload?key=2f45fcafb6dfb2dbae295499022ce476", {
+                    method: "POST", body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    // Simpan Firestore
+                    await addDoc(collection(db, "staff_members"), {
+                        nama: document.getElementById('nama').value,
+                        jabatan: document.getElementById('jabatan').value,
+                        level: parseInt(document.getElementById('level').value),
+                        bio: document.getElementById('bio').value,
+                        foto: data.data.url,
+                        createdAt: new Date().toISOString()
+                    });
+
+                    Swal.fire('Berhasil', 'Pengajar berhasil ditambahkan!', 'success');
+                    document.getElementById('form-staff').reset();
+                } else {
+                    throw new Error("Gagal upload gambar.");
+                }
+            } catch (err) {
+                Swal.fire('Error', err.message, 'error');
+            }
+        });
+
+        // 2. LIST STAFF (Real-time)
+        const q = query(collection(db, "staff_members"), orderBy("level", "asc"));
+        
+        onSnapshot(q, (snapshot) => {
+            const container = document.getElementById('list-staff');
+            container.innerHTML = "";
+
+            if(snapshot.empty) {
+                container.innerHTML = `<p class="text-center text-gray-500 py-4">Belum ada data pengajar.</p>`;
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const d = docSnap.data();
+                
+                // Indikator Level
+                let levelBadge = `<span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">Guru</span>`;
+                if(d.level === 1) levelBadge = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">Kepsek</span>`;
+                if(d.level === 2) levelBadge = `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">Wakil</span>`;
+
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between bg-white border rounded-lg p-4 hover:shadow-md transition";
+                item.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <img src="${d.foto}" class="w-12 h-12 rounded-full object-cover border">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold text-gray-800">${d.nama}</h4>
+                                ${levelBadge}
+                            </div>
+                            <p class="text-sm text-gray-500">${d.jabatan}</p>
+                        </div>
+                    </div>
+                    <button onclick="hapusStaff('${docSnap.id}')" class="text-red-500 hover:text-red-700 p-2">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        });
+
+        window.hapusStaff = async function(id) {
+            Swal.fire({
+                title: 'Hapus Pengajar?',
+                text: "Data akan dihapus permanen.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Ya, Hapus'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await deleteDoc(doc(db, "staff_members", id));
+                    Swal.fire('Terhapus!', '', 'success');
+                }
+            })
+        }
+    </script>
+</body>
+</html>
