@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Orientasi - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex font-sans">
+
+    <aside class="w-64 bg-gray-900 text-white flex flex-col fixed h-full hidden md:flex">
+        <div class="p-6 font-bold text-xl text-yellow-400">ADMIN PANEL</div>
+        <nav class="flex-grow p-4 space-y-2">
+            <a href="index.html" class="block px-4 py-2 hover:bg-gray-800 rounded">Dashboard Utama</a>
+            <a href="#" class="block px-4 py-2 bg-gray-800 rounded text-yellow-400 font-bold">Kelola Orientasi</a>
+        </nav>
+    </aside>
+
+    <main class="flex-grow md:ml-64 p-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Manajemen Pekan Orientasi</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-600">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-video text-red-600"></i> Google Meet Live
+                </h2>
+                <p class="text-sm text-gray-500 mb-2">Link untuk sosialisasi pembukaan.</p>
+                <input type="text" id="meet-link" class="w-full border p-2 rounded mb-4" placeholder="https://meet.google.com/...">
+                <button onclick="saveSettings()" class="bg-navy-900 text-white px-4 py-2 rounded hover:bg-navy-800 w-full">Simpan Link Meet</button>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-600">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <i class="fab fa-whatsapp text-green-600"></i> Link Grup Kelas
+                </h2>
+                
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">LINK KELAS A (Absen 1-15)</label>
+                    <input type="text" id="link-a" class="w-full border p-2 rounded" placeholder="https://chat.whatsapp.com/...">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">LINK KELAS B (Absen 16-30)</label>
+                    <input type="text" id="link-b" class="w-full border p-2 rounded" placeholder="https://chat.whatsapp.com/...">
+                </div>
+
+                <button onclick="saveSettings()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">Simpan Link Grup</button>
+            </div>
+
+        </div>
+
+        <div class="mt-8 bg-white p-6 rounded-xl shadow-md">
+            <h2 class="text-lg font-bold mb-4">Daftar Siswa & Pembagian Kelas (Otomatis)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-100 text-sm font-bold text-gray-600">
+                        <tr>
+                            <th class="p-3 border-b">No</th>
+                            <th class="p-3 border-b">Nama Siswa</th>
+                            <th class="p-3 border-b">Kelas</th>
+                            <th class="p-3 border-b">No. Absen</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-list" class="text-sm">
+                        <tr><td colspan="4" class="p-4 text-center">Memuat...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 1. LOAD SETTINGS
+        onSnapshot(doc(db, "settings", "orientasi"), (doc) => {
+            if(doc.exists()) {
+                const data = doc.data();
+                document.getElementById('meet-link').value = data.meetLink || "";
+                document.getElementById('link-a').value = data.linkKelasA || "";
+                document.getElementById('link-b').value = data.linkKelasB || "";
+            }
+        });
+
+        // 2. SIMPAN SETTINGS
+        window.saveSettings = async function() {
+            const meet = document.getElementById('meet-link').value;
+            const linkA = document.getElementById('link-a').value;
+            const linkB = document.getElementById('link-b').value;
+
+            try {
+                await setDoc(doc(db, "settings", "orientasi"), {
+                    meetLink: meet,
+                    linkKelasA: linkA,
+                    linkKelasB: linkB
+                }, { merge: true });
+                Swal.fire('Tersimpan', 'Link berhasil diperbarui', 'success');
+            } catch (e) {
+                Swal.fire('Error', e.message, 'error');
+            }
+        }
+
+        // 3. PREVIEW KELAS (Logic sama dengan Siswa)
+        async function loadPreview() {
+            const q = query(collection(db, "students"), where("selectionScore", ">", 80));
+            const snapshot = await getDocs(q);
+            
+            let students = [];
+            snapshot.forEach(doc => {
+                students.push({ nama: doc.data().namaLengkap });
+            });
+
+            // Urutkan A-Z
+            students.sort((a, b) => a.nama.localeCompare(b.nama, undefined, {sensitivity: 'base'}));
+
+            const tbody = document.getElementById('student-list');
+            tbody.innerHTML = "";
+
+            if(students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center">Belum ada siswa lolos.</td></tr>';
+                return;
+            }
+
+            students.forEach((s, idx) => {
+                let kelas = "A";
+                let absen = idx + 1;
+                let rowClass = "";
+
+                if (idx >= 15) {
+                    kelas = "B";
+                    absen = (idx - 15) + 1;
+                    rowClass = "bg-gray-50"; // Pembeda warna visual
+                }
+
+                tbody.innerHTML += `
+                    <tr class="${rowClass} border-b hover:bg-gray-100">
+                        <td class="p-3">${idx + 1}</td>
+                        <td class="p-3 font-bold text-navy-800">${s.nama}</td>
+                        <td class="p-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">${kelas}</span></td>
+                        <td class="p-3">${absen}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        loadPreview();
+    </script>
+</body>
+</html>
