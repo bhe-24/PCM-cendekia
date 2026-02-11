@@ -4,360 +4,309 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Siswa - Cendekia Aksara</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        /* Loader */
-        .page-loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #005a9c; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Timeline Styles */
-        .timeline-line { position: absolute; left: 19px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; z-index: 0; }
-        .timeline-item { position: relative; padding-left: 50px; padding-bottom: 2rem; z-index: 10; }
-        .timeline-dot { position: absolute; left: 0; top: 0; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; background: white; border: 2px solid #e2e8f0; font-size: 0.8rem; }
-        .timeline-dot.active { background: #005a9c; border-color: #005a9c; color: white; box-shadow: 0 0 0 4px rgba(0, 90, 156, 0.2); }
-        .timeline-dot.done { background: #10b981; border-color: #10b981; color: white; }
-
-        /* Mobile Sidebar Overlay */
-        #mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; display: none; }
-        
-        /* Sidebar Transition */
-        aside { transition: transform 0.3s ease-in-out; }
-        @media (max-width: 768px) {
-            aside { position: fixed; inset-y: 0; left: 0; transform: translateX(-100%); z-index: 50; width: 80%; max-width: 300px; }
-            aside.open { transform: translateX(0); }
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
+                    }
+                }
+            }
         }
-    </style>
+    </script>
 </head>
-<body class="text-slate-800 h-screen flex flex-col md:flex-row overflow-hidden">
+<body class="bg-gray-50 min-h-screen flex flex-col font-sans">
 
-    <div id="loader" class="page-loader">
-        <div class="spinner mb-4"></div>
-        <p class="text-slate-500 font-medium text-sm animate-pulse">Memuat Data Siswa...</p>
-    </div>
-
-    <div id="mobile-overlay"></div>
-
-    <aside id="sidebar" class="bg-white border-r border-slate-200 flex flex-col h-full md:w-64 md:transform-none flex-shrink-0">
-        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="bg-[#005a9c] text-white p-2 rounded-lg"><i class="fas fa-graduation-cap"></i></div>
-                <h1 class="font-bold text-lg text-slate-800">Portal Siswa</h1>
+    <header class="bg-navy-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center relative">
+            
+            <div class="flex items-center w-1/4">
+                <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-10 w-auto mr-3">
             </div>
-            <button id="close-sidebar" class="md:hidden text-slate-400 hover:text-slate-600">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <a href="index.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 bg-blue-50 text-[#005a9c] font-bold">
-                <i class="fas fa-home w-5 text-center"></i> Beranda
-            </a>
-            <a href="tugas.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 hover:text-[#005a9c] transition font-medium">
-                <i class="fas fa-clipboard-list w-5 text-center"></i> Tugas Saya
-            </a>
-            <a href="chat.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 hover:text-[#005a9c] transition font-medium">
-                <i class="fas fa-comments w-5 text-center"></i> Chat Admin
-            </a>
-        </nav>
 
-        <div class="p-4 border-t border-slate-100">
-            <div class="flex items-center gap-3 mb-4 px-2">
-                <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 font-bold" id="user-initial">?</div>
-                <div class="overflow-hidden">
-                    <p class="text-sm font-bold text-slate-800 truncate" id="sidebar-name">Memuat...</p>
-                    <p class="text-xs text-slate-500 truncate">Siswa Aktif</p>
+            <div class="absolute left-1/2 transform -translate-x-1/2 text-center">
+                <h1 class="text-lg md:text-xl font-bold text-mustard-400 tracking-wide uppercase">
+                    Penerimaan Cendekia Muda
+                </h1>
+            </div>
+
+            <div class="flex justify-end items-center w-1/4">
+                <a href="profil.html" class="flex items-center gap-3 hover:bg-navy-900 p-2 rounded-lg transition group">
+                    <div class="text-right hidden md:block">
+                        <p class="text-xs text-gray-300">Halo,</p>
+                        <p class="text-sm font-bold text-mustard-400 group-hover:text-white transition" id="header-nama">Siswa</p>
+                    </div>
+                    <img id="header-foto" src="https://i.ibb.co/tMdJD76/default-avatar.png" 
+                         alt="Profil" class="h-10 w-10 rounded-full object-cover border-2 border-mustard-500 shadow-sm">
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow space-y-8">
+
+        <div id="info-board" class="bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-navy-800">
+            <div class="p-6">
+                <div class="flex items-start gap-4">
+                    <div class="text-3xl text-navy-800"><i class="fas fa-bullhorn"></i></div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800 mb-2">Status Penerimaan Saat Ini</h2>
+                        <div id="status-content">
+                            </div>
+                    </div>
                 </div>
             </div>
-            <button id="logout-btn" class="w-full px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium transition flex items-center justify-center gap-2">
-                <i class="fas fa-sign-out-alt"></i> Keluar
-            </button>
         </div>
-    </aside>
 
-    <main class="flex-1 flex flex-col h-full relative w-full">
-        
-        <header class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
-            <div class="font-bold text-slate-800 text-lg">Cendekia Aksara</div>
-            <button id="open-sidebar" class="text-slate-600 w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-4 md:p-8 bg-[#f8fafc]">
-            <div class="max-w-4xl mx-auto">
-                
-                <div class="mb-8">
-                    <h2 class="text-2xl md:text-3xl font-bold text-slate-900">Selamat Datang, <br><span id="welcome-name" class="text-[#005a9c]">Siswa</span>! 👋</h2>
-                    <p class="text-slate-500 mt-2">Pantau progres belajar dan status pendaftaran Anda di sini.</p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 mb-8 relative overflow-hidden group hover:shadow-md transition">
-                    <div class="absolute top-0 right-0 w-40 h-40 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-1">
+                <div class="bg-gradient-to-br from-navy-800 to-navy-900 rounded-xl shadow-xl p-6 text-white relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-mustard-500 rounded-full opacity-20"></div>
                     
-                    <div class="relative z-10 flex flex-col md:flex-row gap-6 md:items-center">
-                        <div id="status-icon-container" class="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center text-3xl text-[#005a9c] flex-shrink-0">
-                            <i id="status-icon" class="fas fa-user-clock"></i>
+                    <div class="text-center mb-4">
+                        <img id="card-foto" src="https://i.ibb.co/tMdJD76/default-avatar.png" class="h-20 w-20 rounded-full mx-auto border-4 border-white object-cover mb-3">
+                        <h3 class="text-lg font-bold" id="card-nama">Nama Siswa</h3>
+                        <span class="bg-mustard-500 text-navy-900 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Calon Pendaftar</span>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm text-gray-300 border-t border-gray-600 pt-4">
+                        <div class="flex justify-between">
+                            <span>ID Calon:</span>
+                            <span class="text-white font-mono" id="card-id">-</span>
                         </div>
-                        
-                        <div class="flex-1">
-                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Status Saat Ini</p>
-                            <h3 id="current-stage-title" class="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Memuat Status...</h3>
-                            <p id="current-stage-desc" class="text-slate-600 leading-relaxed">Mohon tunggu sebentar, kami sedang mengambil data terbaru Anda.</p>
-                            
-                            <div id="action-container" class="mt-4 hidden">
+                        <div class="flex justify-between">
+                            <span>Status:</span>
+                            <span class="text-white">Menunggu Seleksi</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-bold text-navy-800 mb-6 border-b pb-2">Jalur Penerimaan Siswa</h3>
+                
+                <div class="relative">
+                    <div class="absolute left-8 top-0 h-full w-0.5 bg-gray-200"></div>
+
+                    <div class="relative flex items-start gap-6 mb-8">
+                        <div class="z-10 flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 shadow-sm shrink-0 border-4 border-white">
+                            <i class="fas fa-file-signature text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">1. Pendaftaran Administrasi</h4>
+                            <p class="text-sm text-gray-500 mt-1">Mengisi formulir data diri dan motivasi.</p>
+                            <div id="step-1-status" class="mt-2">
                                 </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                        <div class="flex items-center gap-2 mb-6">
-                            <i class="fas fa-route text-slate-400"></i>
-                            <h3 class="font-bold text-lg text-slate-800">Jalur Penerimaan</h3>
+                    <div class="relative flex items-start gap-6 mb-8">
+                        <div class="z-10 flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-400 shadow-sm shrink-0 border-4 border-white" id="icon-seleksi">
+                            <i class="fas fa-brain text-xl"></i>
                         </div>
-                        
-                        <div class="relative pl-2" id="timeline-container">
-                            <div class="timeline-line"></div>
-                            </div>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div class="bg-gradient-to-br from-[#005a9c] to-[#004b80] rounded-2xl p-6 text-white shadow-lg">
-                            <div class="flex justify-between items-start mb-4">
-                                <h3 class="font-bold text-lg">Papan Info</h3>
-                                <i class="fas fa-bullhorn opacity-50"></i>
-                            </div>
-                            <div class="text-sm text-blue-100 space-y-3">
-                                <p>📢 Pastikan nomor WhatsApp yang terdaftar selalu aktif.</p>
-                                <p>🗓️ Batas pengumpulan tugas biasanya pukul 23.59 WIB.</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-                            <h3 class="font-bold text-slate-800 mb-4">Akses Cepat</h3>
-                            <div class="grid grid-cols-2 gap-3">
-                                <a href="tugas.html" class="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition border border-slate-100">
-                                    <i class="fas fa-tasks text-xl mb-2"></i>
-                                    <span class="text-xs font-bold">Tugas</span>
-                                </a>
-                                <a href="chat.html" class="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl hover:bg-green-50 hover:text-green-600 transition border border-slate-100">
-                                    <i class="fas fa-comments text-xl mb-2"></i>
-                                    <span class="text-xs font-bold">Bantuan</span>
-                                </a>
-                            </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">2. Tes Minat & Analisis Berpikir</h4>
+                            <p class="text-sm text-gray-500 mt-1">Menjawab pertanyaan studi kasus untuk penempatan kelas.</p>
+                            <div id="step-2-action" class="mt-3">
+                                </div>
                         </div>
                     </div>
 
+                    <div class="relative flex items-start gap-6">
+                        <div class="z-10 flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-400 shadow-sm shrink-0 border-4 border-white">
+                            <i class="fas fa-campground text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">3. Pekan Orientasi Siswa</h4>
+                            <p class="text-sm text-gray-500 mt-1">Pengenalan lingkungan sekolah Cendekia Aksara.</p>
+                        </div>
+                    </div>
                 </div>
-
             </div>
         </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="md:col-span-2 bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <h3 class="font-bold text-navy-800 mb-3"><i class="fas fa-info-circle mr-2"></i>Kabar Sekolah</h3>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check text-green-500 mt-1"></i>
+                        <span>Kelas Cerpen Angkatan 5 akan segera dimulai setelah seleksi selesai.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check text-green-500 mt-1"></i>
+                        <span>Pastikan nomor WhatsApp aktif untuk undangan grup.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="md:col-span-2 grid grid-cols-2 gap-4">
+                <a href="dashboard/tugas.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
+                    <div class="bg-red-100 text-red-600 w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <span class="text-sm font-bold text-gray-700">Tugas</span>
+                </a>
+                <a href="dashboard/bantuan.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
+                    <div class="bg-purple-100 text-purple-600 w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <span class="text-sm font-bold text-gray-700">Bantuan</span>
+                </a>
+                <a href="dashboard/alumni.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
+                    <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <span class="text-sm font-bold text-gray-700">Alumni</span>
+                </a>
+                <a href="dashboard/pengajar.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
+                    <div class="bg-teal-100 text-teal-600 w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <span class="text-sm font-bold text-gray-700">Pengajar</span>
+                </a>
+            </div>
+        </div>
+
     </main>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <footer class="bg-white border-t mt-8 py-6 text-center text-sm text-gray-500">
+        <p class="mb-2">&copy; 2024 Cendekia Aksara. Dibuat dengan ❤️ untuk Sastra Indonesia.</p>
+        <div class="space-x-4">
+            <a href="privacy.html" class="hover:text-navy-800">Kebijakan Privasi</a>
+            <a href="#" class="hover:text-navy-800">Syarat & Ketentuan</a>
+        </div>
+    </footer>
 
-        // FIREBASE CONFIG
-        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676", storageBucket: "mading-cf676.appspot.com", messagingSenderId: "72175203671", appId: "1:72175203671:web:7a0676a55beb64bc96ba12" };
+    <script type="module">
+        // Import Firebase (Sesuaikan path jika perlu)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+
+        // Konfigurasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
 
-        const STAGES = ["Pendaftaran Awal", "Seleksi", "Daftar Ulang", "Dapat Nomor ID", "Seleksi Kelas", "Pekan Orientasi"];
+        // --- SIMULASI STATUS DATABASE (Nanti diganti data real dari Firestore) ---
+        // true = Pendaftaran dibuka, false = ditutup
+        const isRegistrationOpen = true; 
+        
+        // Simulasi Data User (Nanti diambil dari check database apakah UID sudah ada di koleksi 'students')
+        // Ganti 'false' jadi 'true' untuk melihat tampilan jika siswa SUDAH mendaftar
+        let isUserRegistered = false; 
+        let isSelectionDone = false; 
 
-        // 1. CEK AUTH & REDIRECT
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = '../login.html'; // Belum login? Tendang keluar
+        // --- CEK LOGIN & LOAD DATA ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User Login
+                const displayName = user.displayName || "Siswa Cendekia";
+                document.getElementById('header-nama').innerText = displayName;
+                document.getElementById('card-nama').innerText = displayName;
+
+                // Cek Foto Profil (Prioritas: LocalStorage dari Profil > PhotoURL Firebase > Default)
+                const storedPhoto = localStorage.getItem('userProfilePhoto');
+                if (storedPhoto) {
+                    document.getElementById('header-foto').src = storedPhoto;
+                    document.getElementById('card-foto').src = storedPhoto;
+                } else if (user.photoURL) {
+                    document.getElementById('header-foto').src = user.photoURL;
+                    document.getElementById('card-foto').src = user.photoURL;
+                }
+
+                // Jalankan Logika Tampilan
+                renderDashboard(user);
             } else {
-                // Ambil Data User Realtime
-                onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        
-                        // Cek Role (Keamanan)
-                        if(data.role === 'admin') { window.location.href = '../admin/index.html'; return; }
-
-                        // Render Halaman
-                        renderUI(data, user.uid);
-                        
-                        // Sembunyikan Loader
-                        document.getElementById('loader').style.opacity = '0';
-                        setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
-                    }
-                });
+                // Belum Login -> Tendang ke index utama
+                window.location.href = "../index.html"; 
             }
         });
 
-        // 2. RENDER UI FUNCTION
-        function renderUI(data, uid) {
-            // Header & Sidebar Info
-            document.getElementById('welcome-name').textContent = data.name;
-            document.getElementById('sidebar-name').textContent = data.name;
-            document.getElementById('user-initial').textContent = data.name.charAt(0).toUpperCase();
+        function renderDashboard(user) {
+            const infoBoard = document.getElementById('status-content');
+            const step1Status = document.getElementById('step-1-status');
+            const step2Action = document.getElementById('step-2-action');
+            const iconSeleksi = document.getElementById('icon-seleksi');
 
-            // Status Card Logic
-            const title = document.getElementById('current-stage-title');
-            const desc = document.getElementById('current-stage-desc');
-            const iconBox = document.getElementById('status-icon-container');
-            const icon = document.getElementById('status-icon');
-            const actionContainer = document.getElementById('action-container');
-            
-            actionContainer.innerHTML = ''; // Reset tombol aksi
-            actionContainer.classList.add('hidden');
-
-            if (data.isRejected) {
-                // Tampilan DITOLAK
-                title.textContent = "Mohon Maaf";
-                title.className = "text-2xl md:text-3xl font-bold text-red-600 mb-2";
-                desc.textContent = data.rejectionReason || "Anda belum lolos seleksi tahap ini.";
-                iconBox.className = "w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center text-3xl text-red-600 flex-shrink-0";
-                icon.className = "fas fa-times-circle";
+            // 1. LOGIKA PAPAN INFO & TOMBOL DAFTAR
+            if (!isUserRegistered) {
+                // Belum Daftar
+                if (isRegistrationOpen) {
+                    infoBoard.innerHTML = `
+                        <p class="text-green-600 mb-3 font-medium">Gelombang Pendaftaran sedang dibuka! Segera amankan kursimu.</p>
+                        <a href="dashboard/daftar.html" class="inline-block bg-mustard-500 text-navy-900 px-6 py-2 rounded-lg font-bold shadow hover:bg-mustard-400 transition animate-pulse">
+                            Daftarkan Diri Sekarang <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    `;
+                    step1Status.innerHTML = `<span class="text-red-500 text-sm font-bold"><i class="fas fa-clock mr-1"></i> Belum Mendaftar</span>`;
+                    document.getElementById('card-id').innerText = "-";
+                } else {
+                    infoBoard.innerHTML = `
+                        <p class="text-red-600 mb-2 font-medium">Mohon maaf, pendaftaran saat ini ditutup.</p>
+                        <p class="text-sm text-gray-500">Nantikan informasi selanjutnya.</p>
+                    `;
+                }
             } else {
-                // Tampilan NORMAL
-                title.textContent = data.currentStage;
-                title.className = "text-2xl md:text-3xl font-bold text-slate-900 mb-2";
-                iconBox.className = "w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center text-3xl text-[#005a9c] flex-shrink-0";
-
-                if (data.currentStage === "Pendaftaran Awal") {
-                    desc.textContent = "Data Anda sedang diverifikasi oleh admin. Harap tunggu info selanjutnya.";
-                    icon.className = "fas fa-user-clock";
-                } 
-                else if (data.currentStage === "Seleksi") {
-                    desc.textContent = "Selamat! Anda lolos administrasi. Silakan kerjakan tugas seleksi.";
-                    icon.className = "fas fa-pen-nib";
-                    actionContainer.classList.remove('hidden');
-                    actionContainer.innerHTML = `<a href="tugas.html" class="inline-block px-6 py-3 bg-[#005a9c] text-white font-bold rounded-lg hover:bg-[#004b80] transition">Kerjakan Tugas</a>`;
-                }
-                else if (data.currentStage === "Daftar Ulang") {
-                    desc.textContent = "Anda dinyatakan LOLOS SELEKSI! Segera lakukan daftar ulang.";
-                    icon.className = "fas fa-check-circle";
-                    iconBox.className = "w-20 h-20 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0";
-                    
-                    if(!data.hasReRegistered) {
-                        actionContainer.classList.remove('hidden');
-                        const btn = document.createElement('button');
-                        btn.className = "px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition";
-                        btn.textContent = "Konfirmasi Daftar Ulang";
-                        btn.onclick = () => handleReRegister(uid);
-                        actionContainer.appendChild(btn);
-                    } else {
-                        desc.textContent = "Terima kasih sudah daftar ulang. Menunggu penerbitan Nomor ID.";
-                    }
-                }
-                else if (data.currentStage === "Dapat Nomor ID") {
-                    desc.innerHTML = `Nomor Induk Siswa (NIS) Anda: <span class="font-mono font-bold bg-slate-100 px-2 py-1 rounded">${data.studentIdNumber}</span>`;
-                    icon.className = "fas fa-id-card";
-                }
-                else if (data.currentStage === "Seleksi Kelas") {
-                    desc.textContent = data.classLink ? "Kelas telah ditentukan. Silakan bergabung." : "Sedang dalam proses pembagian kelas.";
-                    icon.className = "fas fa-chalkboard-teacher";
-                    if(data.classLink) {
-                        actionContainer.classList.remove('hidden');
-                        actionContainer.innerHTML = `<a href="${data.classLink}" target="_blank" class="inline-block px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition"><i class="fab fa-whatsapp"></i> Gabung Grup Kelas</a>`;
-                    }
-                }
-                else if (data.currentStage === "Pekan Orientasi") {
-                     desc.textContent = "Selamat datang di tahap orientasi siswa baru.";
-                     icon.className = "fas fa-flag";
-                     actionContainer.classList.remove('hidden');
-                     actionContainer.innerHTML = `<a href="tugas.html" class="inline-block px-6 py-3 bg-[#005a9c] text-white font-bold rounded-lg hover:bg-[#004b80] transition">Lihat Tugas Orientasi</a>`;
-                }
-            }
-
-            // Render Timeline
-            renderTimeline(data.currentStage, data.isRejected);
-        }
-
-        function renderTimeline(currentStage, isRejected) {
-            const container = document.getElementById('timeline-container');
-            const currentIndex = STAGES.indexOf(currentStage);
-            
-            // Hapus isi timeline lama kecuali garis
-            const line = container.querySelector('.timeline-line');
-            container.innerHTML = ''; 
-            container.appendChild(line);
-
-            STAGES.forEach((stage, index) => {
-                let dotClass = "timeline-dot"; // Default (abu-abu)
-                let textClass = "text-slate-500";
-                let icon = `<i class="fas fa-circle text-[6px] text-slate-300"></i>`; // Titik kecil
-
-                if (index < currentIndex) {
-                    // Tahap yang SUDAH LEWAT (Hijau)
-                    dotClass += " done";
-                    textClass = "text-slate-800 font-medium";
-                    icon = `<i class="fas fa-check"></i>`;
-                } 
-                else if (index === currentIndex) {
-                    // Tahap SEKARANG (Biru/Merah)
-                    if (isRejected) {
-                        dotClass = "timeline-dot bg-red-500 border-red-500 text-white box-shadow-none"; 
-                        icon = `<i class="fas fa-times"></i>`;
-                        textClass = "text-red-600 font-bold";
-                    } else {
-                        dotClass += " active";
-                        textClass = "text-[#005a9c] font-bold";
-                        icon = `<i class="fas fa-map-marker-alt"></i>`;
-                    }
-                }
-
-                const item = document.createElement('div');
-                item.className = "timeline-item";
-                item.innerHTML = `
-                    <div class="${dotClass}">${icon}</div>
-                    <h4 class="${textClass} text-sm">${stage}</h4>
+                // Sudah Daftar (Balik dari dashboard/daftar.html)
+                document.getElementById('card-id').innerText = "CA-" + user.uid.substr(0, 5).toUpperCase(); // Simulasi ID
+                
+                infoBoard.innerHTML = `
+                    <p class="text-navy-800 mb-2 font-medium">Terima kasih telah mendaftar.</p>
+                    <p class="text-sm text-gray-600">Silakan lanjutkan ke tahap seleksi di bawah ini.</p>
                 `;
-                container.appendChild(item);
-            });
-        }
+                
+                step1Status.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Berhasil Terdaftar</span>`;
+                
+                // Aktifkan Step 2 (Seleksi)
+                iconSeleksi.classList.remove('bg-gray-100', 'text-gray-400');
+                iconSeleksi.classList.add('bg-mustard-100', 'text-mustard-600', 'animate-bounce'); // Visual cue
 
-        // Logic Daftar Ulang
-        async function handleReRegister(uid) {
-            if(!confirm("Apakah Anda yakin ingin melakukan konfirmasi daftar ulang?")) return;
-            const nis = `CA-${new Date().getFullYear()}-${uid.substring(0,4).toUpperCase()}`;
-            await updateDoc(doc(db, "users", uid), {
-                hasReRegistered: true,
-                studentIdNumber: nis,
-                currentStage: "Dapat Nomor ID"
-            });
-            alert("Berhasil Daftar Ulang!");
-        }
-
-        // 3. SIDEBAR TOGGLE LOGIC (MOBILE)
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('mobile-overlay');
-        const openBtn = document.getElementById('open-sidebar');
-        const closeBtn = document.getElementById('close-sidebar');
-
-        function toggleSidebar() {
-            const isOpen = sidebar.classList.contains('open');
-            if (isOpen) {
-                sidebar.classList.remove('open');
-                overlay.style.display = 'none';
-            } else {
-                sidebar.classList.add('open');
-                overlay.style.display = 'block';
+                if (!isSelectionDone) {
+                    step2Action.innerHTML = `
+                        <button onclick="startSelection()" class="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-bold shadow hover:bg-navy-900 transition">
+                            <i class="fas fa-pen-nib mr-2"></i>Ikuti Seleksi
+                        </button>
+                    `;
+                } else {
+                    step2Action.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Seleksi Selesai</span>`;
+                }
             }
         }
 
-        openBtn.onclick = toggleSidebar;
-        closeBtn.onclick = toggleSidebar;
-        overlay.onclick = toggleSidebar;
-
-        // Logout
-        document.getElementById('logout-btn').onclick = () => signOut(auth);
-
+        // Fungsi Global untuk Tombol Seleksi
+        window.startSelection = function() {
+            Swal.fire({
+                title: 'Siap Mengikuti Seleksi?',
+                text: "Anda akan diarahkan ke halaman tes minat & analisis. Pastikan koneksi internet lancar.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#001f3f',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Mulai Sekarang',
+                cancelButtonText: 'Nanti Saja'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "dashboard/seleksi.html";
+                }
+            });
+        }
     </script>
 </body>
 </html>
