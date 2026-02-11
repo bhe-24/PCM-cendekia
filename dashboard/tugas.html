@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Misi & Tugas - Cendekia Aksara</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .task-card { transition: all 0.3s ease; }
+        .task-card:hover { transform: translateY(-5px); }
+        .locked { filter: grayscale(100%); opacity: 0.7; pointer-events: none; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col font-sans">
+
+    <header class="bg-navy-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center relative">
+            <div class="flex items-center w-1/4">
+                <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-10 w-10 rounded-full bg-white border-2 border-mustard-400 mr-3 object-cover shadow-md">
+            </div>
+            <div class="absolute left-1/2 transform -translate-x-1/2 text-center">
+                <h1 class="text-lg font-bold text-mustard-400 tracking-wide uppercase">PAPAN MISI</h1>
+            </div>
+            <div class="flex justify-end items-center w-1/4">
+                <a href="index.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition text-sm font-semibold border border-white/20">
+                    <i class="fas fa-arrow-left"></i> <span class="hidden md:inline">Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow max-w-5xl">
+        
+        <div class="bg-gradient-to-r from-navy-900 to-navy-800 rounded-2xl p-8 text-white shadow-xl mb-10 relative overflow-hidden">
+            <div class="absolute right-0 top-0 opacity-10 transform translate-x-10 -translate-y-10">
+                <i class="fas fa-rocket text-9xl"></i>
+            </div>
+            <div class="relative z-10">
+                <h2 class="text-3xl font-bold text-mustard-400 mb-2">Selesaikan Misi Penerimaan!</h2>
+                <p class="text-gray-300 max-w-xl">Lengkapi setiap tahap di bawah ini untuk menjadi bagian resmi dari keluarga Cendekia Aksara. Semangat!</p>
+                
+                <div class="mt-6 max-w-lg">
+                    <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-1">
+                        <span>Progress Kamu</span>
+                        <span id="progress-text">0%</span>
+                    </div>
+                    <div class="w-full bg-navy-900 rounded-full h-3 border border-navy-600">
+                        <div id="global-progress" class="bg-mustard-500 h-3 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <div id="card-1" class="task-card bg-white rounded-xl shadow-lg border-t-4 border-gray-300 overflow-hidden flex flex-col">
+                <div class="p-6 flex-grow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl">1</div>
+                        <span id="badge-1" class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded font-bold uppercase">Pending</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-navy-800 mb-2">Lengkapi Biodata</h3>
+                    <p class="text-gray-500 text-sm">Isi formulir pendaftaran dengan data diri lengkap, kontak, dan motivasi menulismu.</p>
+                </div>
+                <div class="p-4 bg-gray-50 border-t border-gray-100 mt-auto">
+                    <a href="daftar.html" id="btn-1" class="block w-full text-center bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition shadow">
+                        Kerjakan Sekarang
+                    </a>
+                </div>
+            </div>
+
+            <div id="card-2" class="task-card bg-white rounded-xl shadow-lg border-t-4 border-gray-300 overflow-hidden flex flex-col locked relative">
+                <div id="lock-2" class="absolute inset-0 bg-white/60 z-10 flex flex-col items-center justify-center text-gray-500">
+                    <i class="fas fa-lock text-3xl mb-2"></i>
+                    <span class="text-xs font-bold uppercase">Selesaikan Misi 1 Dulu</span>
+                </div>
+
+                <div class="p-6 flex-grow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xl">2</div>
+                        <span id="badge-2" class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded font-bold uppercase">Terkunci</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-navy-800 mb-2">Ujian Seleksi Minat</h3>
+                    <p class="text-gray-500 text-sm">Tes analisis berpikir dan literasi adaptif yang disesuaikan dengan minatmu oleh sistem.</p>
+                </div>
+                <div class="p-4 bg-gray-50 border-t border-gray-100 mt-auto">
+                    <a href="seleksi.html" id="btn-2" class="block w-full text-center bg-gray-400 text-white py-2 rounded-lg font-bold cursor-not-allowed">
+                        Terkunci
+                    </a>
+                </div>
+            </div>
+
+            <div id="card-3" class="task-card bg-white rounded-xl shadow-lg border-t-4 border-gray-300 overflow-hidden flex flex-col locked relative">
+                
+                <div id="lock-3" class="absolute inset-0 bg-white/60 z-10 flex flex-col items-center justify-center text-gray-500">
+                    <i class="fas fa-lock text-3xl mb-2"></i>
+                    <span class="text-xs font-bold uppercase">Selesaikan Seleksi Dulu</span>
+                </div>
+
+                <div class="p-6 flex-grow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 rounded-full bg-mustard-100 flex items-center justify-center text-mustard-600 font-bold text-xl">3</div>
+                        <span id="badge-3" class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded font-bold uppercase">Menunggu</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-navy-800 mb-2">Pengumuman & Orientasi</h3>
+                    <p class="text-gray-500 text-sm">Cek hasil seleksi dan dapatkan akses ke modul pertama "Dasar Menulis Cerpen".</p>
+                </div>
+                <div class="p-4 bg-gray-50 border-t border-gray-100 mt-auto">
+                    <button onclick="checkAnnouncement()" id="btn-3" class="block w-full text-center bg-gray-400 text-white py-2 rounded-lg font-bold cursor-not-allowed">
+                        Menunggu Jadwal
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-8 bg-green-50 border border-green-200 rounded-xl p-6 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="bg-green-100 p-3 rounded-full text-green-600">
+                    <i class="fas fa-book-open text-2xl"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-navy-800">Bacaan Wajib: Panduan Komunitas</h4>
+                    <p class="text-sm text-gray-600">Pelajari aturan dan budaya di Cendekia Aksara.</p>
+                </div>
+            </div>
+            <a href="#" onclick="Swal.fire('Fitur Segera Hadir', 'Panduan sedang disusun.', 'info')" class="text-green-600 font-bold hover:underline text-sm">
+                Baca Sekarang <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t mt-auto py-6 text-center text-sm text-gray-500">
+        <p>&copy; 2024 Cendekia Aksara.</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- LISTENER STATUS SISWA ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Dengarkan perubahan data di Firestore secara Real-Time
+                onSnapshot(doc(db, "students", user.uid), (doc) => {
+                    updateMissionBoard(doc);
+                });
+            } else {
+                window.location.href = "../index.html";
+            }
+        });
+
+        function updateMissionBoard(docSnap) {
+            // Default: 0% Progress
+            let progress = 0;
+            const data = docSnap.exists() ? docSnap.data() : null;
+
+            // --- MISI 1: ADMINISTRASI ---
+            const card1 = document.getElementById('card-1');
+            const btn1 = document.getElementById('btn-1');
+            const badge1 = document.getElementById('badge-1');
+
+            if (data && data.statusData === "Lengkap") {
+                // Misi 1 Selesai
+                progress += 33;
+                card1.classList.add('border-green-500');
+                card1.classList.remove('border-gray-300');
+                
+                badge1.className = "bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold uppercase";
+                badge1.innerHTML = '<i class="fas fa-check"></i> Selesai';
+                
+                btn1.className = "block w-full text-center bg-green-600 text-white py-2 rounded-lg font-bold shadow cursor-default";
+                btn1.innerText = "Data Terverifikasi";
+                btn1.removeAttribute('href'); // Matikan link
+            } else {
+                // Misi 1 Belum
+                card1.classList.add('border-blue-500');
+            }
+
+            // --- MISI 2: SELEKSI AI ---
+            const card2 = document.getElementById('card-2');
+            const btn2 = document.getElementById('btn-2');
+            const badge2 = document.getElementById('badge-2');
+            const lock2 = document.getElementById('lock-2');
+
+            if (data && data.statusData === "Lengkap") {
+                // Buka Kunci Misi 2
+                card2.classList.remove('locked');
+                lock2.classList.add('hidden'); // Hilangkan gembok
+
+                if (data.statusSeleksi === "Selesai") {
+                    // Misi 2 Selesai
+                    progress += 33;
+                    card2.classList.add('border-green-500');
+                    card2.classList.remove('border-gray-300');
+
+                    badge2.className = "bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold uppercase";
+                    badge2.innerHTML = '<i class="fas fa-check"></i> Selesai';
+
+                    btn2.className = "block w-full text-center bg-green-600 text-white py-2 rounded-lg font-bold shadow cursor-default";
+                    btn2.innerText = "Jawaban Terkirim";
+                    btn2.removeAttribute('href');
+                } else {
+                    // Misi 2 Aktif (Belum Dikerjakan)
+                    card2.classList.add('border-purple-500');
+                    card2.classList.remove('border-gray-300');
+                    
+                    badge2.className = "bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded font-bold uppercase animate-pulse";
+                    badge2.innerText = "Kerjakan Sekarang";
+
+                    btn2.className = "block w-full text-center bg-purple-600 text-white py-2 rounded-lg font-bold hover:bg-purple-700 transition shadow";
+                    btn2.innerText = "Mulai Ujian";
+                    btn2.href = "seleksi.html";
+                }
+            } else {
+                // Masih Terkunci (Default HTML sudah benar)
+            }
+
+            // --- MISI 3: PENGUMUMAN ---
+            const card3 = document.getElementById('card-3');
+            const btn3 = document.getElementById('btn-3');
+            const badge3 = document.getElementById('badge-3');
+            const lock3 = document.getElementById('lock-3');
+
+            if (data && data.statusSeleksi === "Selesai") {
+                // Buka Kunci Misi 3 (Status Menunggu)
+                progress += 34; // Biar jadi 100% kalau logic sederhana
+                card3.classList.remove('locked');
+                lock3.classList.add('hidden');
+
+                card3.classList.add('border-mustard-500');
+                card3.classList.remove('border-gray-300');
+
+                badge3.className = "bg-mustard-100 text-mustard-700 text-xs px-2 py-1 rounded font-bold uppercase";
+                badge3.innerText = "Menunggu Hasil";
+
+                btn3.className = "block w-full text-center bg-navy-800 text-white py-2 rounded-lg font-bold shadow hover:bg-navy-900 transition";
+                btn3.innerText = "Cek Status Penerimaan";
+                btn3.disabled = false;
+                btn3.onclick = checkAnnouncement;
+                btn3.classList.remove('cursor-not-allowed', 'bg-gray-400');
+            }
+
+            // UPDATE GLOBAL PROGRESS
+            document.getElementById('global-progress').style.width = `${progress}%`;
+            document.getElementById('progress-text').innerText = `${progress}% Selesai`;
+        }
+
+        // Fungsi Cek Pengumuman (Simulasi SweetAlert)
+        window.checkAnnouncement = function() {
+            Swal.fire({
+                title: 'Hasil Belum Dirilis',
+                text: 'Tim Pengajar sedang menilai jawaban seleksimu. Pantau terus halaman ini atau grup WhatsApp ya!',
+                icon: 'info',
+                confirmButtonColor: '#001f3f'
+            });
+        }
+    </script>
+
+</body>
+</html>
