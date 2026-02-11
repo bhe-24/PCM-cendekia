@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kata Alumni - Cendekia Aksara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { navy: { 800: '#001f3f', 900: '#00152b' }, mustard: { 400: '#FFDB58', 500: '#E1AD01' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col font-sans">
+
+    <header class="bg-navy-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center w-1/4">
+                <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-10 w-10 rounded-full bg-white border-2 border-mustard-400 mr-3">
+            </div>
+            <div class="absolute left-1/2 transform -translate-x-1/2 text-center">
+                <h1 class="text-lg font-bold text-mustard-400 tracking-wide uppercase">KATA ALUMNI</h1>
+            </div>
+            <div class="flex justify-end items-center w-1/4">
+                <a href="index.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition text-sm font-semibold border border-white/20">
+                    <i class="fas fa-arrow-left"></i> <span class="hidden md:inline">Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-12 flex-grow flex flex-col items-center justify-center">
+        
+        <div class="w-full max-w-4xl relative">
+            
+            <button onclick="prevSlide()" class="absolute left-0 top-1/2 transform -translate-y-1/2 -ml-4 md:-ml-12 bg-white text-navy-800 p-3 rounded-full shadow-lg hover:bg-mustard-400 transition z-10 hidden" id="btn-prev">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <div id="testimonial-container" class="bg-white rounded-2xl shadow-2xl p-8 md:p-12 text-center border-t-8 border-mustard-500 min-h-[300px] flex flex-col items-center justify-center">
+                
+                <div id="loading-state">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-navy-800 mx-auto mb-4"></div>
+                    <p class="text-gray-500">Memuat cerita alumni...</p>
+                </div>
+
+                <div id="empty-state" class="hidden">
+                    <i class="fas fa-user-graduate text-gray-300 text-6xl mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-400">Belum Ada Cerita</h3>
+                    <p class="text-gray-400 text-sm mt-2">Kisah inspiratif alumni akan segera hadir di sini.</p>
+                </div>
+
+                <div id="content-state" class="hidden w-full fade-in">
+                    <div class="relative inline-block mb-6">
+                        <img id="display-foto" src="" class="w-24 h-24 rounded-full border-4 border-navy-800 object-cover shadow-md mx-auto">
+                        <div class="absolute -bottom-2 -right-2 bg-mustard-500 text-navy-900 w-8 h-8 rounded-full flex items-center justify-center shadow font-bold text-xs">
+                            <i class="fas fa-quote-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 text-mustard-500 text-xl" id="display-stars">
+                        </div>
+
+                    <blockquote class="text-xl md:text-2xl font-serif italic text-gray-700 mb-6 leading-relaxed">
+                        "<span id="display-pesan">...</span>"
+                    </blockquote>
+
+                    <div>
+                        <h4 class="text-lg font-bold text-navy-800 uppercase tracking-wider" id="display-nama">Nama Alumni</h4>
+                        <p class="text-sm text-gray-500">Alumni Cendekia Aksara</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <button onclick="nextSlide()" class="absolute right-0 top-1/2 transform -translate-y-1/2 -mr-4 md:-mr-12 bg-white text-navy-800 p-3 rounded-full shadow-lg hover:bg-mustard-400 transition z-10 hidden" id="btn-next">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+
+            <div id="dots-container" class="flex justify-center gap-2 mt-6"></div>
+
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t mt-auto py-6 text-center text-sm text-gray-500">
+        <p>&copy; 2024 Cendekia Aksara.</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let testimonials = [];
+        let currentIndex = 0;
+        let slideInterval;
+
+        // Listen Data Real-Time
+        const q = query(collection(db, "alumni_testimonials"), orderBy("createdAt", "desc"));
+        
+        onSnapshot(q, (snapshot) => {
+            document.getElementById('loading-state').classList.add('hidden');
+            
+            testimonials = [];
+            snapshot.forEach((doc) => {
+                testimonials.push(doc.data());
+            });
+
+            if (testimonials.length === 0) {
+                // Tampilkan Kosong
+                document.getElementById('empty-state').classList.remove('hidden');
+                document.getElementById('content-state').classList.add('hidden');
+                hideControls();
+            } else {
+                // Tampilkan Isi
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('content-state').classList.remove('hidden');
+                showControls();
+                renderSlide(0);
+                startAutoSlide();
+            }
+        });
+
+        // Render Slide
+        function renderSlide(index) {
+            const data = testimonials[index];
+            if (!data) return;
+
+            // Efek Fade In Ulang
+            const container = document.getElementById('content-state');
+            container.classList.remove('fade-in');
+            void container.offsetWidth; // Trigger reflow
+            container.classList.add('fade-in');
+
+            // Set Data
+            document.getElementById('display-nama').innerText = data.nama;
+            document.getElementById('display-pesan').innerText = data.pesan;
+            document.getElementById('display-foto').src = data.foto || "https://i.ibb.co/tMdJD76/default-avatar.png";
+            
+            // Render Bintang
+            let starsHtml = '';
+            for(let i=0; i<5; i++) {
+                if(i < data.rating) starsHtml += '<i class="fas fa-star"></i>';
+                else starsHtml += '<i class="far fa-star text-gray-300"></i>';
+            }
+            document.getElementById('display-stars').innerHTML = starsHtml;
+
+            updateDots(index);
+        }
+
+        // Controls Logic
+        window.prevSlide = function() {
+            currentIndex = (currentIndex === 0) ? testimonials.length - 1 : currentIndex - 1;
+            renderSlide(currentIndex);
+            resetAutoSlide();
+        }
+
+        window.nextSlide = function() {
+            currentIndex = (currentIndex === testimonials.length - 1) ? 0 : currentIndex + 1;
+            renderSlide(currentIndex);
+            resetAutoSlide();
+        }
+
+        function showControls() {
+            document.getElementById('btn-prev').classList.remove('hidden');
+            document.getElementById('btn-next').classList.remove('hidden');
+            
+            // Buat Dots
+            const dotsContainer = document.getElementById('dots-container');
+            dotsContainer.innerHTML = '';
+            testimonials.forEach((_, idx) => {
+                const dot = document.createElement('div');
+                dot.className = `w-3 h-3 rounded-full cursor-pointer transition ${idx===0 ? 'bg-navy-800' : 'bg-gray-300'}`;
+                dot.onclick = () => {
+                    currentIndex = idx;
+                    renderSlide(idx);
+                    resetAutoSlide();
+                };
+                dot.id = `dot-${idx}`;
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        function hideControls() {
+            document.getElementById('btn-prev').classList.add('hidden');
+            document.getElementById('btn-next').classList.add('hidden');
+            document.getElementById('dots-container').innerHTML = '';
+        }
+
+        function updateDots(activeIdx) {
+            testimonials.forEach((_, idx) => {
+                const dot = document.getElementById(`dot-${idx}`);
+                if(dot) {
+                    if (idx === activeIdx) {
+                        dot.classList.remove('bg-gray-300');
+                        dot.classList.add('bg-navy-800', 'scale-125');
+                    } else {
+                        dot.classList.add('bg-gray-300');
+                        dot.classList.remove('bg-navy-800', 'scale-125');
+                    }
+                }
+            });
+        }
+
+        function startAutoSlide() {
+            clearInterval(slideInterval);
+            slideInterval = setInterval(() => {
+                window.nextSlide();
+            }, 5000); // Ganti slide setiap 5 detik
+        }
+
+        function resetAutoSlide() {
+            clearInterval(slideInterval);
+            startAutoSlide();
+        }
+    </script>
+</body>
+</html>
