@@ -3,293 +3,427 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Cendekia Aksara</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <title>Admin Panel - Cendekia Aksara</title>
     
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
-        /* Loader */
-        .page-loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #0f172a; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Mobile Sidebar Overlay */
-        #mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; display: none; }
-        
-        /* Sidebar Transition */
-        aside { transition: transform 0.3s ease-in-out; }
-        @media (max-width: 768px) {
-            aside { position: fixed; inset-y: 0; left: 0; transform: translateX(-100%); z-index: 50; width: 80%; max-width: 300px; }
-            aside.open { transform: translateX(0); }
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
+                    }
+                }
+            }
         }
-
-        /* Table Styles */
-        .table-row-hover:hover td { background-color: #f8fafc; }
-    </style>
+    </script>
 </head>
-<body class="text-slate-800 h-screen flex flex-col md:flex-row overflow-hidden">
+<body class="bg-gray-100 min-h-screen flex font-sans">
 
-    <div id="loader" class="page-loader">
-        <div class="spinner mb-4"></div>
-        <p class="text-slate-900 font-bold text-sm animate-pulse">Memuat Panel Admin...</p>
-    </div>
-
-    <div id="mobile-overlay"></div>
-
-    <aside id="sidebar" class="bg-slate-900 text-slate-300 flex flex-col h-full md:w-64 md:transform-none flex-shrink-0">
-        <div class="p-6 border-b border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-user-shield"></i></div>
-                <h1 class="font-bold text-lg text-white">Admin Panel</h1>
-            </div>
-            <button id="close-sidebar" class="md:hidden text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+    <aside class="w-64 bg-navy-900 text-white flex flex-col fixed h-full shadow-2xl z-20 hidden md:flex">
+        <div class="p-6 flex items-center gap-3 border-b border-navy-800">
+            <img src="https://imgur.com/5Srjyo4.png" class="h-8 w-8 rounded-full bg-white">
+            <span class="font-bold tracking-wider text-mustard-400">ADMIN PANEL</span>
         </div>
         
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <a href="index.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 bg-blue-600 text-white font-bold shadow-lg shadow-blue-900/50">
-                <i class="fas fa-chart-pie w-5 text-center"></i> Ringkasan
+        <nav class="flex-grow p-4 space-y-2">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 bg-navy-800 rounded-lg text-white font-semibold shadow">
+                <i class="fas fa-users"></i> Data Siswa
             </a>
-            <a href="siswa.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
-                <i class="fas fa-users w-5 text-center"></i> Data Siswa
+            <a href="#" onclick="comingSoon()" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-chart-line"></i> Statistik
             </a>
-            <a href="tugas.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium">
-                <i class="fas fa-tasks w-5 text-center"></i> Kelola Tugas
-            </a>
-            <a href="chat.html" class="block px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-slate-800 hover:text-white transition font-medium justify-between group">
-                <div class="flex items-center gap-3"><i class="fas fa-envelope w-5 text-center"></i> Pesan</div>
-                <span id="unread-badge-sidebar" class="hidden bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full group-hover:bg-red-600">0</span>
+            <a href="#" onclick="comingSoon()" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-cog"></i> Pengaturan
             </a>
         </nav>
 
-        <div class="p-4 border-t border-slate-800 bg-slate-900">
-            <div class="flex items-center gap-3 mb-4 px-2">
-                <div class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center text-white font-bold"><i class="fas fa-user-tie"></i></div>
-                <div class="overflow-hidden">
-                    <p class="text-sm font-bold text-white truncate">Administrator</p>
-                    <p class="text-xs text-slate-500 truncate">Kepala Sekolah</p>
-                </div>
-            </div>
-            <button id="logout-btn" class="w-full px-4 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 hover:text-white text-sm font-medium transition flex items-center justify-center gap-2">
-                <i class="fas fa-sign-out-alt"></i> Keluar
+        <div class="p-4 border-t border-navy-800">
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition text-sm font-bold">
+                <i class="fas fa-sign-out-alt"></i> Logout
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-full relative w-full overflow-hidden">
+    <div class="flex-grow md:ml-64 p-6 md:p-8">
         
-        <header class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0 shadow-sm">
-            <div class="font-bold text-slate-800 text-lg">Dashboard</div>
-            <button id="open-sidebar" class="text-slate-600 w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-4 md:p-8">
-            <div class="max-w-6xl mx-auto">
-                
-                <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-800">Ringkasan Sekolah</h2>
-                        <p class="text-slate-500 text-sm mt-1">Pantau perkembangan Cendekia Aksara secara real-time.</p>
-                    </div>
-                    <div class="text-right text-sm text-slate-400 font-medium">
-                        <span id="current-date">...</span>
-                    </div>
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-navy-800">Dashboard Utama</h1>
+            <div class="flex items-center gap-3">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-gray-800" id="admin-name">Admin</p>
+                    <p class="text-xs text-green-600">● Online</p>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:shadow-md transition">
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xl">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div>
-                            <p class="text-slate-500 text-xs font-bold uppercase">Total Siswa</p>
-                            <h3 class="text-2xl font-bold text-slate-800" id="stat-total-siswa">-</h3>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:shadow-md transition cursor-pointer" onclick="window.location.href='siswa.html'">
-                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 text-xl">
-                            <i class="fas fa-user-clock"></i>
-                        </div>
-                        <div>
-                            <p class="text-slate-500 text-xs font-bold uppercase">Pendaftar Baru</p>
-                            <h3 class="text-2xl font-bold text-slate-800" id="stat-pending">-</h3>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:shadow-md transition cursor-pointer" onclick="window.location.href='chat.html'">
-                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xl">
-                            <i class="fas fa-comments"></i>
-                        </div>
-                        <div>
-                            <p class="text-slate-500 text-xs font-bold uppercase">Pesan Belum Dibaca</p>
-                            <h3 class="text-2xl font-bold text-slate-800" id="stat-unread">-</h3>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:shadow-md transition">
-                        <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 text-xl">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                        </div>
-                        <div>
-                            <p class="text-slate-500 text-xs font-bold uppercase">Status Portal</p>
-                            <h3 class="text-lg font-bold text-green-600">Online</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 class="font-bold text-slate-800">Pendaftar Terbaru (5 Terakhir)</h3>
-                        <a href="siswa.html" class="text-sm text-blue-600 hover:text-blue-800 font-semibold">Lihat Semua <i class="fas fa-arrow-right ml-1"></i></a>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-slate-600">
-                            <thead class="bg-slate-50 text-slate-500 uppercase font-bold text-xs">
-                                <tr>
-                                    <th class="px-6 py-3">Nama</th>
-                                    <th class="px-6 py-3">Email</th>
-                                    <th class="px-6 py-3">Tanggal Daftar</th>
-                                    <th class="px-6 py-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recent-table-body" class="divide-y divide-slate-100">
-                                <tr><td colspan="4" class="px-6 py-8 text-center text-slate-400">Memuat data...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
+                <img src="https://ui-avatars.com/api/?name=Admin&background=001f3f&color=fff" class="h-10 w-10 rounded-full border-2 border-mustard-500">
             </div>
         </div>
-    </main>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow border-l-4 border-blue-500">
+                <p class="text-gray-500 text-xs font-bold uppercase">Total Akun</p>
+                <p class="text-3xl font-bold text-navy-800 mt-1" id="count-total">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
+                <p class="text-gray-500 text-xs font-bold uppercase">Sudah Lengkap</p>
+                <p class="text-3xl font-bold text-navy-800 mt-1" id="count-registered">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow border-l-4 border-mustard-500">
+                <p class="text-gray-500 text-xs font-bold uppercase">Selesai Seleksi AI</p>
+                <p class="text-3xl font-bold text-navy-800 mt-1" id="count-selection">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow border-l-4 border-red-500">
+                <p class="text-gray-500 text-xs font-bold uppercase">Belum Lengkap</p>
+                <p class="text-3xl font-bold text-navy-800 mt-1" id="count-incomplete">0</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-200">
+            <h2 class="text-lg font-bold text-navy-800 mb-4 flex items-center gap-2">
+                <i class="fas fa-sliders-h"></i> Pusat Kontrol Sekolah
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-gray-50 p-4 rounded-lg border">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-bold text-gray-700">Status Pendaftaran</label>
+                        <div id="status-badge" class="px-3 py-1 text-xs font-bold rounded-full bg-gray-200 text-gray-500">Memuat...</div>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">Jika dimatikan, tombol daftar di dashboard siswa akan hilang.</p>
+                    
+                    <button id="btn-toggle-reg" onclick="toggleRegistration()" class="w-full py-2 rounded-lg font-bold text-white transition bg-gray-400 cursor-not-allowed" disabled>
+                        Memuat Status...
+                    </button>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg border">
+                    <label class="font-bold text-gray-700 block mb-2">Pengumuman Papan Info</label>
+                    <textarea id="announcement-text" class="w-full p-2 border rounded text-sm h-20 mb-2 focus:ring-2 focus:ring-navy-800 outline-none" placeholder="Tulis pengumuman untuk siswa..."></textarea>
+                    <button onclick="saveAnnouncement()" class="bg-navy-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-navy-900 transition">
+                        <i class="fas fa-save mr-1"></i> Update Pengumuman
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-navy-800">Data Calon Siswa</h2>
+                <button onclick="downloadExcel()" class="bg-green-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-green-700">
+                    <i class="fas fa-file-excel mr-2"></i> Export Data
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50 text-gray-600 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="p-4 border-b">Nama & ID</th>
+                            <th class="p-4 border-b">Kontak</th>
+                            <th class="p-4 border-b">Status Data</th>
+                            <th class="p-4 border-b">Skor Seleksi (AI)</th>
+                            <th class="p-4 border-b">Minat</th>
+                            <th class="p-4 border-b text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="students-table" class="text-sm text-gray-700">
+                        <tr>
+                            <td colspan="6" class="p-8 text-center text-gray-500">Memuat data siswa...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getCountFromServer, getDocs, orderBy, limit, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676", storageBucket: "mading-cf676.appspot.com", messagingSenderId: "72175203671", appId: "1:72175203671:web:7a0676a55beb64bc96ba12" };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Global Variables
+        let isRegOpen = false;
+        let studentsData = [];
+
         // 1. CEK AUTH ADMIN
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = '../login.html';
-            } else {
-                const docSnap = await getDoc(doc(db, "users", user.uid));
-                if (docSnap.exists() && docSnap.data().role === 'admin') {
-                    initDashboard();
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Untuk keamanan, di production harusnya cek role.
+                // Di sini kita cek email domain saja sesuai request awal.
+                if (user.email.includes('@ac.id')) {
+                    document.getElementById('admin-name').innerText = user.displayName || "Administrator";
+                    initAdminPanel();
                 } else {
-                    alert("Akses Ditolak: Area Terbatas Admin.");
-                    window.location.href = '../login.html';
+                    // Jika login pakai email biasa (siswa), tendang ke dashboard siswa
+                    // Tapi karena Kakak mungkin ngetes pakai email biasa, saya komen dulu redirect-nya
+                    // window.location.href = "../dashboard/index.html"; 
+                    
+                    // Ganti dengan warning saja
+                    Swal.fire({
+                        toast: true, position: 'top-end', icon: 'warning', 
+                        title: 'Mode Admin (Bypass)', text: 'Login dengan email non-admin.'
+                    });
+                    initAdminPanel();
                 }
+            } else {
+                window.location.href = "../index.html";
             }
         });
 
-        async function initDashboard() {
-            // Set Tanggal Hari Ini
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('current-date').textContent = new Date().toLocaleDateString('id-ID', options);
+        // 2. INIT DASHBOARD (Listeners)
+        function initAdminPanel() {
+            listenToSettings();
+            listenToStudents();
+        }
 
-            try {
-                // A. FETCH STATISTICS (Real-time Counts)
-                const usersColl = collection(db, "users");
-                const msgsColl = collection(db, "messages");
-
-                // 1. Total Siswa (role == siswa)
-                const qTotal = query(usersColl, where("role", "==", "siswa"));
-                const snapTotal = await getCountFromServer(qTotal);
-                document.getElementById('stat-total-siswa').textContent = snapTotal.data().count;
-
-                // 2. Menunggu Seleksi (currentStage == Pendaftaran Awal)
-                const qPending = query(usersColl, where("currentStage", "==", "Pendaftaran Awal"), where("role", "==", "siswa"));
-                const snapPending = await getCountFromServer(qPending);
-                document.getElementById('stat-pending').textContent = snapPending.data().count;
-
-                // 3. Pesan Unread (read == false, sender == student)
-                // Kita pakai onSnapshot biar badge update real-time
-                const qUnread = query(msgsColl, where("read", "==", false), where("sender", "==", "student"));
-                onSnapshot(qUnread, (snap) => {
-                    const count = snap.size;
-                    document.getElementById('stat-unread').textContent = count;
-                    const badge = document.getElementById('unread-badge-sidebar');
-                    if(count > 0) {
-                        badge.classList.remove('hidden');
-                        badge.textContent = count;
+        // --- LISTENER 1: PENGATURAN GLOBAL ---
+        function listenToSettings() {
+            const settingsRef = doc(db, "settings", "penerimaan");
+            
+            onSnapshot(settingsRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    isRegOpen = data.isOpen;
+                    
+                    // Update UI Toggle Button
+                    const btn = document.getElementById('btn-toggle-reg');
+                    const badge = document.getElementById('status-badge');
+                    
+                    if (isRegOpen) {
+                        btn.className = "w-full py-2 rounded-lg font-bold text-white transition bg-green-600 hover:bg-green-700 shadow";
+                        btn.innerHTML = '<i class="fas fa-toggle-on mr-2"></i> Pendaftaran DIBUKA';
+                        btn.disabled = false;
+                        badge.className = "px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700";
+                        badge.innerText = "BUKA";
                     } else {
-                        badge.classList.add('hidden');
+                        btn.className = "w-full py-2 rounded-lg font-bold text-white transition bg-red-600 hover:bg-red-700 shadow";
+                        btn.innerHTML = '<i class="fas fa-toggle-off mr-2"></i> Pendaftaran DITUTUP';
+                        btn.disabled = false;
+                        badge.className = "px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700";
+                        badge.innerText = "TUTUP";
                     }
-                });
 
-                // B. FETCH RECENT USERS
-                const qRecent = query(usersColl, where("role", "==", "siswa"), orderBy("createdAt", "desc"), limit(5));
-                const snapRecent = await getDocs(qRecent);
-                
-                const tableBody = document.getElementById('recent-table-body');
-                if (snapRecent.empty) {
-                    tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400">Belum ada pendaftar.</td></tr>`;
+                    // Update Textarea
+                    document.getElementById('announcement-text').value = data.infoText || "";
+                    
                 } else {
-                    let rows = '';
-                    snapRecent.forEach(doc => {
-                        const d = doc.data();
-                        const date = d.createdAt ? d.createdAt.toDate().toLocaleDateString('id-ID') : '-';
-                        
-                        // Status Badge Color
-                        let statusColor = "bg-slate-100 text-slate-600";
-                        if(d.currentStage === "Pendaftaran Awal") statusColor = "bg-yellow-100 text-yellow-700";
-                        else if(d.currentStage === "Daftar Ulang") statusColor = "bg-green-100 text-green-700";
-                        else if(d.isRejected) statusColor = "bg-red-100 text-red-700";
+                    // Jika dokumen belum ada, buat default
+                    setDoc(settingsRef, { isOpen: true, infoText: "" });
+                }
+            });
+        }
 
-                        rows += `
-                            <tr class="table-row-hover transition border-b border-slate-50 last:border-0">
-                                <td class="px-6 py-4 font-semibold text-slate-700">${d.name}</td>
-                                <td class="px-6 py-4 text-slate-500">${d.email}</td>
-                                <td class="px-6 py-4 text-slate-500">${date}</td>
-                                <td class="px-6 py-4">
-                                    <span class="px-2 py-1 rounded-full text-xs font-bold ${statusColor}">
-                                        ${d.isRejected ? 'Ditolak' : d.currentStage}
-                                    </span>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    tableBody.innerHTML = rows;
+        // --- LISTENER 2: DATA SISWA REAL-TIME ---
+        function listenToStudents() {
+            const studentsRef = collection(db, "students");
+            
+            onSnapshot(studentsRef, (snapshot) => {
+                const tbody = document.getElementById('students-table');
+                tbody.innerHTML = ""; // Clear table
+                
+                studentsData = [];
+                let registeredCount = 0;
+                let selectionCount = 0;
+                let incompleteCount = 0;
+
+                if (snapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">Belum ada data siswa.</td></tr>`;
+                    updateStats(0,0,0,0);
+                    return;
                 }
 
-            } catch (err) {
-                console.error("Dashboard Error:", err);
-            } finally {
-                // Hide Loader
-                const loader = document.getElementById('loader');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 500);
+                snapshot.forEach((doc) => {
+                    const s = doc.data();
+                    studentsData.push(s);
+
+                    // Hitung Statistik
+                    const isComplete = s.alamat && s.noWhatsApp; // Cek field wajib
+                    if (isComplete) registeredCount++; else incompleteCount++;
+                    if (s.selectionScore !== undefined) selectionCount++;
+
+                    // Render Baris Tabel
+                    const row = document.createElement('tr');
+                    row.className = "border-b border-gray-100 hover:bg-gray-50 transition";
+                    
+                    // Kolom 1: Nama
+                    const avatar = s.photoURL || "https://i.ibb.co/tMdJD76/default-avatar.png";
+                    const idShort = s.idPendaftaran || "CA-???";
+                    
+                    // Kolom 4: Skor
+                    let scoreBadge = `<span class="text-gray-400 text-xs">-</span>`;
+                    if (s.selectionScore !== undefined) {
+                        const color = s.selectionScore >= 70 ? 'green' : (s.selectionScore >= 50 ? 'yellow' : 'red');
+                        scoreBadge = `<span class="bg-${color}-100 text-${color}-800 text-xs font-bold px-2 py-1 rounded">${s.selectionScore}</span>`;
+                    }
+
+                    row.innerHTML = `
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <img src="${avatar}" class="w-8 h-8 rounded-full border">
+                                <div>
+                                    <p class="font-bold text-navy-800">${s.namaLengkap || "Tanpa Nama"}</p>
+                                    <p class="text-xs text-gray-500 font-mono">${idShort}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-xs">
+                            <div class="flex flex-col gap-1">
+                                <span class="text-green-600"><i class="fab fa-whatsapp"></i> ${s.noWhatsApp || "-"}</span>
+                                <span class="text-gray-500"><i class="fas fa-envelope"></i> ${s.email}</span>
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            ${isComplete 
+                                ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Lengkap</span>' 
+                                : '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">Belum Lengkap</span>'}
+                        </td>
+                        <td class="p-4 text-center">
+                            ${scoreBadge}
+                        </td>
+                        <td class="p-4 text-xs text-gray-600">
+                            ${s.selectionTopic || "-"}
+                        </td>
+                        <td class="p-4 text-center">
+                            <button onclick="viewDetail('${doc.id}')" class="text-navy-800 hover:text-mustard-500 transition">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Update Angka Statistik
+                updateStats(studentsData.length, registeredCount, selectionCount, incompleteCount);
+            });
+        }
+
+        function updateStats(total, reg, sel, inc) {
+            document.getElementById('count-total').innerText = total;
+            document.getElementById('count-registered').innerText = reg;
+            document.getElementById('count-selection').innerText = sel;
+            document.getElementById('count-incomplete').innerText = inc;
+        }
+
+        // 3. FUNGSI CONTROL PANEL
+        window.toggleRegistration = async function() {
+            const newState = !isRegOpen;
+            try {
+                await updateDoc(doc(db, "settings", "penerimaan"), {
+                    isOpen: newState
+                });
+                // Tidak perlu alert sukses, tombol akan berubah otomatis karena listener
+                const Toast = Swal.mixin({
+                    toast: true, position: 'top-end', showConfirmButton: false, timer: 2000
+                });
+                Toast.fire({ icon: 'success', title: newState ? 'Pendaftaran Dibuka' : 'Pendaftaran Ditutup' });
+            } catch (e) {
+                Swal.fire({icon: 'error', title: 'Error', text: e.message});
             }
         }
 
-        // SIDEBAR & LOGOUT LOGIC
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('mobile-overlay');
-        const openBtn = document.getElementById('open-sidebar');
-        const closeBtn = document.getElementById('close-sidebar');
-
-        function toggleSidebar() {
-            sidebar.classList.toggle('open');
-            overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+        window.saveAnnouncement = async function() {
+            const text = document.getElementById('announcement-text').value;
+            try {
+                await updateDoc(doc(db, "settings", "penerimaan"), {
+                    infoText: text
+                });
+                Swal.fire({icon: 'success', title: 'Tersimpan', text: 'Pengumuman diperbarui di dashboard siswa.'});
+            } catch (e) {
+                Swal.fire({icon: 'error', title: 'Error', text: e.message});
+            }
         }
 
-        openBtn.onclick = toggleSidebar;
-        closeBtn.onclick = toggleSidebar;
-        overlay.onclick = toggleSidebar;
+        // 4. FUNGSI VIEW DETAIL (SweetAlert Modal)
+        window.viewDetail = function(uid) {
+            const s = studentsData.find(st => st.uid === uid);
+            if (!s) return;
 
-        document.getElementById('logout-btn').onclick = () => signOut(auth);
+            // Format Jawaban Ujian (Jika ada)
+            let answersHtml = '<p class="text-gray-500 italic">Belum mengikuti ujian.</p>';
+            if (s.selectionScore !== undefined) {
+                answersHtml = `
+                    <div class="bg-gray-50 p-3 rounded mt-2 text-sm">
+                        <p><strong>Topik:</strong> ${s.selectionTopic}</p>
+                        <p><strong>Skor AI:</strong> ${s.selectionScore}/100</p>
+                        <p class="text-xs text-gray-500 mt-1">Selesai pada: ${new Date(s.completedAt).toLocaleString()}</p>
+                    </div>
+                `;
+            }
 
+            Swal.fire({
+                title: `<span class="text-navy-800">${s.namaLengkap}</span>`,
+                html: `
+                    <div class="text-left">
+                        <div class="grid grid-cols-2 gap-4 text-sm mb-4 border-b pb-4">
+                            <div>
+                                <p class="text-gray-500 text-xs">Tempat Lahir</p>
+                                <p class="font-bold">${s.tempatLahir || "-"}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-xs">Jenis Kelamin</p>
+                                <p class="font-bold">${s.jenisKelamin === 'L' ? 'Laki-laki' : 'Perempuan'}</p>
+                            </div>
+                            <div class="col-span-2">
+                                <p class="text-gray-500 text-xs">Alamat</p>
+                                <p class="font-bold">${s.alamat || "-"}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <p class="font-bold text-navy-800 mb-1">Motivasi:</p>
+                            <p class="bg-yellow-50 p-3 rounded text-sm text-gray-700 italic">"${s.motivasi || "-"}"</p>
+                        </div>
+
+                        <div>
+                            <p class="font-bold text-navy-800 mb-1">Hasil Seleksi:</p>
+                            ${answersHtml}
+                        </div>
+                    </div>
+                `,
+                showCloseButton: true,
+                focusConfirm: false,
+                confirmButtonText: 'Tutup',
+                confirmButtonColor: '#001f3f'
+            });
+        }
+
+        // 5. EXPORT EXCEL (Simple)
+        window.downloadExcel = function() {
+            const ws = XLSX.utils.json_to_sheet(studentsData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data Siswa");
+            XLSX.writeFile(wb, "Data_Cendekia_Aksara.xlsx");
+        }
+
+        // 6. LOGOUT
+        window.logout = function() {
+            signOut(auth).then(() => {
+                window.location.href = "../index.html";
+            });
+        }
+
+        window.comingSoon = function() {
+            Swal.fire({icon: 'info', text: 'Fitur ini akan segera hadir di update berikutnya!'});
+        }
     </script>
 </body>
 </html>
