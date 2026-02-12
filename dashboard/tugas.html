@@ -86,9 +86,9 @@
             </div>
 
             <div id="card-2" class="task-card bg-white rounded-xl shadow-lg border-t-4 border-gray-300 overflow-hidden flex flex-col locked relative">
-                <div id="lock-2" class="absolute inset-0 bg-white/60 z-10 flex flex-col items-center justify-center text-gray-500">
+                <div id="lock-2" class="absolute inset-0 bg-white/60 z-10 flex flex-col items-center justify-center text-gray-500 text-center px-4">
                     <i class="fas fa-lock text-3xl mb-2"></i>
-                    <span class="text-xs font-bold uppercase">Selesaikan Misi 1 Dulu</span>
+                    <span id="lock-msg-2" class="text-xs font-bold uppercase">Menunggu Pendaftaran Dibuka</span>
                 </div>
 
                 <div class="p-6 flex-grow">
@@ -100,14 +100,13 @@
                     <p class="text-gray-500 text-sm">Tes analisis berpikir dan literasi adaptif yang disesuaikan dengan minatmu.</p>
                 </div>
                 <div class="p-4 bg-gray-50 border-t border-gray-100 mt-auto">
-                    <a href="seleksi.html" id="btn-2" class="block w-full text-center bg-gray-400 text-white py-2 rounded-lg font-bold cursor-not-allowed">
+                    <a href="#" id="btn-2" class="block w-full text-center bg-gray-400 text-white py-2 rounded-lg font-bold cursor-not-allowed">
                         Terkunci
                     </a>
                 </div>
             </div>
 
             <div id="card-3" class="task-card bg-white rounded-xl shadow-lg border-t-4 border-gray-300 overflow-hidden flex flex-col locked relative">
-                
                 <div id="lock-3" class="absolute inset-0 bg-white/60 z-10 flex flex-col items-center justify-center text-gray-500">
                     <i class="fas fa-lock text-3xl mb-2"></i>
                     <span class="text-xs font-bold uppercase">Selesaikan Seleksi Dulu</span>
@@ -170,17 +169,27 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        let isRegistrationOpen = false;
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                onSnapshot(doc(db, "students", user.uid), (doc) => {
-                    updateMissionBoard(doc);
+                // 1. DENGAR STATUS PENDAFTARAN DARI ADMIN
+                onSnapshot(doc(db, "settings", "penerimaan"), (settingsSnap) => {
+                    if (settingsSnap.exists()) {
+                        isRegistrationOpen = settingsSnap.data().isOpen;
+                    }
+                    
+                    // 2. SETELAH TAU STATUS, BARU CEK DATA SISWA
+                    onSnapshot(doc(db, "students", user.uid), (studentSnap) => {
+                        updateMissionBoard(studentSnap, isRegistrationOpen);
+                    });
                 });
             } else {
                 window.location.href = "../index.html";
             }
         });
 
-        function updateMissionBoard(docSnap) {
+        function updateMissionBoard(docSnap, isRegOpen) {
             let progress = 0;
             const data = docSnap.exists() ? docSnap.data() : null;
 
@@ -189,8 +198,7 @@
             const btn1 = document.getElementById('btn-1');
             const badge1 = document.getElementById('badge-1');
 
-            // Cek apakah data profil sudah lengkap? (Nama ada di Auth, tapi cek Firestore)
-            // Asumsi: jika field namaLengkap ada di Firestore, berarti sudah isi profil/data
+            // Cek kelengkapan data
             if (data && data.namaLengkap) {
                 progress += 33;
                 card1.classList.add('border-green-500');
@@ -206,38 +214,72 @@
                 card1.classList.add('border-blue-500');
             }
 
-            // --- MISI 2: SELEKSI ---
+            // --- MISI 2: SELEKSI (LOGIKA UTAMA) ---
             const card2 = document.getElementById('card-2');
             const btn2 = document.getElementById('btn-2');
             const badge2 = document.getElementById('badge-2');
             const lock2 = document.getElementById('lock-2');
+            const lockMsg2 = document.getElementById('lock-msg-2');
 
-            if (data && data.namaLengkap) { // Syarat Misi 1 Selesai
-                card2.classList.remove('locked');
-                lock2.classList.add('hidden');
+            // Syarat Buka: Profil Lengkap AND Pendaftaran BUKA
+            if (data && data.namaLengkap) { 
+                
+                if (isRegOpen) {
+                    // Pendaftaran BUKA -> Boleh Ujian
+                    card2.classList.remove('locked');
+                    lock2.classList.add('hidden');
 
-                if (data.statusSeleksi === "Selesai") {
-                    progress += 33;
-                    card2.classList.add('border-green-500');
-                    card2.classList.remove('border-gray-300');
+                    if (data.statusSeleksi === "Selesai") {
+                        // Sudah Ujian
+                        progress += 33;
+                        card2.classList.add('border-green-500');
+                        card2.classList.remove('border-gray-300');
 
-                    badge2.className = "bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold uppercase";
-                    badge2.innerHTML = '<i class="fas fa-check"></i> Selesai';
+                        badge2.className = "bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold uppercase";
+                        badge2.innerHTML = '<i class="fas fa-check"></i> Selesai';
 
-                    btn2.className = "block w-full text-center bg-green-600 text-white py-2 rounded-lg font-bold shadow cursor-default";
-                    btn2.innerText = "Jawaban Terkirim";
-                    btn2.removeAttribute('href');
+                        btn2.className = "block w-full text-center bg-green-600 text-white py-2 rounded-lg font-bold shadow cursor-default";
+                        btn2.innerText = "Jawaban Terkirim";
+                        btn2.removeAttribute('href');
+                    } else {
+                        // Belum Ujian
+                        card2.classList.add('border-purple-500');
+                        card2.classList.remove('border-gray-300');
+                        
+                        badge2.className = "bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded font-bold uppercase animate-pulse";
+                        badge2.innerText = "Kerjakan Sekarang";
+
+                        btn2.className = "block w-full text-center bg-purple-600 text-white py-2 rounded-lg font-bold hover:bg-purple-700 transition shadow";
+                        btn2.innerText = "Mulai Ujian";
+                        btn2.href = "seleksi.html";
+                    }
                 } else {
-                    card2.classList.add('border-purple-500');
-                    card2.classList.remove('border-gray-300');
-                    
-                    badge2.className = "bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded font-bold uppercase animate-pulse";
-                    badge2.innerText = "Kerjakan Sekarang";
-
-                    btn2.className = "block w-full text-center bg-purple-600 text-white py-2 rounded-lg font-bold hover:bg-purple-700 transition shadow";
-                    btn2.innerText = "Mulai Ujian";
-                    btn2.href = "seleksi.html";
+                    // Pendaftaran TUTUP -> Tetap Terkunci meski Biodata Lengkap
+                    // Kecuali kalau sudah terlanjur selesai ujian sebelumnya
+                    if (data.statusSeleksi === "Selesai") {
+                         // Kasus khusus: Siswa lama yang sudah ujian, tapi admin tutup pendaftaran baru.
+                         // Tetap tampilkan hijau selesai.
+                        progress += 33;
+                        card2.classList.remove('locked');
+                        lock2.classList.add('hidden');
+                        card2.classList.add('border-green-500');
+                        
+                        badge2.className = "bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold uppercase";
+                        badge2.innerHTML = '<i class="fas fa-check"></i> Selesai';
+                        
+                        btn2.className = "block w-full text-center bg-green-600 text-white py-2 rounded-lg font-bold shadow cursor-default";
+                        btn2.innerText = "Jawaban Terkirim";
+                    } else {
+                        // Biodata lengkap, tapi Admin belum buka / sudah tutup -> Kunci
+                        card2.classList.add('locked');
+                        lock2.classList.remove('hidden');
+                        lockMsg2.innerText = "PENDAFTARAN BELUM DIBUKA"; // Pesan Kunci
+                    }
                 }
+
+            } else {
+                // Biodata Belum Lengkap -> Kunci dengan pesan "Selesaikan Misi 1"
+                lockMsg2.innerText = "SELESAIKAN MISI 1 DULU";
             }
 
             // --- MISI 3: PENGUMUMAN ---
