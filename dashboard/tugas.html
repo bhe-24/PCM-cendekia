@@ -76,11 +76,11 @@
                         <span id="badge-1" class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded font-bold uppercase">Pending</span>
                     </div>
                     <h3 class="text-xl font-bold text-navy-800 mb-2">Lengkapi Biodata</h3>
-                    <p class="text-gray-500 text-sm">Isi formulir pendaftaran dengan data diri lengkap, kontak, dan motivasi menulismu.</p>
+                    <p class="text-gray-500 text-sm">Masuk ke menu Profil, lengkapi nama, foto, dan data diri agar terdata di sistem.</p>
                 </div>
                 <div class="p-4 bg-gray-50 border-t border-gray-100 mt-auto">
                     <a href="profil.html" id="btn-1" class="block w-full text-center bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition shadow">
-                        Kerjakan Sekarang
+                        Lengkapi di Profil
                     </a>
                 </div>
             </div>
@@ -97,7 +97,7 @@
                         <span id="badge-2" class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded font-bold uppercase">Terkunci</span>
                     </div>
                     <h3 class="text-xl font-bold text-navy-800 mb-2">Ujian Seleksi Minat</h3>
-                    <p class="text-gray-500 text-sm">Tes analisis berpikir dan literasi adaptif yang disesuaikan dengan minatmu oleh sistem.</p>
+                    <p class="text-gray-500 text-sm">Tes analisis berpikir dan literasi adaptif yang disesuaikan dengan minatmu.</p>
                 </div>
                 <div class="p-4 bg-gray-50 border-t border-gray-100 mt-auto">
                     <a href="seleksi.html" id="btn-2" class="block w-full text-center bg-gray-400 text-white py-2 rounded-lg font-bold cursor-not-allowed">
@@ -119,7 +119,7 @@
                         <span id="badge-3" class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded font-bold uppercase">Menunggu</span>
                     </div>
                     <h3 class="text-xl font-bold text-navy-800 mb-2">Pengumuman & Orientasi</h3>
-                    <p class="text-gray-500 text-sm">Cek hasil seleksi dan dapatkan akses ke modul pertama "Dasar Menulis Cerpen".</p>
+                    <p class="text-gray-500 text-sm">Cek hasil seleksi dan dapatkan akses ke modul pertama.</p>
                 </div>
                 <div class="p-4 bg-gray-50 border-t border-gray-100 mt-auto">
                     <button onclick="checkAnnouncement()" id="btn-3" class="block w-full text-center bg-gray-400 text-white py-2 rounded-lg font-bold cursor-not-allowed">
@@ -170,10 +170,8 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- LISTENER STATUS SISWA ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Dengarkan perubahan data di Firestore secara Real-Time
                 onSnapshot(doc(db, "students", user.uid), (doc) => {
                     updateMissionBoard(doc);
                 });
@@ -183,17 +181,17 @@
         });
 
         function updateMissionBoard(docSnap) {
-            // Default: 0% Progress
             let progress = 0;
             const data = docSnap.exists() ? docSnap.data() : null;
 
-            // --- MISI 1: ADMINISTRASI ---
+            // --- MISI 1: PROFIL ---
             const card1 = document.getElementById('card-1');
             const btn1 = document.getElementById('btn-1');
             const badge1 = document.getElementById('badge-1');
 
-            if (data && data.statusData === "Lengkap") {
-                // Misi 1 Selesai
+            // Cek apakah data profil sudah lengkap? (Nama ada di Auth, tapi cek Firestore)
+            // Asumsi: jika field namaLengkap ada di Firestore, berarti sudah isi profil/data
+            if (data && data.namaLengkap) {
                 progress += 33;
                 card1.classList.add('border-green-500');
                 card1.classList.remove('border-gray-300');
@@ -202,26 +200,23 @@
                 badge1.innerHTML = '<i class="fas fa-check"></i> Selesai';
                 
                 btn1.className = "block w-full text-center bg-green-600 text-white py-2 rounded-lg font-bold shadow cursor-default";
-                btn1.innerText = "Data Terverifikasi";
-                btn1.removeAttribute('href'); // Matikan link
+                btn1.innerText = "Profil Lengkap";
+                btn1.removeAttribute('href'); 
             } else {
-                // Misi 1 Belum
                 card1.classList.add('border-blue-500');
             }
 
-            // --- MISI 2: SELEKSI AI ---
+            // --- MISI 2: SELEKSI ---
             const card2 = document.getElementById('card-2');
             const btn2 = document.getElementById('btn-2');
             const badge2 = document.getElementById('badge-2');
             const lock2 = document.getElementById('lock-2');
 
-            if (data && data.statusData === "Lengkap") {
-                // Buka Kunci Misi 2
+            if (data && data.namaLengkap) { // Syarat Misi 1 Selesai
                 card2.classList.remove('locked');
-                lock2.classList.add('hidden'); // Hilangkan gembok
+                lock2.classList.add('hidden');
 
                 if (data.statusSeleksi === "Selesai") {
-                    // Misi 2 Selesai
                     progress += 33;
                     card2.classList.add('border-green-500');
                     card2.classList.remove('border-gray-300');
@@ -233,7 +228,6 @@
                     btn2.innerText = "Jawaban Terkirim";
                     btn2.removeAttribute('href');
                 } else {
-                    // Misi 2 Aktif (Belum Dikerjakan)
                     card2.classList.add('border-purple-500');
                     card2.classList.remove('border-gray-300');
                     
@@ -244,8 +238,6 @@
                     btn2.innerText = "Mulai Ujian";
                     btn2.href = "seleksi.html";
                 }
-            } else {
-                // Masih Terkunci (Default HTML sudah benar)
             }
 
             // --- MISI 3: PENGUMUMAN ---
@@ -255,8 +247,7 @@
             const lock3 = document.getElementById('lock-3');
 
             if (data && data.statusSeleksi === "Selesai") {
-                // Buka Kunci Misi 3 (Status Menunggu)
-                progress += 34; // Biar jadi 100% kalau logic sederhana
+                progress += 34;
                 card3.classList.remove('locked');
                 lock3.classList.add('hidden');
 
@@ -273,16 +264,14 @@
                 btn3.classList.remove('cursor-not-allowed', 'bg-gray-400');
             }
 
-            // UPDATE GLOBAL PROGRESS
             document.getElementById('global-progress').style.width = `${progress}%`;
             document.getElementById('progress-text').innerText = `${progress}% Selesai`;
         }
 
-        // Fungsi Cek Pengumuman (Simulasi SweetAlert)
         window.checkAnnouncement = function() {
             Swal.fire({
                 title: 'Hasil Belum Dirilis',
-                text: 'Tim Pengajar sedang menilai jawaban seleksimu. Pantau terus halaman ini atau grup WhatsApp ya!',
+                text: 'Pantau terus halaman ini atau grup WhatsApp ya!',
                 icon: 'info',
                 confirmButtonColor: '#001f3f'
             });
