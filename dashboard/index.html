@@ -206,7 +206,7 @@
 
         let acceptedCount = 0;
         let isQuotaFull = false;
-        let isRegistrationOpen = false; // Status dari Admin
+        let isRegistrationOpen = false;
 
         // 1. CEK KUOTA 
         async function checkQuota() {
@@ -247,7 +247,7 @@
                     }
                     // BARU UPDATE DATA SISWA
                     listenToStudentData(user);
-                    listenToGlobalSettings(settingsSnap); // Kirim snap langsung biar efisien
+                    listenToGlobalSettings(settingsSnap);
                 });
 
             } else {
@@ -285,14 +285,13 @@
                 document.body.setAttribute('data-registered', 'true');
 
                 // STEP 1: OK
-                // Cek apakah profil sudah lengkap (nama ada)
                 if (data.namaLengkap) {
                     step1Status.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Data Lengkap</span>`;
                 } else {
                     step1Status.innerHTML = `<span class="text-red-500 text-sm font-bold"><i class="fas fa-exclamation-circle mr-1"></i> Belum Lengkap</span>`;
                 }
                 
-                // STEP 2: TES SELEKSI (LOGIKA BARU DENGAN STATUS PENDAFTARAN)
+                // STEP 2: TES SELEKSI (LOGIKA KUNCI PENDAFTARAN)
                 if (data.selectionScore === undefined || data.selectionScore === null) {
                     // Belum Ujian
                     if (isRegistrationOpen) {
@@ -312,7 +311,7 @@
                     }
                     resultCardContainer.innerHTML = "";
                 } else {
-                    // SUDAH TES (Tetap tampilkan hasil meskipun pendaftaran ditutup)
+                    // SUDAH TES (Tetap tampilkan hasil)
                     iconSeleksi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 shadow-sm shrink-0 border-4 border-white";
                     step2Action.innerHTML = `<span class="text-gray-500 text-sm font-bold">Ujian Selesai</span>`;
 
@@ -411,10 +410,11 @@
 
                 if (!isRegistered) {
                     if (data.isOpen && !isQuotaFull) {
+                        // REVISI: LINK KE DAFTAR.HTML
                         htmlContent += `
                             <div class="mt-2 pt-2 border-t border-gray-200">
                                 <p class="text-green-600 mb-2 font-bold text-sm">🟢 Pendaftaran Sedang Dibuka</p>
-                                <a href="profil.html" class="inline-block bg-mustard-500 text-navy-900 px-6 py-2 rounded-lg font-bold shadow hover:bg-mustard-400 transition animate-pulse">
+                                <a href="daftar.html" class="inline-block bg-mustard-500 text-navy-900 px-6 py-2 rounded-lg font-bold shadow hover:bg-mustard-400 transition animate-pulse">
                                     Lengkapi Biodata Siswa <i class="fas fa-arrow-right ml-2"></i>
                                 </a>
                             </div>`;
