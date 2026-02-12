@@ -105,7 +105,7 @@
                         </div>
                         <div>
                             <h4 class="font-bold text-gray-800">1. Pendaftaran Administrasi</h4>
-                            <p class="text-sm text-gray-500 mt-1">Isi formulir biodata lengkap.</p>
+                            <p class="text-sm text-gray-500 mt-1">Lengkapi Profil Biodata.</p>
                             <div id="step-1-status" class="mt-2"></div>
                         </div>
                     </div>
@@ -206,6 +206,7 @@
 
         let acceptedCount = 0;
         let isQuotaFull = false;
+        let isRegistrationOpen = false; // Status dari Admin
 
         // 1. CEK KUOTA 
         async function checkQuota() {
@@ -238,8 +239,16 @@
                 document.getElementById('card-foto').src = photoUrl;
 
                 await checkQuota();
-                listenToStudentData(user);
-                listenToGlobalSettings();
+                
+                // DENGAR STATUS PENDAFTARAN DULU
+                onSnapshot(doc(db, "settings", "penerimaan"), (settingsSnap) => {
+                    if (settingsSnap.exists()) {
+                        isRegistrationOpen = settingsSnap.data().isOpen;
+                    }
+                    // BARU UPDATE DATA SISWA
+                    listenToStudentData(user);
+                    listenToGlobalSettings(settingsSnap); // Kirim snap langsung biar efisien
+                });
 
             } else {
                 window.location.href = "../index.html"; 
@@ -263,6 +272,7 @@
                 const iconSeleksi = document.getElementById('icon-seleksi');
                 const iconOrientasi = document.getElementById('icon-orientasi');
 
+                // DEFAULT: Belum ada data
                 if (!docSnap.exists()) {
                     document.body.setAttribute('data-registered', 'false');
                     labelStatus.innerText = "Calon Siswa";
@@ -275,17 +285,34 @@
                 document.body.setAttribute('data-registered', 'true');
 
                 // STEP 1: OK
-                step1Status.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Data Lengkap</span>`;
+                // Cek apakah profil sudah lengkap (nama ada)
+                if (data.namaLengkap) {
+                    step1Status.innerHTML = `<span class="text-green-600 text-sm font-bold"><i class="fas fa-check-circle mr-1"></i> Data Lengkap</span>`;
+                } else {
+                    step1Status.innerHTML = `<span class="text-red-500 text-sm font-bold"><i class="fas fa-exclamation-circle mr-1"></i> Belum Lengkap</span>`;
+                }
                 
-                // STEP 2: TES
+                // STEP 2: TES SELEKSI (LOGIKA BARU DENGAN STATUS PENDAFTARAN)
                 if (data.selectionScore === undefined || data.selectionScore === null) {
-                    iconSeleksi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-mustard-100 text-mustard-600 shadow-sm shrink-0 border-4 border-white animate-bounce";
-                    step2Action.innerHTML = `
-                        <button onclick="startSelection()" class="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-bold shadow hover:bg-navy-900 transition">
-                            <i class="fas fa-pen-nib mr-2"></i>Mulai Ujian
-                        </button>`;
+                    // Belum Ujian
+                    if (isRegistrationOpen) {
+                        // BUKA: Tampilkan Tombol
+                        iconSeleksi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-mustard-100 text-mustard-600 shadow-sm shrink-0 border-4 border-white animate-bounce";
+                        step2Action.innerHTML = `
+                            <button onclick="startSelection()" class="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-bold shadow hover:bg-navy-900 transition">
+                                <i class="fas fa-pen-nib mr-2"></i>Mulai Ujian
+                            </button>`;
+                    } else {
+                        // TUTUP: Kunci Tombol
+                        iconSeleksi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-400 shadow-sm shrink-0 border-4 border-white";
+                        step2Action.innerHTML = `
+                            <button disabled class="bg-gray-300 text-gray-500 px-5 py-2 rounded-lg text-sm font-bold cursor-not-allowed border border-gray-400">
+                                <i class="fas fa-lock mr-2"></i>Menunggu Pendaftaran Dibuka
+                            </button>`;
+                    }
                     resultCardContainer.innerHTML = "";
                 } else {
+                    // SUDAH TES (Tetap tampilkan hasil meskipun pendaftaran ditutup)
                     iconSeleksi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 shadow-sm shrink-0 border-4 border-white";
                     step2Action.innerHTML = `<span class="text-gray-500 text-sm font-bold">Ujian Selesai</span>`;
 
@@ -347,15 +374,13 @@
                     }
                 }
 
-                // --- 4. STATUS SISWA RESMI (UPDATE TEXT HERE) ---
+                // --- 4. STATUS SISWA RESMI ---
                 if (data.isOfficialStudent === true) {
                     studentCard.classList.remove('from-navy-800', 'to-navy-900');
                     studentCard.classList.add('from-green-600', 'to-green-800');
                     
                     labelStatus.className = "bg-white text-green-700 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider";
                     labelStatus.innerText = "SISWA RESMI";
-                    
-                    // !!! BAGIAN INI SUDAH DIGANTI SESUAI REQUEST !!!
                     textStatus.innerText = "Siswa Aktif";
                     
                     document.getElementById('final-achievement').classList.remove('hidden');
@@ -367,69 +392,65 @@
         }
 
         // --- 5. DENGAR PENGUMUMAN ---
-        function listenToGlobalSettings() {
-            const settingsRef = doc(db, "settings", "penerimaan");
+        function listenToGlobalSettings(docSnap) {
+            const infoBoardContent = document.getElementById('status-content');
+            const newsContainer = document.getElementById('news-container');
+            const newsList = document.getElementById('news-list');
 
-            onSnapshot(settingsRef, (docSnap) => {
-                const infoBoardContent = document.getElementById('status-content');
-                const newsContainer = document.getElementById('news-container');
-                const newsList = document.getElementById('news-list');
+            if (docSnap && docSnap.exists()) {
+                const data = docSnap.data();
+                let htmlContent = "";
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    let htmlContent = "";
+                if (data.infoText && data.infoText.trim() !== "") {
+                    htmlContent += `<p class="text-navy-800 mb-3 font-medium">${data.infoText}</p>`;
+                } else {
+                    htmlContent += `<p class="text-gray-500 mb-3 italic">Belum ada pengumuman khusus.</p>`;
+                }
 
-                    if (data.infoText && data.infoText.trim() !== "") {
-                        htmlContent += `<p class="text-navy-800 mb-3 font-medium">${data.infoText}</p>`;
-                    } else {
-                        htmlContent += `<p class="text-gray-500 mb-3 italic">Belum ada pengumuman khusus.</p>`;
-                    }
+                const isRegistered = document.body.getAttribute('data-registered') === 'true';
 
-                    const isRegistered = document.body.getAttribute('data-registered') === 'true';
-
-                    if (!isRegistered) {
-                        if (data.isOpen && !isQuotaFull) {
-                            htmlContent += `
-                                <div class="mt-2 pt-2 border-t border-gray-200">
-                                    <p class="text-green-600 mb-2 font-bold text-sm">🟢 Pendaftaran Sedang Dibuka</p>
-                                    <a href="daftar.html" class="inline-block bg-mustard-500 text-navy-900 px-6 py-2 rounded-lg font-bold shadow hover:bg-mustard-400 transition animate-pulse">
-                                        Lengkapi Biodata Siswa <i class="fas fa-arrow-right ml-2"></i>
-                                    </a>
-                                </div>`;
-                        } else if (isQuotaFull) {
-                             htmlContent += `
-                                <div class="mt-2 pt-2 border-t border-gray-200">
-                                    <p class="text-red-600 font-bold text-sm">🔴 Pendaftaran Ditutup (Kuota Penuh)</p>
-                                    <p class="text-xs text-gray-500">Terima kasih atas antusiasme calon siswa.</p>
-                                </div>`;
-                        } else {
-                             htmlContent += `
-                                <div class="mt-2 pt-2 border-t border-gray-200">
-                                    <p class="text-red-600 font-bold text-sm">🔴 Pendaftaran Belum Dibuka</p>
-                                    <p class="text-xs text-gray-500">Nantikan informasi selanjutnya.</p>
-                                </div>`;
-                        }
-                    } else {
+                if (!isRegistered) {
+                    if (data.isOpen && !isQuotaFull) {
                         htmlContent += `
                             <div class="mt-2 pt-2 border-t border-gray-200">
-                                <p class="text-blue-600 font-bold text-sm"><i class="fas fa-info-circle"></i> Ikuti tahapan seleksi di bawah.</p>
-                            </div>
-                        `;
+                                <p class="text-green-600 mb-2 font-bold text-sm">🟢 Pendaftaran Sedang Dibuka</p>
+                                <a href="profil.html" class="inline-block bg-mustard-500 text-navy-900 px-6 py-2 rounded-lg font-bold shadow hover:bg-mustard-400 transition animate-pulse">
+                                    Lengkapi Biodata Siswa <i class="fas fa-arrow-right ml-2"></i>
+                                </a>
+                            </div>`;
+                    } else if (isQuotaFull) {
+                            htmlContent += `
+                            <div class="mt-2 pt-2 border-t border-gray-200">
+                                <p class="text-red-600 font-bold text-sm">🔴 Pendaftaran Ditutup (Kuota Penuh)</p>
+                                <p class="text-xs text-gray-500">Terima kasih atas antusiasme calon siswa.</p>
+                            </div>`;
+                    } else {
+                            htmlContent += `
+                            <div class="mt-2 pt-2 border-t border-gray-200">
+                                <p class="text-red-600 font-bold text-sm">🔴 Pendaftaran Belum Dibuka</p>
+                                <p class="text-xs text-gray-500">Nantikan informasi selanjutnya.</p>
+                            </div>`;
                     }
-
-                    infoBoardContent.innerHTML = htmlContent;
-
-                    if (data.kabarSekolah && Array.isArray(data.kabarSekolah) && data.kabarSekolah.length > 0) {
-                        newsContainer.classList.remove('hidden');
-                        newsList.innerHTML = data.kabarSekolah.map(news => `
-                            <li class="flex items-start gap-2">
-                                <i class="fas fa-check text-green-500 mt-1"></i>
-                                <span>${news}</span>
-                            </li>
-                        `).join('');
-                    }
+                } else {
+                    htmlContent += `
+                        <div class="mt-2 pt-2 border-t border-gray-200">
+                            <p class="text-blue-600 font-bold text-sm"><i class="fas fa-info-circle"></i> Ikuti tahapan seleksi di bawah.</p>
+                        </div>
+                    `;
                 }
-            });
+
+                infoBoardContent.innerHTML = htmlContent;
+
+                if (data.kabarSekolah && Array.isArray(data.kabarSekolah) && data.kabarSekolah.length > 0) {
+                    newsContainer.classList.remove('hidden');
+                    newsList.innerHTML = data.kabarSekolah.map(news => `
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-green-500 mt-1"></i>
+                            <span>${news}</span>
+                        </li>
+                    `).join('');
+                }
+            }
         }
 
         window.startSelection = function() {
