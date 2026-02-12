@@ -173,7 +173,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-analytics.js";
+        // TAMBAHKAN: setDoc dan doc
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
@@ -187,6 +188,7 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
 
         // --- 1. LOGIC TOGGLE PASSWORD (Show/Hide) ---
         window.togglePassword = function(fieldId, iconId) {
@@ -240,16 +242,19 @@
             }
         }
 
-        // --- 3. LOGIC REGISTER (Wajib pakai updateProfile) ---
-        document.getElementById('form-register').addEventListener('submit', function(e) {
+        // --- 3. LOGIC REGISTER (PERBAIKAN: SIMPAN KE DATABASE) ---
+        document.getElementById('form-register').addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            // Ambil semua data dari input
             const nama = document.getElementById('reg-nama').value;
             const tglLahirVal = document.getElementById('reg-tgl-lahir').value;
+            const alamat = document.getElementById('reg-alamat').value;
+            const telp = document.getElementById('reg-telp').value;
             const email = document.getElementById('reg-email').value;
             const password = document.getElementById('reg-password').value;
 
-            // Cek Umur
+            // Cek Umur (15 Tahun)
             const tglLahir = new Date(tglLahirVal);
             const today = new Date();
             let age = today.getFullYear() - tglLahir.getFullYear();
@@ -268,35 +273,49 @@
 
             Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
 
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    // Update Nama Langsung ke Akun
-                    return updateProfile(user, {
-                        displayName: nama,
-                        photoURL: "https://i.ibb.co/tMdJD76/default-avatar.png"
-                    });
-                })
-                .then(() => {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: 'Akun ' + nama + ' berhasil dibuat.',
-                        confirmButtonText: 'Masuk Dashboard',
-                        confirmButtonColor: '#001f3f'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            // Clear form & switch to login visual
-                            document.getElementById('form-register').reset();
-                            switchTab('login');
-                        }
-                    });
-                })
-                .catch((error) => {
-                    let msg = error.message;
-                    if(error.code === 'auth/email-already-in-use') msg = "Email sudah terdaftar.";
-                    Swal.fire({icon: 'error', title: 'Gagal', text: msg, confirmButtonColor: '#d33'});
+            try {
+                // 1. Buat Akun Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // 2. Update Profile Auth (Nama)
+                await updateProfile(user, {
+                    displayName: nama,
+                    photoURL: "https://i.ibb.co/tMdJD76/default-avatar.png"
                 });
+
+                // 3. SIMPAN KE FIRESTORE (INI KUNCI PERBAIKANNYA)
+                // Kita simpan Nama, Tgl Lahir, Alamat, dan WA agar bisa di-load nanti
+                await setDoc(doc(db, "students", user.uid), {
+                    namaLengkap: nama,
+                    tanggalLahir: tglLahirVal,
+                    alamat: alamat,
+                    noWhatsApp: telp,
+                    email: email,
+                    photoURL: "https://i.ibb.co/tMdJD76/default-avatar.png",
+                    createdAt: new Date().toISOString(),
+                    statusData: "Belum Lengkap" // Default status
+                });
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Akun ' + nama + ' berhasil dibuat.',
+                    confirmButtonText: 'Masuk Dashboard',
+                    confirmButtonColor: '#001f3f'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('form-register').reset();
+                        switchTab('login');
+                    }
+                });
+
+            } catch (error) {
+                console.error(error);
+                let msg = error.message;
+                if(error.code === 'auth/email-already-in-use') msg = "Email sudah terdaftar.";
+                Swal.fire({icon: 'error', title: 'Gagal', text: msg, confirmButtonColor: '#d33'});
+            }
         });
 
         // --- 4. LOGIC LOGIN ---
@@ -329,7 +348,7 @@
                 });
         });
 
-        // --- 5. LOGIC RESET PASSWORD (Di Halaman Form Baru) ---
+        // --- 5. LOGIC RESET PASSWORD ---
         document.getElementById('form-reset-action').addEventListener('submit', function(e) {
             e.preventDefault();
             const email = document.getElementById('reset-email').value;
