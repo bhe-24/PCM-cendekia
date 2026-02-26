@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
         if (!message) return res.status(400).json({ error: 'Pesan kosong' });
 
-        // 2. SYSTEM PROMPT (Instruksi ketat untuk AI)
+        // 2. SYSTEM PROMPT
         const systemPrompt = `
 Peran Anda adalah "AksaBot", asisten virtual yang ramah, manis, dan pintar dari komunitas Cendekia Aksara.
 Sapaan pengguna saat ini: ${userName || 'Teman'}. Sesuaikan gaya bicaramu agar akrab, asik, tapi tetap profesional.
@@ -28,41 +28,44 @@ ATURAN MENJAWAB (WAJIB DIIKUTI):
 "${knowledgeContext || 'Saat ini belum ada informasi spesifik mengenai Cendekia Aksara.'}"
 `;
 
-        // 3. MEMANGGIL GROQ API MENGGUNAKAN FETCH
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        // 3. MEMANGGIL OPENROUTER API
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://cendekia-aksara.vercel.app', // Opsional: Untuk ranking di OpenRouter
+                'X-Title': 'AksaBot v2' 
             },
             body: JSON.stringify({
-                // PERUBAHAN ADA DI SINI: Menggunakan model terbaru Groq yang didukung
-                model: 'groq/compound', 
+                // MENGGUNAKAN JALUR GRATIS OTOMATIS
+                model: 'openrouter/free', 
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: message }
                 ],
-                temperature: 0.5,
+                temperature: 0.7, // Sedikit lebih tinggi agar gaya bicaranya lebih luwes
             })
         });
 
         const data = await response.json();
 
-        // Tangkap jika ada error dari server Groq
+        // Tangkap jika ada error dari server OpenRouter
         if (!response.ok) {
-            throw new Error(data.error?.message || 'Gagal menghubungi Groq API');
+            throw new Error(data.error?.message || 'Gagal menghubungi OpenRouter API');
         }
 
         // 4. BERSIHKAN & KIRIM BALASAN
         let textResponse = data.choices[0].message.content;
         
-        // Jaga-jaga jika AI masih bandel pakai markdown
+        // Pembersihan tambahan agar tetap konsisten menggunakan HTML
         textResponse = textResponse.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+        textResponse = textResponse.replace(/\n/g, '<br>');
 
         res.status(200).json({ reply: textResponse });
 
     } catch (error) {
-        console.error("AksaBot Groq Error:", error);
-        res.status(500).json({ reply: "Aduh, sistem AksaBot lagi tidur siang nih 💤. Coba sapa aku lagi nanti ya!" });
+        console.error("AksaBot OpenRouter Error:", error);
+        res.status(500).json({ reply: "Aduh, AksaBot lagi sedikit pusing 😵‍💫. Coba sapa aku lagi nanti ya, manis!" });
     }
 }
