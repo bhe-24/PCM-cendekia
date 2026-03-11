@@ -10,7 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-pdfmake/browser.js"></script>
 
     <script>
         tailwind.config = {
@@ -143,7 +146,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
         
-        // Konfigurasi Database
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
             authDomain: "mading-cf676.firebaseapp.com",
@@ -160,7 +162,7 @@
         let currentQuestionIndex = 0;
         let userAnswers = {};
 
-        // Cek login
+        // Pastikan Siswa Login
         onAuthStateChanged(auth, (user) => {
             if (!user) window.location.href = "../index.html";
         });
@@ -185,7 +187,7 @@
             }, 1500);
 
             try {
-                // Coba panggil backend API jika ada
+                // Endpoint AI
                 const response = await fetch('/api/simulasi', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -196,8 +198,8 @@
                 questions = await response.json();
 
             } catch (error) {
-                // JIKA API GAGAL/BELUM DIBUAT, KITA PAKAI SOAL DUMMY AGAR TETAP BISA JALAN
-                console.log("Menggunakan soal cadangan karena server Aksa belum tersedia.");
+                // SOAL DUMMY JIKA BACKEND BELUM TERHUBUNG (Dibuat otomatis jika API mati)
+                console.log("Menggunakan soal cadangan karena server Aksa belum merespon.");
                 questions = [
                     {
                         category: "Analisis Karakter",
@@ -229,7 +231,6 @@
                     }
                 ];
                 
-                // Beri jeda 3 detik agar animasi loading terlihat natural
                 await new Promise(r => setTimeout(r, 3000));
             }
 
@@ -301,78 +302,77 @@
             renderQuestion();
         }
 
-        // FUNGSI UNDUH PDF
-        window.downloadPDF = function() {
+        // FUNGSI UNDUH PDF (ASLI, TEXT VECTOR, BUKAN SCREENSHOT)
+        window.downloadPDF = async function() {
+            Swal.fire({title: 'Membuat PDF...', text: 'Mengemas soal dan jawaban...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            
             const minat = document.getElementById('minat-input').value;
             let correctCount = 0;
-            
-            // Susun HTML untuk dirender jadi PDF
-            let htmlContent = `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                    <div style="text-align: center; border-bottom: 2px solid #001f3f; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h2 style="color: #001f3f; margin: 0;">Review Hasil Latihan - Cendekia Aksara</h2>
-                        <p style="margin: 5px 0 0 0; color: #666;">Topik Latihan: <strong>${minat}</strong></p>
-                    </div>
+
+            // Hitung Skor
+            questions.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correct_answer) correctCount++;
+            });
+            const finalScore = Math.round((correctCount / questions.length) * 100);
+
+            // Buat Struktur HTML untuk di-convert ke Format PDFMake
+            let htmlStr = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #001f3f;">CENDEKIA AKSARA</h1>
+                    <h3>Lembar Pembahasan Latihan Ujian</h3>
+                    <p style="color: #666;">Topik Latihan: <strong>${minat}</strong></p>
+                    <p>Skor Akhir: <strong style="color: ${finalScore >= 60 ? 'green' : 'red'};">${finalScore}/100</strong></p>
+                </div>
+                <hr style="margin-bottom: 20px;">
             `;
 
             questions.forEach((q, idx) => {
                 const userAnsIdx = userAnswers[idx];
                 const correctAnsIdx = q.correct_answer;
                 const isCorrect = userAnsIdx === correctAnsIdx;
-                if (isCorrect) correctCount++;
+
+                htmlStr += `<div style="margin-bottom: 15px;">`;
+                htmlStr += `<p><strong>Soal ${idx + 1}</strong> <span style="color: gray; font-size: 10px;">(${q.category})</span></p>`;
                 
-                htmlContent += `
-                    <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #ccc; page-break-inside: avoid;">
-                        <p style="font-weight: bold; margin-bottom: 8px;">Soal ${idx + 1}: <span style="font-weight: normal; color: #555;">[${q.category}]</span></p>
-                        <div style="margin-bottom: 10px;">${marked.parse(q.question)}</div>
-                        <ul style="list-style-type: none; padding-left: 0; margin: 0;">
-                `;
-                
+                // Gunakan marked.js untuk convert format bold/italic dari soal
+                htmlStr += `<div>${marked.parse(q.question)}</div>`;
+                htmlStr += `<ul style="list-style-type: none;">`;
+
                 q.options.forEach((opt, oIdx) => {
-                    let style = "color: #555;";
-                    let marker = "";
+                    let prefix = String.fromCharCode(65 + oIdx) + ". ";
                     if (oIdx === correctAnsIdx) {
-                        style = "color: #16a34a; font-weight: bold; background-color: #f0fdf4; padding: 4px; border-radius: 4px;";
-                        marker = " ✅ (Jawaban Benar)";
+                        htmlStr += `<li style="color: green; font-weight: bold;">${prefix}${opt}  [Jawaban Benar]</li>`;
                     } else if (oIdx === userAnsIdx && !isCorrect) {
-                        style = "color: #dc2626; text-decoration: line-through; background-color: #fef2f2; padding: 4px; border-radius: 4px;";
-                        marker = " ❌ (Jawabanmu Salah)";
+                        htmlStr += `<li style="color: red; text-decoration: line-through;">${prefix}${opt}  [Jawabanmu Salah]</li>`;
+                    } else {
+                        htmlStr += `<li>${prefix}${opt}</li>`;
                     }
-                    
-                    htmlContent += `<li style="${style} margin-bottom: 4px;">${String.fromCharCode(65 + oIdx)}. ${opt}${marker}</li>`;
                 });
+
+                htmlStr += `</ul></div>`;
+            });
+
+            try {
+                // Convert HTML string ke Format PDFMake
+                var htmlFormated = htmlToPdfmake(htmlStr);
                 
-                htmlContent += `
-                        </ul>
-                    </div>
-                `;
-            });
+                var docDefinition = {
+                    content: htmlFormated,
+                    header: { text: 'Simulasi Latihan - Cendekia Aksara', margin: [20, 15], fontSize: 9, color: 'gray', italics: true },
+                    footer: function(currentPage, pageCount) { 
+                        return { text: 'Halaman ' + currentPage.toString() + ' dari ' + pageCount, alignment: 'center', fontSize: 9, margin: [0, 10] }; 
+                    },
+                    defaultStyle: { font: 'Roboto', fontSize: 11, lineHeight: 1.2 }
+                };
 
-            const finalScore = Math.round((correctCount / questions.length) * 100);
-            htmlContent += `
-                    <div style="text-align: right; margin-top: 20px;">
-                        <h3>Total Skor Akhir: <span style="color: ${finalScore >= 60 ? '#16a34a' : '#dc2626'};">${finalScore} / 100</span></h3>
-                    </div>
-                </div>
-            `;
-
-            // Proses Render PDF
-            const element = document.createElement('div');
-            element.innerHTML = htmlContent;
-            
-            const opt = {
-              margin:       15,
-              filename:     `Latihan_Aksa_${minat.replace(/\s+/g, '_')}.pdf`,
-              image:        { type: 'jpeg', quality: 0.98 },
-              html2canvas:  { scale: 2 },
-              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            Swal.fire({title: 'Membuat PDF...', text:'Mohon tunggu sebentar.', didOpen: () => Swal.showLoading()});
-            
-            html2pdf().set(opt).from(element).save().then(() => {
-                Swal.close();
-            });
+                // Generate & Download
+                pdfMake.createPdf(docDefinition).download(`Latihan_Aksa_${minat.replace(/\s+/g, '_')}.pdf`, () => {
+                    Swal.close();
+                });
+            } catch (err) {
+                Swal.fire('Gagal', 'Terjadi kesalahan saat membuat PDF.', 'error');
+                console.error(err);
+            }
         };
 
         window.finishPractice = function() {
