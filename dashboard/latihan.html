@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Latihan - Cendekia Aksara</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+        .option-card:hover { border-color: #E1AD01; background-color: #fffbeb; }
+        .option-card.selected { border-color: #001f3f; background-color: #001f3f; color: white; }
+        .option-card.selected .option-letter { background-color: #E1AD01; color: #001f3f; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+    <header class="bg-navy-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center relative">
+            <div class="flex items-center w-1/4">
+                <img src="https://imgur.com/5Srjyo4.png" alt="Logo" class="h-10 w-10 rounded-full bg-white border-2 border-mustard-400 mr-3 shadow-md object-cover">
+            </div>
+
+            <div class="absolute left-1/2 transform -translate-x-1/2 text-center w-full md:w-auto">
+                <h1 class="text-sm md:text-lg font-bold text-mustard-400 tracking-wide uppercase truncate">
+                    SIMULASI UJIAN (LATIHAN)
+                </h1>
+            </div>
+
+            <div class="flex justify-end items-center w-1/4">
+                <a href="index.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition text-sm font-semibold border border-white/20">
+                    <i class="fas fa-arrow-left"></i>
+                    <span class="hidden md:inline">Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow max-w-3xl">
+
+        <div id="screen-intro" class="bg-white rounded-xl shadow-lg p-8 text-center border-t-4 border-green-500 relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-lg font-bold text-xs">MODE LATIHAN</div>
+            
+            <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-green-600">
+                <i class="fas fa-gamepad text-3xl text-green-600"></i>
+            </div>
+            
+            <h2 class="text-2xl font-bold text-navy-800 mb-2">Latihan Ujian Analisis & Literasi</h2>
+            <p class="text-gray-600 mb-6 leading-relaxed text-sm">
+                Persiapkan dirimu! Ini adalah simulasi dari Ujian Seleksi Cendekia Aksara. Nilai yang kamu dapatkan di sini <strong>tidak akan disimpan</strong> dan <strong>tidak mempengaruhi</strong> hasil kelulusanmu. Kamu bisa berlatih sebanyak yang kamu mau.
+            </p>
+            
+            <div class="bg-green-50 p-6 rounded-xl text-left mb-8 border border-green-200">
+                <label class="block font-bold text-navy-800 mb-2 text-sm uppercase tracking-wide">
+                    Topik Latihan Apa yang Ingin Kamu Coba?
+                </label>
+                <input type="text" id="minat-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none shadow-sm" placeholder="Contoh: Menulis Puisi, Fiksi Ilmiah, Artikel Opini..." autocomplete="off">
+                <p class="text-xs text-gray-500 mt-2 italic">*AI akan membuatkan soal berdasarkan topik ini.</p>
+            </div>
+
+            <button onclick="generatePracticeQuestions()" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition shadow-lg w-full md:w-auto flex items-center justify-center gap-2 group mx-auto">
+                <span>Mulai Simulasi Ujian</span>
+                <i class="fas fa-play group-hover:scale-110 transition"></i>
+            </button>
+        </div>
+
+        <div id="screen-loading" class="hidden text-center py-20">
+            <div class="relative w-24 h-24 mx-auto mb-6">
+                <div class="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-green-500 rounded-full border-t-transparent animate-spin"></div>
+                <i class="fas fa-robot absolute inset-0 flex items-center justify-center text-navy-800 text-xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-navy-800">AI Sedang Menyusun Soal Latihan...</h2>
+            <p class="text-gray-500 mt-3 animate-pulse text-sm" id="loading-text">Menyiapkan skenario cerita...</p>
+        </div>
+
+        <div id="screen-quiz" class="hidden">
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-green-500 h-2.5 rounded-full transition-all duration-300 shadow" style="width: 0%"></div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 relative overflow-hidden border-t-4 border-green-600">
+                <div class="absolute -top-6 -right-6 opacity-5">
+                    <img src="https://imgur.com/5Srjyo4.png" class="w-40">
+                </div>
+
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                        Soal Latihan <span id="current-number" class="text-navy-800 text-lg font-bold">1</span> / <span id="total-number">10</span>
+                    </span>
+                    <span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider" id="kategori-soal">
+                        Simulasi
+                    </span>
+                </div>
+
+                <div id="question-text" class="text-lg font-medium text-gray-800 mb-8 leading-relaxed">
+                    Memuat pertanyaan...
+                </div>
+
+                <div id="options-container" class="space-y-3"></div>
+            </div>
+
+            <div class="flex justify-between mt-8">
+                <button onclick="prevQuestion()" id="btn-prev" class="text-gray-500 font-bold hover:text-navy-800 disabled:opacity-30 flex items-center gap-2" disabled>
+                    <i class="fas fa-arrow-left"></i> Sebelumnya
+                </button>
+                
+                <button onclick="nextQuestion()" id="btn-next" class="bg-navy-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-navy-900 shadow transition hidden flex items-center gap-2">
+                    Selanjutnya <i class="fas fa-arrow-right"></i>
+                </button>
+                
+                <button onclick="finishPractice()" id="btn-finish" class="bg-mustard-500 text-navy-900 px-6 py-3 rounded-lg font-bold hover:bg-mustard-400 shadow transition hidden flex items-center gap-2">
+                    Lihat Hasil Latihan <i class="fas fa-check-circle"></i>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t mt-auto py-6 text-center text-sm text-gray-500">
+        <p class="mb-2">&copy; 2026 Cendekia Aksara. Hak Cipta Dilindungi.</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+        
+        // Konfigurasi Database
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {};
+
+        // Cek login saja, tidak perlu cek status ujian di database karena ini latihan bebas
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "../index.html";
+            }
+        });
+
+        window.generatePracticeQuestions = async function() {
+            const minat = document.getElementById('minat-input').value;
+            if (!minat || minat.trim() === "") {
+                Swal.fire({icon: 'warning', title: 'Topik Kosong', text: 'Silakan isi topik agar AI bisa membuatkan soal yang sesuai.', confirmButtonColor: '#22c55e'});
+                return;
+            }
+
+            // Reset UI
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            document.getElementById('screen-intro').classList.add('hidden');
+            document.getElementById('screen-loading').classList.remove('hidden');
+
+            const loadingTexts = ["Menganalisis topik...", "Merakit logika cerita...", "Menyesuaikan tingkat kesulitan...", "Menyiapkan lembar latihan..."];
+            let textIdx = 0;
+            const textInterval = setInterval(() => {
+                document.getElementById('loading-text').innerText = loadingTexts[textIdx % loadingTexts.length];
+                textIdx++;
+            }, 1500);
+
+            try {
+                // Asumsi endpoint API generate soal masih sama dengan seleksi
+                const response = await fetch('/api/generate-soal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ minat: "Latihan: " + minat })
+                });
+
+                if (!response.ok) throw new Error('Gagal menghubungi AI.');
+
+                questions = await response.json();
+                clearInterval(textInterval);
+                document.getElementById('screen-loading').classList.add('hidden');
+                document.getElementById('screen-quiz').classList.remove('hidden');
+                renderQuestion();
+
+            } catch (error) {
+                console.error(error);
+                clearInterval(textInterval);
+                document.getElementById('screen-loading').classList.add('hidden');
+                document.getElementById('screen-intro').classList.remove('hidden');
+                Swal.fire({icon: 'error', title: 'Terjadi Kesalahan', text: 'Gagal memuat soal latihan. Coba lagi beberapa saat.', confirmButtonColor: '#001f3f'});
+            }
+        }
+
+        function renderQuestion() {
+            const q = questions[currentQuestionIndex];
+            document.getElementById('current-number').innerText = currentQuestionIndex + 1;
+            document.getElementById('total-number').innerText = questions.length;
+            document.getElementById('kategori-soal').innerText = q.category || 'Materi Latihan';
+            document.getElementById('progress-bar').style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+            
+            document.getElementById('question-text').innerHTML = marked.parse(q.question);
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('div');
+                btn.className = `option-card border-2 border-gray-200 rounded-lg p-4 cursor-pointer transition font-medium text-gray-700 flex items-start gap-3 select-none`;
+                
+                if (userAnswers[currentQuestionIndex] === idx) {
+                    btn.classList.add('selected');
+                    // Style khusus hijau untuk latihan agar beda feeling
+                    btn.style.borderColor = '#16a34a';
+                    btn.style.backgroundColor = '#f0fdf4';
+                    btn.style.color = '#16a34a';
+                }
+
+                btn.onclick = () => {
+                    userAnswers[currentQuestionIndex] = idx;
+                    renderQuestion(); // Re-render untuk merubah warna pilihan
+                };
+
+                btn.innerHTML = `
+                    <div class="option-letter bg-gray-100 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-bold shrink-0 mt-0.5 transition-colors"
+                         style="${userAnswers[currentQuestionIndex] === idx ? 'background-color:#16a34a; color:white;' : ''}">
+                        ${String.fromCharCode(65 + idx)}
+                    </div>
+                    <div class="leading-relaxed">${opt}</div>
+                `;
+                container.appendChild(btn);
+            });
+
+            document.getElementById('btn-prev').disabled = currentQuestionIndex === 0;
+            if (currentQuestionIndex === questions.length - 1) {
+                document.getElementById('btn-next').classList.add('hidden');
+                document.getElementById('btn-finish').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-next').classList.remove('hidden');
+                document.getElementById('btn-finish').classList.add('hidden');
+            }
+        }
+
+        window.nextQuestion = function() {
+            if (userAnswers[currentQuestionIndex] === undefined) {
+                Swal.fire({icon: 'warning', text: 'Pilih salah satu jawaban dulu ya!', timer: 1200, showConfirmButton: false});
+                return;
+            }
+            currentQuestionIndex++;
+            renderQuestion();
+        }
+
+        window.prevQuestion = function() {
+            currentQuestionIndex--;
+            renderQuestion();
+        }
+
+        window.finishPractice = function() {
+            if (userAnswers[currentQuestionIndex] === undefined) {
+                Swal.fire({icon: 'warning', text: 'Pilih jawaban terakhirmu!', timer: 1200, showConfirmButton: false});
+                return;
+            }
+
+            let correctCount = 0;
+            questions.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correct_answer) correctCount++;
+            });
+
+            const finalScore = Math.round((correctCount / questions.length) * 100);
+            
+            let message = "";
+            let iconType = "success";
+
+            // KKM saat ini 60
+            if (finalScore >= 60) {
+                message = "Hebat! Jika ini ujian asli, kamu kemungkinan besar akan lulus seleksi. Terus asah kemampuan menulismu!";
+            } else {
+                iconType = "info";
+                message = "Tidak apa-apa, ini baru latihan. Perbanyak bacaan literasi dan coba latih lagi analisismu sebelum mengikuti ujian asli.";
+            }
+
+            // Tampilkan pop up hasil tanpa menyimpan ke database
+            Swal.fire({
+                title: `Skor Latihan: ${finalScore}`,
+                html: `<p class="mb-4">${message}</p>
+                       <p class="text-sm text-gray-500 bg-gray-100 p-2 rounded">Jawaban Benar: ${correctCount} dari ${questions.length} soal.</p>`,
+                icon: iconType,
+                showCancelButton: true,
+                confirmButtonColor: '#16a34a',
+                cancelButtonColor: '#001f3f',
+                confirmButtonText: '<i class="fas fa-redo"></i> Latihan Lagi',
+                cancelButtonText: '<i class="fas fa-home"></i> Ke Dashboard',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Reset UI untuk latihan ulang
+                    document.getElementById('minat-input').value = "";
+                    document.getElementById('screen-quiz').classList.add('hidden');
+                    document.getElementById('screen-intro').classList.remove('hidden');
+                } else {
+                    // Kembali ke dashboard
+                    window.location.href = "index.html";
+                }
+            });
+        }
+    </script>
+</body>
+</html>
