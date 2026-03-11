@@ -136,7 +136,7 @@
 
         // 3. PREVIEW KELAS (Logic sama dengan Siswa)
         async function loadPreview() {
-            const q = query(collection(db, "students"), where("selectionScore", ">", 80));
+            const q = query(collection(db, "students"), where("selectionScore", ">", 60));
             const snapshot = await getDocs(q);
             
             sortedStudents = []; // Reset
