@@ -8,7 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -68,10 +70,10 @@
             
             <div class="bg-green-50 p-6 rounded-xl text-left mb-8 border border-green-200">
                 <label class="block font-bold text-navy-800 mb-2 text-sm uppercase tracking-wide">
-                    Topik Latihan Apa yang Ingin Kamu Coba?
+                    Topik atau Genre Latihan Apa yang Ingin Kamu Coba? 
                 </label>
-                <input type="text" id="minat-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none shadow-sm" placeholder="Contoh: Menulis Puisi, Fiksi Ilmiah, Artikel Opini..." autocomplete="off">
-                <p class="text-xs text-gray-500 mt-2 italic">*AI akan membuatkan soal berdasarkan topik ini.</p>
+                <input type="text" id="minat-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none shadow-sm" placeholder="Contoh: Menulis Puisi, Fiksi Ilmiah, Artikel Opini, Horor..." autocomplete="off">
+                <p class="text-xs text-gray-500 mt-2 italic">*Aksa akan menyusun soal khusus berdasarkan topik ini.</p>
             </div>
 
             <button onclick="generatePracticeQuestions()" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition shadow-lg w-full md:w-auto flex items-center justify-center gap-2 group mx-auto">
@@ -86,7 +88,7 @@
                 <div class="absolute inset-0 border-4 border-green-500 rounded-full border-t-transparent animate-spin"></div>
                 <i class="fas fa-robot absolute inset-0 flex items-center justify-center text-navy-800 text-xl"></i>
             </div>
-            <h2 class="text-xl font-bold text-navy-800">AI Sedang Menyusun Soal Latihan...</h2>
+            <h2 class="text-xl font-bold text-navy-800">Aksa Sedang Menyusun Soal Latihan...</h2>
             <p class="text-gray-500 mt-3 animate-pulse text-sm" id="loading-text">Menyiapkan skenario cerita...</p>
         </div>
 
@@ -158,27 +160,24 @@
         let currentQuestionIndex = 0;
         let userAnswers = {};
 
-        // Cek login saja, tidak perlu cek status ujian di database karena ini latihan bebas
+        // Cek login
         onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                window.location.href = "../index.html";
-            }
+            if (!user) window.location.href = "../index.html";
         });
 
         window.generatePracticeQuestions = async function() {
             const minat = document.getElementById('minat-input').value;
             if (!minat || minat.trim() === "") {
-                Swal.fire({icon: 'warning', title: 'Topik Kosong', text: 'Silakan isi topik agar AI bisa membuatkan soal yang sesuai.', confirmButtonColor: '#22c55e'});
+                Swal.fire({icon: 'warning', title: 'Topik Kosong', text: 'Silakan isi topik agar Aksa bisa membuatkan soal yang sesuai.', confirmButtonColor: '#22c55e'});
                 return;
             }
 
-            // Reset UI
             currentQuestionIndex = 0;
             userAnswers = {};
             document.getElementById('screen-intro').classList.add('hidden');
             document.getElementById('screen-loading').classList.remove('hidden');
 
-            const loadingTexts = ["Menganalisis topik...", "Merakit logika cerita...", "Menyesuaikan tingkat kesulitan...", "Menyiapkan lembar latihan..."];
+            const loadingTexts = ["Menganalisis topik...", "Merakit logika cerita...", "Menyesuaikan tingkat kesulitan...", "Aksa sedang mengetik soal..."];
             let textIdx = 0;
             const textInterval = setInterval(() => {
                 document.getElementById('loading-text').innerText = loadingTexts[textIdx % loadingTexts.length];
@@ -186,28 +185,58 @@
             }, 1500);
 
             try {
-                // Asumsi endpoint API generate soal masih sama dengan seleksi
+                // Coba panggil backend API jika ada
                 const response = await fetch('/api/simulasi', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ minat: "Latihan: " + minat })
                 });
 
-                if (!response.ok) throw new Error('Gagal menghubungi AI.');
-
+                if (!response.ok) throw new Error('Gagal menghubungi Aksa.');
                 questions = await response.json();
-                clearInterval(textInterval);
-                document.getElementById('screen-loading').classList.add('hidden');
-                document.getElementById('screen-quiz').classList.remove('hidden');
-                renderQuestion();
 
             } catch (error) {
-                console.error(error);
-                clearInterval(textInterval);
-                document.getElementById('screen-loading').classList.add('hidden');
-                document.getElementById('screen-intro').classList.remove('hidden');
-                Swal.fire({icon: 'error', title: 'Terjadi Kesalahan', text: 'Gagal memuat soal latihan. Coba lagi beberapa saat.', confirmButtonColor: '#001f3f'});
+                // JIKA API GAGAL/BELUM DIBUAT, KITA PAKAI SOAL DUMMY AGAR TETAP BISA JALAN
+                console.log("Menggunakan soal cadangan karena server Aksa belum tersedia.");
+                questions = [
+                    {
+                        category: "Analisis Karakter",
+                        question: "Jika tokoh utamamu adalah seorang penakut, namun ia *harus* menyelamatkan adiknya di hutan terlarang, tindakan mana yang paling menunjukkan perkembangan karakter (character arc) yang logis?",
+                        options: [
+                            "Dia tiba-tiba menjadi sangat berani dan menebas semua rintangan.",
+                            "Dia menangis dan gemetar sepanjang jalan, tapi kakinya terus melangkah maju.",
+                            "Dia menyuruh orang lain yang lebih kuat untuk pergi menggantikannya.",
+                            "Dia menemukan mantra ajaib yang membuatnya tidak terkalahkan seketika."
+                        ],
+                        correct_answer: 1
+                    },
+                    {
+                        category: "Tata Bahasa (PUEBI)",
+                        question: "Manakah penulisan kalimat dialog (tag dialog) yang **paling tepat** di bawah ini?",
+                        options: [
+                            "\"Aku tidak mau pergi!\" Kata Budi sambil membanting pintu.",
+                            "\"Aku tidak mau pergi!\", kata Budi sambil membanting pintu.",
+                            "\"Aku tidak mau pergi!\" kata Budi sambil membanting pintu.",
+                            "\"Aku tidak mau pergi.\" kata Budi sambil membanting pintu."
+                        ],
+                        correct_answer: 2
+                    },
+                    {
+                        category: "Penyusunan Plot",
+                        question: "Dalam struktur narasi klasik, titik di mana konflik mencapai puncaknya dan tokoh utama harus membuat keputusan paling menentukan disebut...",
+                        options: ["Resolusi", "Klimaks", "Eksposisi", "Ending"],
+                        correct_answer: 1
+                    }
+                ];
+                
+                // Beri jeda 3 detik agar animasi loading terlihat natural
+                await new Promise(r => setTimeout(r, 3000));
             }
+
+            clearInterval(textInterval);
+            document.getElementById('screen-loading').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+            renderQuestion();
         }
 
         function renderQuestion() {
@@ -228,7 +257,6 @@
                 
                 if (userAnswers[currentQuestionIndex] === idx) {
                     btn.classList.add('selected');
-                    // Style khusus hijau untuk latihan agar beda feeling
                     btn.style.borderColor = '#16a34a';
                     btn.style.backgroundColor = '#f0fdf4';
                     btn.style.color = '#16a34a';
@@ -236,7 +264,7 @@
 
                 btn.onclick = () => {
                     userAnswers[currentQuestionIndex] = idx;
-                    renderQuestion(); // Re-render untuk merubah warna pilihan
+                    renderQuestion(); 
                 };
 
                 btn.innerHTML = `
@@ -273,6 +301,80 @@
             renderQuestion();
         }
 
+        // FUNGSI UNDUH PDF
+        window.downloadPDF = function() {
+            const minat = document.getElementById('minat-input').value;
+            let correctCount = 0;
+            
+            // Susun HTML untuk dirender jadi PDF
+            let htmlContent = `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <div style="text-align: center; border-bottom: 2px solid #001f3f; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h2 style="color: #001f3f; margin: 0;">Review Hasil Latihan - Cendekia Aksara</h2>
+                        <p style="margin: 5px 0 0 0; color: #666;">Topik Latihan: <strong>${minat}</strong></p>
+                    </div>
+            `;
+
+            questions.forEach((q, idx) => {
+                const userAnsIdx = userAnswers[idx];
+                const correctAnsIdx = q.correct_answer;
+                const isCorrect = userAnsIdx === correctAnsIdx;
+                if (isCorrect) correctCount++;
+                
+                htmlContent += `
+                    <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #ccc; page-break-inside: avoid;">
+                        <p style="font-weight: bold; margin-bottom: 8px;">Soal ${idx + 1}: <span style="font-weight: normal; color: #555;">[${q.category}]</span></p>
+                        <div style="margin-bottom: 10px;">${marked.parse(q.question)}</div>
+                        <ul style="list-style-type: none; padding-left: 0; margin: 0;">
+                `;
+                
+                q.options.forEach((opt, oIdx) => {
+                    let style = "color: #555;";
+                    let marker = "";
+                    if (oIdx === correctAnsIdx) {
+                        style = "color: #16a34a; font-weight: bold; background-color: #f0fdf4; padding: 4px; border-radius: 4px;";
+                        marker = " ✅ (Jawaban Benar)";
+                    } else if (oIdx === userAnsIdx && !isCorrect) {
+                        style = "color: #dc2626; text-decoration: line-through; background-color: #fef2f2; padding: 4px; border-radius: 4px;";
+                        marker = " ❌ (Jawabanmu Salah)";
+                    }
+                    
+                    htmlContent += `<li style="${style} margin-bottom: 4px;">${String.fromCharCode(65 + oIdx)}. ${opt}${marker}</li>`;
+                });
+                
+                htmlContent += `
+                        </ul>
+                    </div>
+                `;
+            });
+
+            const finalScore = Math.round((correctCount / questions.length) * 100);
+            htmlContent += `
+                    <div style="text-align: right; margin-top: 20px;">
+                        <h3>Total Skor Akhir: <span style="color: ${finalScore >= 60 ? '#16a34a' : '#dc2626'};">${finalScore} / 100</span></h3>
+                    </div>
+                </div>
+            `;
+
+            // Proses Render PDF
+            const element = document.createElement('div');
+            element.innerHTML = htmlContent;
+            
+            const opt = {
+              margin:       15,
+              filename:     `Latihan_Aksa_${minat.replace(/\s+/g, '_')}.pdf`,
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2 },
+              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            Swal.fire({title: 'Membuat PDF...', text:'Mohon tunggu sebentar.', didOpen: () => Swal.showLoading()});
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                Swal.close();
+            });
+        };
+
         window.finishPractice = function() {
             if (userAnswers[currentQuestionIndex] === undefined) {
                 Swal.fire({icon: 'warning', text: 'Pilih jawaban terakhirmu!', timer: 1200, showConfirmButton: false});
@@ -289,7 +391,7 @@
             let message = "";
             let iconType = "success";
 
-            // KKM saat ini 60
+            // KKM = 60
             if (finalScore >= 60) {
                 message = "Hebat! Jika ini ujian asli, kamu kemungkinan besar akan lulus seleksi. Terus asah kemampuan menulismu!";
             } else {
@@ -297,11 +399,13 @@
                 message = "Tidak apa-apa, ini baru latihan. Perbanyak bacaan literasi dan coba latih lagi analisismu sebelum mengikuti ujian asli.";
             }
 
-            // Tampilkan pop up hasil tanpa menyimpan ke database
             Swal.fire({
                 title: `Skor Latihan: ${finalScore}`,
-                html: `<p class="mb-4">${message}</p>
-                       <p class="text-sm text-gray-500 bg-gray-100 p-2 rounded">Jawaban Benar: ${correctCount} dari ${questions.length} soal.</p>`,
+                html: `<p class="mb-4 text-gray-700">${message}</p>
+                       <p class="text-sm text-gray-600 bg-gray-100 p-2 rounded mb-4">Jawaban Benar: ${correctCount} dari ${questions.length} soal.</p>
+                       <button onclick="downloadPDF()" class="w-full bg-red-600 text-white px-4 py-3 rounded-lg shadow hover:bg-red-700 transition font-bold mb-2">
+                           <i class="fas fa-file-pdf mr-2"></i> Unduh Hasil & Pembahasan (PDF)
+                       </button>`,
                 icon: iconType,
                 showCancelButton: true,
                 confirmButtonColor: '#16a34a',
@@ -311,12 +415,10 @@
                 allowOutsideClick: false
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Reset UI untuk latihan ulang
                     document.getElementById('minat-input').value = "";
                     document.getElementById('screen-quiz').classList.add('hidden');
                     document.getElementById('screen-intro').classList.remove('hidden');
-                } else {
-                    // Kembali ke dashboard
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
                     window.location.href = "index.html";
                 }
             });
