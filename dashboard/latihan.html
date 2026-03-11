@@ -187,7 +187,7 @@
 
             try {
                 // Asumsi endpoint API generate soal masih sama dengan seleksi
-                const response = await fetch('/api/generate-soal', {
+                const response = await fetch('/api/simulasi', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ minat: "Latihan: " + minat })
