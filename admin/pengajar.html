@@ -7,23 +7,87 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #mobile-sidebar { transition: transform 0.3s ease-in-out; }
+        .sidebar-open { transform: translateX(0); }
+        .sidebar-closed { transform: translateX(-100%); }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex font-sans">
+<body class="bg-gray-100 min-h-screen flex font-sans overflow-x-hidden">
 
-    <aside class="w-64 bg-gray-900 text-white flex flex-col fixed h-full hidden md:flex">
-        <div class="p-6 font-bold text-xl text-yellow-400">ADMIN PANEL</div>
+    <div class="md:hidden bg-navy-800 text-white p-4 flex justify-between items-center fixed w-full z-30 shadow-md">
+        <div class="font-bold text-mustard-400">ADMIN PANEL</div>
+        <button onclick="toggleSidebar()" class="text-white focus:outline-none">
+            <i class="fas fa-bars text-2xl"></i>
+        </button>
+    </div>
+
+    <aside id="mobile-sidebar" class="w-64 bg-navy-900 text-white flex flex-col fixed h-full shadow-2xl z-40 sidebar-closed md:translate-x-0 pt-16 md:pt-0">
+        <div class="p-6 flex items-center gap-3 border-b border-navy-800 hidden md:flex">
+            <img src="https://imgur.com/5Srjyo4.png" class="h-8 w-8 rounded-full bg-white">
+            <span class="font-bold tracking-wider text-mustard-400">CENDEKIA</span>
+        </div>
+        
         <nav class="flex-grow p-4 space-y-2">
-            <a href="index.html" class="block px-4 py-2 hover:bg-gray-800 rounded">Dashboard Utama</a>
-            <a href="alumni.html" class="block px-4 py-2 hover:bg-gray-800 rounded">Kelola Alumni</a>
-            <a href="#" class="block px-4 py-2 bg-gray-800 rounded text-yellow-400 font-bold">Kelola Pengajar</a>
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-tachometer-alt w-6"></i> Dashboard
+            </a>
+            <a href="orientasi.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-campground w-6"></i> Orientasi
+            </a>
+            <a href="arsip.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-archive w-6"></i> Arsip Data
+            </a>
+            <a href="alumni.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-user-graduate w-6"></i> Alumni
+            </a>
+            <a href="pengajar.html" class="flex items-center gap-3 px-4 py-3 bg-navy-800 rounded-lg text-white font-semibold shadow border-l-4 border-mustard-500">
+                <i class="fas fa-chalkboard-teacher w-6"></i> Pengajar
+            </a>
         </nav>
+
+        <div class="p-4 border-t border-navy-800">
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition text-sm font-bold shadow">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
     </aside>
 
-    <main class="flex-grow md:ml-64 p-8">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">Manajemen Tenaga Pendidik</h1>
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
 
-        <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-            <h2 class="text-lg font-bold mb-4 border-b pb-2">Tambah / Edit Staff</h2>
+    <main class="flex-grow md:ml-64 p-4 md:p-8 pt-20 md:pt-8 transition-all">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-navy-800">Manajemen Tenaga Pendidik</h1>
+                <p class="text-sm text-gray-500">Kelola susunan struktur organisasi dan dewan guru.</p>
+            </div>
+            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-gray-800">Administrator</p>
+                    <p class="text-xs text-green-600 font-bold">● System Active</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=001f3f&color=fff" class="h-10 w-10 rounded-full border-2 border-mustard-500">
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md mb-8 border-t-4 border-blue-500">
+            <h2 class="text-lg font-bold mb-4 border-b pb-2 flex items-center gap-2">
+                <i class="fas fa-user-plus text-blue-500"></i> Tambah / Edit Staff
+            </h2>
             <form id="form-staff" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 <div>
@@ -57,23 +121,24 @@
                 </div>
 
                 <div class="md:col-span-2">
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 w-full transition shadow-lg">
-                        <i class="fas fa-plus mr-2"></i> Tambahkan Pengajar
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 w-full transition shadow-lg flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i> Tambahkan Pengajar
                     </button>
                 </div>
             </form>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-md">
-            <h2 class="text-lg font-bold mb-4">Struktur Organisasi</h2>
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+            <h2 class="text-lg font-bold mb-4 text-navy-800">Struktur Organisasi</h2>
             <div id="list-staff" class="space-y-3">
-                <p class="text-center text-gray-500">Memuat data...</p>
+                <p class="text-center text-gray-500 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Memuat data...</p>
             </div>
         </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, orderBy, query } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -82,12 +147,39 @@
             projectId: "mading-cf676",
             storageBucket: "mading-cf676.firebasestorage.app",
             messagingSenderId: "72175203671",
-            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
-            measurementId: "G-590P9LLK7J"
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12"
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // UI Toggle Mobile
+        window.toggleSidebar = function() {
+            const sb = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('overlay');
+            if (sb.classList.contains('sidebar-closed')) {
+                sb.classList.remove('sidebar-closed');
+                sb.classList.add('sidebar-open');
+                overlay.classList.remove('hidden');
+            } else {
+                sb.classList.add('sidebar-closed');
+                sb.classList.remove('sidebar-open');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Cek Login Admin
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "../index.html";
+            }
+        });
+
+        // Logout
+        window.logout = function() {
+            signOut(auth).then(() => window.location.href = "../index.html");
+        }
 
         // 1. TAMBAH STAFF
         document.getElementById('form-staff').addEventListener('submit', async (e) => {
@@ -104,14 +196,12 @@
             formData.append("image", file);
 
             try {
-                // Upload ImgBB
                 const res = await fetch("https://api.imgbb.com/1/upload?key=2f45fcafb6dfb2dbae295499022ce476", {
                     method: "POST", body: formData
                 });
                 const data = await res.json();
                 
                 if (data.success) {
-                    // Simpan Firestore
                     await addDoc(collection(db, "staff_members"), {
                         nama: document.getElementById('nama').value,
                         jabatan: document.getElementById('jabatan').value,
@@ -152,19 +242,20 @@
                 if(d.level === 2) levelBadge = `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">Wakil</span>`;
 
                 const item = document.createElement('div');
-                item.className = "flex items-center justify-between bg-white border rounded-lg p-4 hover:shadow-md transition";
+                item.className = "flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition";
                 item.innerHTML = `
                     <div class="flex items-center gap-4">
-                        <img src="${d.foto}" class="w-12 h-12 rounded-full object-cover border">
+                        <img src="${d.foto}" class="w-12 h-12 rounded-full object-cover border border-gray-300">
                         <div>
-                            <div class="flex items-center gap-2">
-                                <h4 class="font-bold text-gray-800">${d.nama}</h4>
+                            <div class="flex items-center gap-2 mb-1">
+                                <h4 class="font-bold text-navy-800">${d.nama}</h4>
                                 ${levelBadge}
                             </div>
-                            <p class="text-sm text-gray-500">${d.jabatan}</p>
+                            <p class="text-sm text-gray-600">${d.jabatan}</p>
+                            ${d.bio ? `<p class="text-xs text-gray-400 mt-1 italic">"${d.bio}"</p>` : ''}
                         </div>
                     </div>
-                    <button onclick="hapusStaff('${docSnap.id}')" class="text-red-500 hover:text-red-700 p-2">
+                    <button onclick="hapusStaff('${docSnap.id}')" class="text-red-500 hover:text-red-700 bg-white border border-red-100 p-2 rounded-md shadow-sm transition">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 `;
@@ -183,7 +274,7 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     await deleteDoc(doc(db, "staff_members", id));
-                    Swal.fire('Terhapus!', '', 'success');
+                    Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Terhapus!', showConfirmButton: false, timer: 1500});
                 }
             })
         }
