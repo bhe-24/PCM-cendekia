@@ -168,12 +168,6 @@
                     </div>
                     <span class="text-sm font-bold text-gray-700">Pengajar</span>
                 </a>
-                <a href="aksabot.html" class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col items-center justify-center text-center group">
-                    <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <span class="text-sm font-bold text-gray-700">Aksa Bot</span>
-                </a>
             </div>
         </div>
 
@@ -216,7 +210,8 @@
 
         // 1. CEK KUOTA 
         async function checkQuota() {
-            const q = query(collection(db, "students"), where("selectionScore", ">", PASSING_GRADE));
+            // PERBAIKAN: >= agar nilai 60 pas tetap masuk kuota
+            const q = query(collection(db, "students"), where("selectionScore", ">=", PASSING_GRADE));
             const querySnapshot = await getDocs(q);
             acceptedCount = querySnapshot.size;
             isQuotaFull = acceptedCount >= MAX_QUOTA;
@@ -246,12 +241,10 @@
 
                 await checkQuota();
                 
-                // DENGAR STATUS PENDAFTARAN DULU
                 onSnapshot(doc(db, "settings", "penerimaan"), (settingsSnap) => {
                     if (settingsSnap.exists()) {
                         isRegistrationOpen = settingsSnap.data().isOpen;
                     }
-                    // BARU UPDATE DATA SISWA
                     listenToStudentData(user);
                     listenToGlobalSettings(settingsSnap);
                 });
@@ -297,18 +290,15 @@
                     step1Status.innerHTML = `<span class="text-red-500 text-sm font-bold"><i class="fas fa-exclamation-circle mr-1"></i> Belum Lengkap</span>`;
                 }
                 
-                // STEP 2: TES SELEKSI (LOGIKA KUNCI PENDAFTARAN)
+                // STEP 2: TES SELEKSI
                 if (data.selectionScore === undefined || data.selectionScore === null) {
-                    // Belum Ujian
                     if (isRegistrationOpen) {
-                        // BUKA: Tampilkan Tombol
                         iconSeleksi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-mustard-100 text-mustard-600 shadow-sm shrink-0 border-4 border-white animate-bounce";
                         step2Action.innerHTML = `
                             <button onclick="startSelection()" class="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-bold shadow hover:bg-navy-900 transition">
                                 <i class="fas fa-pen-nib mr-2"></i>Mulai Ujian
                             </button>`;
                     } else {
-                        // TUTUP: Kunci Tombol
                         iconSeleksi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-400 shadow-sm shrink-0 border-4 border-white";
                         step2Action.innerHTML = `
                             <button disabled class="bg-gray-300 text-gray-500 px-5 py-2 rounded-lg text-sm font-bold cursor-not-allowed border border-gray-400">
@@ -317,12 +307,13 @@
                     }
                     resultCardContainer.innerHTML = "";
                 } else {
-                    // SUDAH TES (Tetap tampilkan hasil)
                     iconSeleksi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 shadow-sm shrink-0 border-4 border-white";
                     step2Action.innerHTML = `<span class="text-gray-500 text-sm font-bold">Ujian Selesai</span>`;
 
                     const score = data.selectionScore;
-                    const isLolos = score > PASSING_GRADE;
+                    
+                    // PERBAIKAN LOGIKA: Menggunakan >= agar nilai 60 Lolos!
+                    const isLolos = score >= PASSING_GRADE;
 
                     if (isLolos) {
                         resultCardContainer.innerHTML = `
@@ -338,7 +329,6 @@
                             </div>
                         `;
                         
-                        // LOGIKA STEP 3
                         if (data.isOfficialStudent === true) {
                             iconOrientasi.className = "z-10 flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 shadow-sm shrink-0 border-4 border-white";
                             step3Action.innerHTML = `
@@ -379,7 +369,6 @@
                     }
                 }
 
-                // --- 4. STATUS SISWA RESMI ---
                 if (data.isOfficialStudent === true) {
                     studentCard.classList.remove('from-navy-800', 'to-navy-900');
                     studentCard.classList.add('from-green-600', 'to-green-800');
@@ -396,7 +385,6 @@
             });
         }
 
-        // --- 5. DENGAR PENGUMUMAN ---
         function listenToGlobalSettings(docSnap) {
             const infoBoardContent = document.getElementById('status-content');
             const newsContainer = document.getElementById('news-container');
@@ -416,7 +404,6 @@
 
                 if (!isRegistered) {
                     if (data.isOpen && !isQuotaFull) {
-                        // REVISI: LINK KE DAFTAR.HTML
                         htmlContent += `
                             <div class="mt-2 pt-2 border-t border-gray-200">
                                 <p class="text-green-600 mb-2 font-bold text-sm">🟢 Pendaftaran Sedang Dibuka</p>
