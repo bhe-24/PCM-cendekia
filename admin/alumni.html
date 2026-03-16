@@ -7,32 +7,97 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #mobile-sidebar { transition: transform 0.3s ease-in-out; }
+        .sidebar-open { transform: translateX(0); }
+        .sidebar-closed { transform: translateX(-100%); }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex font-sans">
+<body class="bg-gray-100 min-h-screen flex font-sans overflow-x-hidden">
 
-    <aside class="w-64 bg-gray-900 text-white flex flex-col fixed h-full hidden md:flex">
-        <div class="p-6 font-bold text-xl text-yellow-400">ADMIN PANEL</div>
+    <div class="md:hidden bg-navy-800 text-white p-4 flex justify-between items-center fixed w-full z-30 shadow-md">
+        <div class="font-bold text-mustard-400">ADMIN PANEL</div>
+        <button onclick="toggleSidebar()" class="text-white focus:outline-none">
+            <i class="fas fa-bars text-2xl"></i>
+        </button>
+    </div>
+
+    <aside id="mobile-sidebar" class="w-64 bg-navy-900 text-white flex flex-col fixed h-full shadow-2xl z-40 sidebar-closed md:translate-x-0 pt-16 md:pt-0">
+        <div class="p-6 flex items-center gap-3 border-b border-navy-800 hidden md:flex">
+            <img src="https://imgur.com/5Srjyo4.png" class="h-8 w-8 rounded-full bg-white">
+            <span class="font-bold tracking-wider text-mustard-400">CENDEKIA</span>
+        </div>
+        
         <nav class="flex-grow p-4 space-y-2">
-            <a href="index.html" class="block px-4 py-2 hover:bg-gray-800 rounded">Dashboard Utama</a>
-            <a href="#" class="block px-4 py-2 bg-gray-800 rounded text-yellow-400 font-bold">Kelola Alumni</a>
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-tachometer-alt w-6"></i> Dashboard
+            </a>
+            <a href="orientasi.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-campground w-6"></i> Orientasi
+            </a>
+            <a href="arsip.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-archive w-6"></i> Arsip Data
+            </a>
+            <a href="alumni.html" class="flex items-center gap-3 px-4 py-3 bg-navy-800 rounded-lg text-white font-semibold shadow border-l-4 border-mustard-500">
+                <i class="fas fa-user-graduate w-6"></i> Alumni
+            </a>
+            <a href="pengajar.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-chalkboard-teacher w-6"></i> Pengajar
+            </a>
         </nav>
+
+        <div class="p-4 border-t border-navy-800">
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition text-sm font-bold shadow">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
     </aside>
 
-    <main class="flex-grow md:ml-64 p-8">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">Kelola Testimoni Alumni</h1>
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
 
-        <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-            <h2 class="text-lg font-bold mb-4 border-b pb-2">Tambah Alumni Baru</h2>
+    <main class="flex-grow md:ml-64 p-4 md:p-8 pt-20 md:pt-8 transition-all">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-navy-800">Kelola Testimoni Alumni</h1>
+                <p class="text-sm text-gray-500">Tambahkan atau hapus daftar alumni yang tampil di halaman depan.</p>
+            </div>
+            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-gray-800">Administrator</p>
+                    <p class="text-xs text-green-600 font-bold">● System Active</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=001f3f&color=fff" class="h-10 w-10 rounded-full border-2 border-mustard-500">
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md mb-8 border-t-4 border-blue-500">
+            <h2 class="text-lg font-bold mb-4 border-b pb-2 flex items-center gap-2">
+                <i class="fas fa-plus-circle text-blue-500"></i> Tambah Alumni Baru
+            </h2>
             <form id="form-alumni" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 <div>
                     <label class="block text-sm font-bold mb-1">Nama Alumni</label>
-                    <input type="text" id="nama" class="w-full border p-2 rounded" required>
+                    <input type="text" id="nama" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none" required>
                 </div>
 
                 <div>
                     <label class="block text-sm font-bold mb-1">Rating (Bintang)</label>
-                    <select id="rating" class="w-full border p-2 rounded">
+                    <select id="rating" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="5">⭐⭐⭐⭐⭐ (5)</option>
                         <option value="4">⭐⭐⭐⭐ (4)</option>
                         <option value="3">⭐⭐⭐ (3)</option>
@@ -41,7 +106,7 @@
 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-bold mb-1">Pesan / Testimoni</label>
-                    <textarea id="pesan" class="w-full border p-2 rounded h-20" placeholder="Apa kata mereka tentang Cendekia Aksara?" required></textarea>
+                    <textarea id="pesan" class="w-full border p-2 rounded h-20 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Apa kata mereka tentang Cendekia Aksara?" required></textarea>
                 </div>
 
                 <div class="md:col-span-2">
@@ -51,23 +116,24 @@
                 </div>
 
                 <div class="md:col-span-2">
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 w-full">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 w-full transition shadow-lg">
                         <i class="fas fa-plus mr-2"></i> Tambahkan ke Slideshow
                     </button>
                 </div>
             </form>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-md">
-            <h2 class="text-lg font-bold mb-4">Daftar Alumni Aktif</h2>
-            <div id="list-alumni" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <p class="text-gray-500 col-span-3 text-center">Memuat data...</p>
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+            <h2 class="text-lg font-bold mb-4 text-navy-800">Daftar Alumni Aktif</h2>
+            <div id="list-alumni" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <p class="text-gray-500 col-span-3 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Memuat data...</p>
             </div>
         </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, orderBy, query } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -76,12 +142,39 @@
             projectId: "mading-cf676",
             storageBucket: "mading-cf676.firebasestorage.app",
             messagingSenderId: "72175203671",
-            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
-            measurementId: "G-590P9LLK7J"
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12"
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // UI Toggle Mobile
+        window.toggleSidebar = function() {
+            const sb = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('overlay');
+            if (sb.classList.contains('sidebar-closed')) {
+                sb.classList.remove('sidebar-closed');
+                sb.classList.add('sidebar-open');
+                overlay.classList.remove('hidden');
+            } else {
+                sb.classList.add('sidebar-closed');
+                sb.classList.remove('sidebar-open');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Cek Login Admin
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "../index.html";
+            }
+        });
+
+        // Logout
+        window.logout = function() {
+            signOut(auth).then(() => window.location.href = "../index.html");
+        }
 
         // 1. TAMBAH ALUMNI
         document.getElementById('form-alumni').addEventListener('submit', async (e) => {
@@ -97,7 +190,6 @@
 
             Swal.fire({title: 'Mengupload...', didOpen: () => Swal.showLoading()});
 
-            // Upload ImgBB
             const formData = new FormData();
             formData.append("image", file);
 
@@ -108,7 +200,6 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    // Simpan ke Firestore
                     await addDoc(collection(db, "alumni_testimonials"), {
                         nama: nama,
                         pesan: pesan,
@@ -133,22 +224,22 @@
             container.innerHTML = "";
 
             if(snapshot.empty) {
-                container.innerHTML = `<p class="text-gray-500 col-span-3 text-center">Belum ada data.</p>`;
+                container.innerHTML = `<p class="text-gray-500 col-span-3 text-center py-4">Belum ada data testimoni.</p>`;
                 return;
             }
 
             snapshot.forEach((docSnap) => {
                 const d = docSnap.data();
                 const item = document.createElement('div');
-                item.className = "border rounded-lg p-4 flex items-start gap-3 bg-gray-50 relative group";
+                item.className = "border rounded-lg p-4 flex items-start gap-3 bg-gray-50 relative group shadow-sm";
                 item.innerHTML = `
-                    <img src="${d.foto}" class="w-12 h-12 rounded-full object-cover">
+                    <img src="${d.foto}" class="w-12 h-12 rounded-full object-cover border border-gray-300">
                     <div>
-                        <p class="font-bold text-sm">${d.nama}</p>
+                        <p class="font-bold text-sm text-navy-800">${d.nama}</p>
                         <p class="text-yellow-500 text-xs">${'★'.repeat(d.rating)}</p>
-                        <p class="text-xs text-gray-600 mt-1 italic line-clamp-2">"${d.pesan}"</p>
+                        <p class="text-xs text-gray-600 mt-1 italic line-clamp-3">"${d.pesan}"</p>
                     </div>
-                    <button onclick="hapus('${docSnap.id}')" class="absolute top-2 right-2 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition">
+                    <button onclick="hapus('${docSnap.id}')" class="absolute top-2 right-2 text-red-500 hover:text-red-700 bg-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition shadow-sm border border-red-100">
                         <i class="fas fa-trash"></i>
                     </button>
                 `;
@@ -157,9 +248,18 @@
         });
 
         window.hapus = async function(id) {
-            if(confirm("Hapus alumni ini?")) {
-                await deleteDoc(doc(db, "alumni_testimonials", id));
-            }
+            Swal.fire({
+                title: 'Hapus Alumni?',
+                text: "Testimoni ini tidak akan tampil lagi di halaman depan.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Hapus'
+            }).then(async (result) => {
+                if(result.isConfirmed) {
+                    await deleteDoc(doc(db, "alumni_testimonials", id));
+                }
+            });
         }
     </script>
 </body>
