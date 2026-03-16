@@ -103,10 +103,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // VARIABEL GLOBAL UNTUK MENYIMPAN DATA SISWA YANG SUDAH DIURUTKAN
         let sortedStudents = [];
 
-        // 1. LOAD SETTINGS
         onSnapshot(doc(db, "settings", "orientasi"), (doc) => {
             if(doc.exists()) {
                 const data = doc.data();
@@ -116,7 +114,6 @@
             }
         });
 
-        // 2. SIMPAN SETTINGS
         window.saveSettings = async function() {
             const meet = document.getElementById('meet-link').value;
             const linkA = document.getElementById('link-a').value;
@@ -134,20 +131,19 @@
             }
         }
 
-        // 3. PREVIEW KELAS (Logic sama dengan Siswa)
         async function loadPreview() {
-            const q = query(collection(db, "students"), where("selectionScore", ">", 60));
+            // PERBAIKAN: >= agar nilai 60 pas ditarik juga
+            const q = query(collection(db, "students"), where("selectionScore", ">=", 60));
             const snapshot = await getDocs(q);
             
-            sortedStudents = []; // Reset
+            sortedStudents = [];
             snapshot.forEach(doc => {
                 sortedStudents.push({ 
                     nama: doc.data().namaLengkap,
-                    wa: doc.data().noWhatsApp // Ambil WA juga buat data excel
+                    wa: doc.data().noWhatsApp
                 });
             });
 
-            // Urutkan A-Z
             sortedStudents.sort((a, b) => a.nama.localeCompare(b.nama, undefined, {sensitivity: 'base'}));
 
             const tbody = document.getElementById('student-list');
@@ -169,7 +165,6 @@
                     rowClass = "bg-gray-50"; 
                 }
                 
-                // Simpan info kelas ke objek siswa untuk memudahkan export nanti
                 s.kelas = kelas;
                 s.absen = absen;
 
@@ -184,9 +179,7 @@
             });
         }
 
-        // 4. UNDUH DATA KELAS (EXCEL)
         window.downloadClassData = function(targetClass) {
-            // Filter siswa berdasarkan kelas yang dipilih
             const classData = sortedStudents.filter(s => s.kelas === targetClass);
 
             if (classData.length === 0) {
@@ -194,7 +187,6 @@
                 return;
             }
 
-            // Format data untuk Excel
             const formattedData = classData.map(s => ({
                 "No. Absen": s.absen,
                 "Nama Lengkap": s.nama,
@@ -202,12 +194,10 @@
                 "Kelas": s.kelas
             }));
 
-            // Buat Worksheet & Workbook
             const ws = XLSX.utils.json_to_sheet(formattedData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, `Kelas ${targetClass}`);
 
-            // Download File
             XLSX.writeFile(wb, `Daftar_Hadir_Kelas_${targetClass}.xlsx`);
         }
 
