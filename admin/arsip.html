@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arsip Siswa - Admin Panel</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #mobile-sidebar { transition: transform 0.3s ease-in-out; }
+        .sidebar-open { transform: translateX(0); }
+        .sidebar-closed { transform: translateX(-100%); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex font-sans overflow-x-hidden">
+
+    <div class="md:hidden bg-navy-800 text-white p-4 flex justify-between items-center fixed w-full z-30 shadow-md">
+        <div class="font-bold text-mustard-400">ADMIN PANEL</div>
+        <button onclick="toggleSidebar()" class="text-white focus:outline-none">
+            <i class="fas fa-bars text-2xl"></i>
+        </button>
+    </div>
+
+    <aside id="mobile-sidebar" class="w-64 bg-navy-900 text-white flex flex-col fixed h-full shadow-2xl z-40 sidebar-closed md:translate-x-0 pt-16 md:pt-0">
+        <div class="p-6 flex items-center gap-3 border-b border-navy-800 hidden md:flex">
+            <img src="https://imgur.com/5Srjyo4.png" class="h-8 w-8 rounded-full bg-white">
+            <span class="font-bold tracking-wider text-mustard-400">CENDEKIA</span>
+        </div>
+        
+        <nav class="flex-grow p-4 space-y-2">
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-tachometer-alt w-6"></i> Dashboard
+            </a>
+            <a href="orientasi.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-campground w-6"></i> Orientasi
+            </a>
+            <a href="arsip.html" class="flex items-center gap-3 px-4 py-3 bg-navy-800 rounded-lg text-white font-semibold shadow border-l-4 border-red-500">
+                <i class="fas fa-archive w-6"></i> Arsip Data
+            </a>
+            <a href="alumni.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-user-graduate w-6"></i> Alumni
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-navy-800">
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition text-sm font-bold shadow">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
+
+    <div class="flex-grow md:ml-64 p-4 md:p-8 pt-20 md:pt-8 transition-all">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-navy-800">Arsip Pendaftaran</h1>
+                <p class="text-sm text-gray-500">Data siswa dari gelombang/batch sebelumnya.</p>
+            </div>
+            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-gray-800" id="admin-name">Administrator</p>
+                    <p class="text-xs text-red-600 font-bold">● Archive Mode</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=001f3f&color=fff" class="h-10 w-10 rounded-full border-2 border-mustard-500">
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+            <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-red-50">
+                <h2 class="text-lg font-bold text-red-800 flex items-center gap-2">
+                    <i class="fas fa-database"></i> Database Arsip Siswa
+                </h2>
+                <button onclick="downloadArchiveExcel()" class="bg-green-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-green-700 shadow w-full md:w-auto transition flex items-center justify-center gap-2">
+                    <i class="fas fa-file-excel"></i> Export Semua ke Excel
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[800px]"> 
+                    <thead class="bg-gray-100 text-gray-600 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="p-4 border-b">Nama Siswa</th>
+                            <th class="p-4 border-b">Tanggal Arsip</th>
+                            <th class="p-4 border-b">Kontak (WA)</th>
+                            <th class="p-4 border-b text-center">Nilai Ujian</th>
+                            <th class="p-4 border-b text-center">Status Akhir</th>
+                        </tr>
+                    </thead>
+                    <tbody id="archive-table" class="text-sm text-gray-700">
+                        <tr>
+                            <td colspan="5" class="p-8 text-center text-gray-500">
+                                <i class="fas fa-spinner fa-spin mr-2"></i> Mengambil data arsip...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+        import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let archivedData = [];
+
+        // UI Toggle Mobile
+        window.toggleSidebar = function() {
+            const sb = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('overlay');
+            if (sb.classList.contains('sidebar-closed')) {
+                sb.classList.remove('sidebar-closed');
+                sb.classList.add('sidebar-open');
+                overlay.classList.remove('hidden');
+            } else {
+                sb.classList.add('sidebar-closed');
+                sb.classList.remove('sidebar-open');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Cek Auth
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                if (user.email.includes('@ac.id')) {
+                    document.getElementById('admin-name').innerText = user.displayName || "Admin";
+                    loadArchivedData();
+                } else {
+                    Swal.fire({toast: true, position: 'top-end', icon: 'warning', title: 'Login Non-Admin'});
+                    loadArchivedData();
+                }
+            } else {
+                window.location.href = "../index.html";
+            }
+        });
+
+        // Ambil Data dari Koleksi "archived_students"
+        async function loadArchivedData() {
+            const tbody = document.getElementById('archive-table');
+            archivedData = []; // Reset array
+
+            try {
+                // Mengambil data arsip, jika mau diurutkan berdasarkan waktu arsip
+                // const q = query(collection(db, "archived_students"), orderBy("archivedAt", "desc"));
+                const querySnapshot = await getDocs(collection(db, "archived_students"));
+
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500 italic">Belum ada data arsip.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = ""; // Bersihkan loading
+
+                querySnapshot.forEach((doc) => {
+                    const s = doc.data();
+                    archivedData.push(s);
+
+                    const row = document.createElement('tr');
+                    row.className = "border-b border-gray-100 hover:bg-red-50 transition";
+
+                    // Format Tanggal Arsip
+                    let tglArsip = "-";
+                    if (s.archivedAt) {
+                        // Handle format timestamp firebase
+                        const dateObj = s.archivedAt.toDate ? s.archivedAt.toDate() : new Date(s.archivedAt);
+                        tglArsip = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                    }
+
+                    // Status Kelulusan
+                    let statusText = '<span class="text-gray-500">Tidak Diketahui</span>';
+                    if (s.isOfficialStudent) {
+                        statusText = '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Siswa Resmi</span>';
+                    } else if (s.selectionScore >= 60) {
+                        statusText = '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">Lolos (Belum Disahkan)</span>';
+                    } else if (s.selectionScore > 0 && s.selectionScore < 60) {
+                        statusText = '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">Gagal Seleksi</span>';
+                    } else {
+                        statusText = '<span class="bg-gray-100 text-gray-500 px-2 py-1 rounded text-xs">Hanya Mendaftar</span>';
+                    }
+
+                    row.innerHTML = `
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <img src="${s.photoURL || 'https://i.ibb.co/tMdJD76/default-avatar.png'}" class="w-8 h-8 rounded-full border border-gray-300">
+                                <div>
+                                    <p class="font-bold text-navy-800">${s.namaLengkap || 'Tanpa Nama'}</p>
+                                    <p class="text-xs text-gray-500 font-mono">${s.email || '-'}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-xs font-semibold text-gray-600">${tglArsip}</td>
+                        <td class="p-4 text-xs">
+                            <a href="https://wa.me/${s.noWhatsApp}" target="_blank" class="text-green-600 hover:underline">
+                                <i class="fab fa-whatsapp"></i> ${s.noWhatsApp || '-'}
+                            </a>
+                        </td>
+                        <td class="p-4 text-center font-bold text-navy-800">${s.selectionScore || '-'}</td>
+                        <td class="p-4 text-center">${statusText}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error("Error loading archives:", error);
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-500">Terjadi kesalahan saat memuat data.</td></tr>`;
+            }
+        }
+
+        // Fitur Export Excel untuk Arsip
+        window.downloadArchiveExcel = function() {
+            if (archivedData.length === 0) {
+                Swal.fire('Kosong', 'Tidak ada data arsip untuk diexport.', 'info');
+                return;
+            }
+
+            // Format data agar rapi di Excel
+            const formattedData = archivedData.map(s => {
+                let dateStr = "-";
+                if (s.archivedAt) {
+                    const dateObj = s.archivedAt.toDate ? s.archivedAt.toDate() : new Date(s.archivedAt);
+                    dateStr = dateObj.toLocaleDateString('id-ID');
+                }
+
+                let statusInfo = "Hanya Mendaftar";
+                if (s.isOfficialStudent) statusInfo = "Siswa Resmi";
+                else if (s.selectionScore >= 60) statusInfo = "Lolos Seleksi";
+                else if (s.selectionScore > 0) statusInfo = "Gagal Seleksi";
+
+                return {
+                    "Nama Lengkap": s.namaLengkap || "-",
+                    "Email": s.email || "-",
+                    "No. WhatsApp": s.noWhatsApp || "-",
+                    "Tanggal Arsip": dateStr,
+                    "Nilai Seleksi": s.selectionScore || 0,
+                    "Status Terakhir": statusInfo
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(formattedData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data Arsip");
+            XLSX.writeFile(wb, "Arsip_Cendekia_Aksara.xlsx");
+        }
+
+        window.logout = function() {
+            signOut(auth).then(() => window.location.href = "../index.html");
+        }
+    </script>
+</body>
+</html>
