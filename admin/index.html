@@ -51,6 +51,9 @@
             <a href="orientasi.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
                 <i class="fas fa-campground w-6"></i> Orientasi
             </a>
+            <a href="arsip.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-archive w-6"></i> Arsip Data
+            </a>
             <a href="alumni.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
                 <i class="fas fa-user-graduate w-6"></i> Alumni
             </a>
@@ -193,7 +196,6 @@
         let isRegOpen = false;
         let studentsData = [];
         const MAX_QUOTA = 30; 
-        const PASSING_GRADE = 60; // KKM = 60
 
         // UI Toggle Mobile
         window.toggleSidebar = function() {
@@ -281,10 +283,10 @@
                     s.uid = doc.id; // Simpan ID
                     studentsData.push(s);
 
-                    // LOGIKA HITUNG (PERBAIKAN >= 60)
+                    // Logic Hitung
                     const nilai = s.selectionScore || 0;
-                    if (nilai >= PASSING_GRADE) countLolos++; // Lolos Seleksi (>= 60)
-                    if (nilai > 0 && nilai < PASSING_GRADE) countFailed++; // Gagal (< 60)
+                    if (nilai >= 60) countLolos++; // Lolos Seleksi (KKM 60)
+                    if (nilai > 0 && nilai < 60) countFailed++; // Gagal (KKM 60)
                     if (s.isOfficialStudent) countOfficial++; // Sudah Validasi
 
                     renderRow(s, tbody);
@@ -302,6 +304,7 @@
                     msg.innerText = "Sistem Otomatis: Kuota Penuh (30). Pendaftaran Ditutup.";
                     msg.className = "text-[10px] text-red-600 mt-2 text-center font-bold animate-pulse";
                     
+                    // Jika masih terbuka, paksa tutup di database
                     if (isRegOpen) {
                         updateDoc(doc(db, "settings", "penerimaan"), { isOpen: false });
                     }
@@ -316,15 +319,15 @@
             const row = document.createElement('tr');
             row.className = "border-b border-gray-100 hover:bg-gray-50 transition";
             
-            // Badge Status (PERBAIKAN >= 60)
+            // Badge Status
             let statusBadge = '<span class="bg-gray-100 text-gray-500 px-2 py-1 rounded text-xs">Daftar</span>';
-            if (s.selectionScore >= PASSING_GRADE) statusBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">Lolos Seleksi</span>';
-            if (s.selectionScore > 0 && s.selectionScore < PASSING_GRADE) statusBadge = '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">Gagal</span>';
+            if (s.selectionScore >= 60) statusBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">Lolos Seleksi</span>'; // KKM 60
+            if (s.selectionScore > 0 && s.selectionScore < 60) statusBadge = '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">Gagal</span>'; // KKM 60
             if (s.isOfficialStudent) statusBadge = '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">SISWA RESMI</span>';
 
-            // Tombol Validasi (PERBAIKAN >= 60)
+            // Tombol Validasi (Hanya muncul jika lolos dan belum resmi)
             let actionBtn = '';
-            if (s.selectionScore >= PASSING_GRADE && !s.isOfficialStudent) {
+            if (s.selectionScore >= 60 && !s.isOfficialStudent) { // KKM 60
                 actionBtn = `<button onclick="validateStudent('${s.uid}')" class="bg-navy-800 text-white px-3 py-1 rounded text-xs hover:bg-mustard-500 transition">Sahkan</button>`;
             } else if (s.isOfficialStudent) {
                 actionBtn = `<i class="fas fa-check-circle text-green-500 text-lg"></i>`;
@@ -361,7 +364,7 @@
             } catch (e) { Swal.fire('Error', e.message, 'error'); }
         }
 
-        // 5. FITUR ARSIP & RESET
+        // 5. FITUR ARSIP & RESET (THE BIG BUTTON)
         window.archiveAndReset = async function() {
             const result = await Swal.fire({
                 title: 'PERINGATAN KERAS!',
@@ -378,20 +381,24 @@
 
                 try {
                     const batch = writeBatch(db);
-                    const timestamp = new Date().toISOString().split('T')[0];
+                    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
                     
+                    // 1. Ambil semua data siswa aktif
                     const snapshot = await getDocs(collection(db, "students"));
                     
                     snapshot.forEach((document) => {
                         const data = document.data();
                         
+                        // 2. Salin ke koleksi 'archived_students'
                         const archiveRef = doc(db, "archived_students", `${timestamp}_${document.id}`);
                         batch.set(archiveRef, { ...data, archivedAt: new Date() });
 
+                        // 3. Hapus dari koleksi 'students' (aktif)
                         const activeRef = doc(db, "students", document.id);
                         batch.delete(activeRef);
                     });
 
+                    // 4. Jalankan Batch
                     await batch.commit();
 
                     Swal.fire(
