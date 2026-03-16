@@ -4,23 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola Orientasi - Admin</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-</head>
-<body class="bg-gray-100 min-h-screen flex font-sans">
 
-    <aside class="w-64 bg-gray-900 text-white flex flex-col fixed h-full hidden md:flex">
-        <div class="p-6 font-bold text-xl text-yellow-400">ADMIN PANEL</div>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#001f3f', 900: '#00152b' },
+                        mustard: { 400: '#FFDB58', 500: '#E1AD01' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Transisi Sidebar Mobile */
+        #mobile-sidebar { transition: transform 0.3s ease-in-out; }
+        .sidebar-open { transform: translateX(0); }
+        .sidebar-closed { transform: translateX(-100%); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex font-sans overflow-x-hidden">
+
+    <div class="md:hidden bg-navy-800 text-white p-4 flex justify-between items-center fixed w-full z-30 shadow-md">
+        <div class="font-bold text-mustard-400">ADMIN PANEL</div>
+        <button onclick="toggleSidebar()" class="text-white focus:outline-none">
+            <i class="fas fa-bars text-2xl"></i>
+        </button>
+    </div>
+
+    <aside id="mobile-sidebar" class="w-64 bg-navy-900 text-white flex flex-col fixed h-full shadow-2xl z-40 sidebar-closed md:translate-x-0 pt-16 md:pt-0">
+        <div class="p-6 flex items-center gap-3 border-b border-navy-800 hidden md:flex">
+            <img src="https://imgur.com/5Srjyo4.png" class="h-8 w-8 rounded-full bg-white">
+            <span class="font-bold tracking-wider text-mustard-400">CENDEKIA</span>
+        </div>
+        
         <nav class="flex-grow p-4 space-y-2">
-            <a href="index.html" class="block px-4 py-2 hover:bg-gray-800 rounded">Dashboard Utama</a>
-            <a href="#" class="block px-4 py-2 bg-gray-800 rounded text-yellow-400 font-bold">Kelola Orientasi</a>
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-tachometer-alt w-6"></i> Dashboard
+            </a>
+            <a href="orientasi.html" class="flex items-center gap-3 px-4 py-3 bg-navy-800 rounded-lg text-white font-semibold shadow border-l-4 border-mustard-500">
+                <i class="fas fa-campground w-6"></i> Orientasi
+            </a>
+            <a href="arsip.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-archive w-6"></i> Arsip Data
+            </a>
+            <a href="alumni.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-user-graduate w-6"></i> Alumni
+            </a>
+            <a href="pengajar.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-navy-800 hover:text-white rounded-lg transition">
+                <i class="fas fa-chalkboard-teacher w-6"></i> Pengajar
+            </a>
         </nav>
+
+        <div class="p-4 border-t border-navy-800">
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition text-sm font-bold shadow">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
     </aside>
 
-    <main class="flex-grow md:ml-64 p-8">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">Manajemen Pekan Orientasi</h1>
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
+
+    <main class="flex-grow md:ml-64 p-4 md:p-8 pt-20 md:pt-8 transition-all">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-navy-800">Manajemen Pekan Orientasi</h1>
+                <p class="text-sm text-gray-500">Kelola link sosialisasi dan pembagian kelas siswa lolos.</p>
+            </div>
+            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-gray-800">Administrator</p>
+                    <p class="text-xs text-green-600 font-bold">● System Active</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=001f3f&color=fff" class="h-10 w-10 rounded-full border-2 border-mustard-500">
+            </div>
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
@@ -30,7 +95,7 @@
                 </h2>
                 <p class="text-sm text-gray-500 mb-2">Link untuk sosialisasi pembukaan.</p>
                 <input type="text" id="meet-link" class="w-full border p-2 rounded mb-4" placeholder="https://meet.google.com/...">
-                <button onclick="saveSettings()" class="bg-navy-900 text-white px-4 py-2 rounded hover:bg-navy-800 w-full">Simpan Link Meet</button>
+                <button onclick="saveSettings()" class="bg-navy-900 text-white px-4 py-2 rounded hover:bg-navy-800 w-full font-bold shadow">Simpan Link Meet</button>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-600">
@@ -48,28 +113,28 @@
                     <input type="text" id="link-b" class="w-full border p-2 rounded" placeholder="https://chat.whatsapp.com/...">
                 </div>
 
-                <button onclick="saveSettings()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">Simpan Link Grup</button>
+                <button onclick="saveSettings()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full font-bold shadow">Simpan Link Grup</button>
             </div>
 
         </div>
 
-        <div class="mt-8 bg-white p-6 rounded-xl shadow-md">
+        <div class="mt-8 bg-white p-6 rounded-xl shadow-md border border-gray-200">
             <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                <h2 class="text-lg font-bold">Daftar Siswa & Pembagian Kelas</h2>
+                <h2 class="text-lg font-bold text-navy-800">Daftar Siswa & Pembagian Kelas</h2>
                 
                 <div class="flex gap-2">
-                    <button onclick="downloadClassData('A')" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 flex items-center gap-2">
+                    <button onclick="downloadClassData('A')" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 flex items-center gap-2 shadow">
                         <i class="fas fa-file-excel"></i> Unduh Kelas A
                     </button>
-                    <button onclick="downloadClassData('B')" class="bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-purple-700 flex items-center gap-2">
+                    <button onclick="downloadClassData('B')" class="bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-purple-700 flex items-center gap-2 shadow">
                         <i class="fas fa-file-excel"></i> Unduh Kelas B
                     </button>
                 </div>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-100 text-sm font-bold text-gray-600">
+                <table class="w-full text-left border-collapse min-w-[600px]">
+                    <thead class="bg-gray-100 text-sm font-bold text-gray-600 uppercase">
                         <tr>
                             <th class="p-3 border-b">No</th>
                             <th class="p-3 border-b">Nama Siswa</th>
@@ -78,7 +143,7 @@
                         </tr>
                     </thead>
                     <tbody id="student-list" class="text-sm">
-                        <tr><td colspan="4" class="p-4 text-center">Memuat...</td></tr>
+                        <tr><td colspan="4" class="p-8 text-center text-gray-500">Memuat data...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -88,6 +153,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        // TAMBAHAN: Import Firebase Auth untuk proteksi halaman dan fungsi logout
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -101,10 +168,39 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
         let sortedStudents = [];
 
+        // Cek Login Admin
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "../index.html";
+            }
+        });
+
+        // UI Toggle Mobile
+        window.toggleSidebar = function() {
+            const sb = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('overlay');
+            if (sb.classList.contains('sidebar-closed')) {
+                sb.classList.remove('sidebar-closed');
+                sb.classList.add('sidebar-open');
+                overlay.classList.remove('hidden');
+            } else {
+                sb.classList.add('sidebar-closed');
+                sb.classList.remove('sidebar-open');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Fungsi Logout
+        window.logout = function() {
+            signOut(auth).then(() => window.location.href = "../index.html");
+        }
+
+        // Load Settings Orientasi
         onSnapshot(doc(db, "settings", "orientasi"), (doc) => {
             if(doc.exists()) {
                 const data = doc.data();
@@ -114,6 +210,7 @@
             }
         });
 
+        // Simpan Settings
         window.saveSettings = async function() {
             const meet = document.getElementById('meet-link').value;
             const linkA = document.getElementById('link-a').value;
@@ -125,14 +222,14 @@
                     linkKelasA: linkA,
                     linkKelasB: linkB
                 }, { merge: true });
-                Swal.fire('Tersimpan', 'Link berhasil diperbarui', 'success');
+                Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Tersimpan', showConfirmButton: false, timer: 1500});
             } catch (e) {
                 Swal.fire('Error', e.message, 'error');
             }
         }
 
+        // Load Data Siswa Lolos (>= 60)
         async function loadPreview() {
-            // PERBAIKAN: >= agar nilai 60 pas ditarik juga
             const q = query(collection(db, "students"), where("selectionScore", ">=", 60));
             const snapshot = await getDocs(q);
             
@@ -144,13 +241,14 @@
                 });
             });
 
+            // Urutkan A-Z
             sortedStudents.sort((a, b) => a.nama.localeCompare(b.nama, undefined, {sensitivity: 'base'}));
 
             const tbody = document.getElementById('student-list');
             tbody.innerHTML = "";
 
             if(sortedStudents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center">Belum ada siswa lolos.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500 italic">Belum ada siswa lolos.</td></tr>';
                 return;
             }
 
@@ -169,16 +267,17 @@
                 s.absen = absen;
 
                 tbody.innerHTML += `
-                    <tr class="${rowClass} border-b hover:bg-gray-100">
+                    <tr class="${rowClass} border-b border-gray-100 hover:bg-gray-100 transition">
                         <td class="p-3">${idx + 1}</td>
                         <td class="p-3 font-bold text-navy-800">${s.nama}</td>
-                        <td class="p-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">${kelas}</span></td>
+                        <td class="p-3"><span class="${kelas === 'A' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'} px-2 py-1 rounded text-xs font-bold">${kelas}</span></td>
                         <td class="p-3">${absen}</td>
                     </tr>
                 `;
             });
         }
 
+        // Download Excel per Kelas
         window.downloadClassData = function(targetClass) {
             const classData = sortedStudents.filter(s => s.kelas === targetClass);
 
