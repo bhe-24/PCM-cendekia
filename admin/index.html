@@ -183,6 +183,8 @@
 
     </div>
 
+    <div id="pdf-container" style="position: absolute; left: -9999px; top: 0; width: 794px; background: white;"></div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
         import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
@@ -446,7 +448,7 @@
         // ==========================================
         // FITUR BARU: DOWNLOAD PDF (1 HALAMAN/SISWA)
         // ==========================================
-        window.downloadPDF = function() {
+        window.downloadPDF = async function() {
             if (studentsData.length === 0) {
                 Swal.fire('Kosong', 'Belum ada data siswa untuk diunduh.', 'info');
                 return;
@@ -459,18 +461,20 @@
                 didOpen: () => Swal.showLoading()
             });
 
-            // Buat kontainer rahasia untuk merender HTML sebelum di-convert ke PDF
-            let htmlContent = `<div style="font-family: Arial, sans-serif; background-color: white;">`;
+            const container = document.getElementById('pdf-container');
+            let htmlContent = '';
             
             studentsData.forEach((s, idx) => {
-                // Tambahkan Page Break agar tiap siswa dapat halaman baru (kecuali siswa pertama)
                 let pageBreak = idx > 0 ? `page-break-before: always;` : ``;
                 
+                // Gunakan URL default jika foto tidak ada, dan tambahkan query string untuk menghindari cache
+                const fotoUrl = (s.photoURL || 'https://i.ibb.co/tMdJD76/default-avatar.png') + "?t=" + new Date().getTime();
+                
                 htmlContent += `
-                <div style="${pageBreak} padding: 40px; box-sizing: border-box; min-height: 100vh;">
+                <div style="${pageBreak} padding: 40px; box-sizing: border-box; min-height: 1120px;">
                     
                     <div style="display: flex; align-items: center; border-bottom: 4px solid #001f3f; padding-bottom: 20px; margin-bottom: 30px;">
-                        <img src="https://imgur.com/5Srjyo4.png" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #E1AD01; margin-right: 20px;">
+                        <img src="https://imgur.com/5Srjyo4.png" crossorigin="anonymous" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #E1AD01; margin-right: 20px;">
                         <div>
                             <h1 style="color: #001f3f; margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 1px;">CENDEKIA AKSARA</h1>
                             <p style="color: #E1AD01; margin: 0; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">Berkas Formulir Calon Siswa Baru</p>
@@ -479,11 +483,11 @@
 
                     <div style="display: flex; gap: 30px;">
                         <div style="width: 150px; flex-shrink: 0; text-align: center;">
-                            <img src="${s.photoURL || 'https://i.ibb.co/tMdJD76/default-avatar.png'}" style="width: 150px; height: 200px; object-fit: cover; border-radius: 8px; border: 3px solid #001f3f; padding: 2px;">
+                            <img src="${fotoUrl}" crossorigin="anonymous" style="width: 150px; height: 200px; object-fit: cover; border-radius: 8px; border: 3px solid #001f3f; padding: 2px;">
                             
                             <div style="margin-top: 15px; padding: 10px; background-color: #f3f4f6; border-radius: 8px; border: 1px solid #e5e7eb;">
                                 <p style="font-size: 11px; color: #6b7280; font-weight: bold; margin: 0;">NILAI SELEKSI</p>
-                                <p style="font-size: 24px; font-weight: 900; color: ${s.selectionScore >= 60 ? '#16a34a' : '#dc2626'}; margin: 0;">${s.selectionScore !== undefined ? s.selectionScore : 'N/A'}</p>
+                                <p style="font-size: 24px; font-weight: 900; color: ${s.selectionScore >= PASSING_GRADE ? '#16a34a' : '#dc2626'}; margin: 0;">${s.selectionScore !== undefined ? s.selectionScore : 'N/A'}</p>
                             </div>
                         </div>
 
@@ -536,25 +540,29 @@
                     
                 </div>`;
             });
-            htmlContent += `</div>`;
 
-            // Proses Render HTML ke PDF
-            const element = document.createElement('div');
-            element.innerHTML = htmlContent;
-            
-            const opt = {
-                margin:       0,
-                filename:     'Berkas_Data_Siswa_Cendekia.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true }, // useCORS wajib agar foto muncul
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
+            // Memasukkan HTML ke dalam container rahasia di DOM
+            container.innerHTML = htmlContent;
 
-            html2pdf().set(opt).from(element).save().then(() => {
-                Swal.close();
-            }).catch(err => {
-                Swal.fire('Error', 'Gagal memproses PDF: ' + err.message, 'error');
-            });
+            // Beri jeda 1 detik agar semua gambar (logo dan foto profil) selesai di-load oleh browser
+            setTimeout(() => {
+                const opt = {
+                    margin:       0,
+                    filename:     'Berkas_Data_Siswa_Cendekia.pdf',
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true, logging: false },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                html2pdf().set(opt).from(container).save().then(() => {
+                    container.innerHTML = ''; // Bersihkan DOM
+                    Swal.close();
+                }).catch(err => {
+                    console.error(err);
+                    container.innerHTML = '';
+                    Swal.fire('Error', 'Gagal memproses PDF: ' + err.message, 'error');
+                });
+            }, 1000);
         }
 
         // 7. EXPORT EXCEL (Tetap Sama)
