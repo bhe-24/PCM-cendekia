@@ -10,7 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 
     <script>
         tailwind.config = {
@@ -30,18 +32,6 @@
         .sidebar-closed { transform: translateX(-100%); }
         .swal2-html-container::-webkit-scrollbar { width: 6px; }
         .swal2-html-container::-webkit-scrollbar-thumb { background-color: #001f3f; border-radius: 10px; }
-        
-        /* Stylings Khusus Untuk PDF Container */
-        #pdf-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 800px;
-            /* Menghindari interaksi tapi membiarkan div "ada" di halaman untuk dirender */
-            opacity: 0.01;
-            pointer-events: none;
-            z-index: -100;
-        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex font-sans overflow-x-hidden">
@@ -193,10 +183,6 @@
             </div>
         </div>
 
-    </div>
-
-    <div id="pdf-wrapper">
-        <div id="pdf-renderer"></div>
     </div>
 
     <script type="module">
@@ -487,8 +473,25 @@
         }
 
         // ==========================================
-        // FITUR PDF DENGAN TEKS VEKTOR
+        // FITUR PDF DENGAN PDFMAKE (SUPER RAPI & TEXT ASLI)
         // ==========================================
+        
+        // Helper: Convert Image URL to Base64 (Syarat PDFMake)
+        async function getBase64ImageFromUrl(imageUrl) {
+            try {
+                const response = await fetch(imageUrl, { mode: 'cors' });
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (e) {
+                return null;
+            }
+        }
+
         window.downloadPDF = async function() {
             if (studentsData.length === 0) {
                 Swal.fire('Kosong', 'Belum ada data siswa untuk diunduh.', 'info');
@@ -497,101 +500,145 @@
 
             Swal.fire({
                 title: 'Menyusun Berkas PDF...', 
-                text: 'Proses ini mungkin memakan waktu beberapa detik.',
+                text: 'Mohon tunggu, sistem sedang membangun dokumen asli...',
                 allowOutsideClick: false, 
                 didOpen: () => Swal.showLoading()
             });
 
-            const container = document.getElementById('pdf-renderer');
-            let htmlContent = '';
-            
-            studentsData.forEach((s, idx) => {
-                // PAGE BREAK UNTUK 1 SISWA = 1 HALAMAN
-                let pageBreak = idx > 0 ? `page-break-before: always;` : ``;
-                
-                htmlContent += `
-                <div style="${pageBreak} padding: 40px; box-sizing: border-box; width: 100%; min-height: 1050px; background-color: white;">
-                    
-                    <div style="display: flex; align-items: center; border-bottom: 4px solid #001f3f; padding-bottom: 20px; margin-bottom: 30px;">
-                        <img src="https://imgur.com/5Srjyo4.png" crossorigin="anonymous" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #E1AD01; margin-right: 20px;">
-                        <div>
-                            <h1 style="color: #001f3f; margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 1px;">CENDEKIA AKSARA</h1>
-                            <p style="color: #E1AD01; margin: 0; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">Berkas Formulir Calon Siswa Baru</p>
-                        </div>
-                    </div>
+            // Ambil Logo Cendekia dan convert ke Base64
+            const logoBase64 = await getBase64ImageFromUrl("https://imgur.com/5Srjyo4.png");
 
-                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #374151;">
-                        <tr>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; width: 200px; font-weight: bold; color: #001f3f; background-color: #f9fafb;">ID Pendaftaran</td>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: 900; color: #1d4ed8; font-family: monospace; font-size: 16px;">${s.idPendaftaran || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Nilai Seleksi</td>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: ${s.selectionScore >= PASSING_GRADE ? '#16a34a' : '#dc2626'}; font-size: 16px;">${s.selectionScore !== undefined ? s.selectionScore : 'Belum Ujian'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Nama Lengkap</td>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold;">${s.namaLengkap || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Email Pribadi</td>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.email || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Nomor WhatsApp</td>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.noWhatsApp || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Tempat, Tgl Lahir</td>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.tempatLahir || '-'}, ${s.tanggalLahir || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Alamat Rumah</td>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.alamatLengkap || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Asal Sekolah</td>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.asalSekolah || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Media Sosial</td>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.mediaSosial || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Topik Ujian</td>
-                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.selectionTopic || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Motivasi / Portofolio Singkat:</td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" style="padding: 15px 10px; border: 1px solid #e5e7eb; white-space: pre-wrap; line-height: 1.5; min-height: 150px; vertical-align: top;">${s.motivasi || 'Tidak ada catatan.'}</td>
-                        </tr>
-                    </table>
-                </div>`;
+            // Struktur Dokumen PDFMake
+            const docDefinition = {
+                pageSize: 'A4',
+                pageMargins: [40, 40, 40, 40],
+                content: [],
+                styles: {
+                    headerTitle: { fontSize: 22, bold: true, color: '#001f3f' },
+                    headerSub: { fontSize: 10, bold: true, color: '#E1AD01', margin: [0, 2, 0, 10] },
+                    tableLabel: { bold: true, color: '#001f3f', fillColor: '#f9fafb', margin: [5, 5, 5, 5] },
+                    tableValue: { margin: [5, 5, 5, 5] },
+                    sectionTitle: { fontSize: 12, bold: true, color: '#001f3f', margin: [0, 20, 0, 5] },
+                    motivasiText: { italics: true, color: '#4b5563', margin: [5, 5, 5, 5] }
+                },
+                defaultStyle: {
+                    columnGap: 20
+                }
+            };
+
+            // Loop untuk setiap siswa
+            studentsData.forEach((s, idx) => {
+                
+                // Tambahkan Page Break jika bukan siswa pertama
+                if (idx > 0) {
+                    docDefinition.content.push({ text: '', pageBreak: 'before' });
+                }
+
+                // 1. KOP SURAT (Header)
+                const headerTable = {
+                    table: {
+                        widths: ['auto', '*'],
+                        body: [
+                            [
+                                // Jika Base64 logo gagal di-load, tampilkan teks kosong
+                                logoBase64 ? { image: logoBase64, width: 50, border: [false, false, false, true] } : { text: '', border: [false, false, false, true] },
+                                {
+                                    stack: [
+                                        { text: 'CENDEKIA AKSARA', style: 'headerTitle' },
+                                        { text: 'BERKAS FORMULIR CALON SISWA BARU', style: 'headerSub' }
+                                    ],
+                                    border: [false, false, false, true],
+                                    margin: [10, 5, 0, 0]
+                                }
+                            ]
+                        ]
+                    },
+                    margin: [0, 0, 0, 20]
+                };
+                docDefinition.content.push(headerTable);
+
+                // 2. TABEL BIODATA KOMPLIT
+                let nilaiTeks = s.selectionScore !== undefined ? s.selectionScore.toString() : 'Belum Ujian';
+                let nilaiWarna = s.selectionScore >= PASSING_GRADE ? '#16a34a' : '#dc2626';
+
+                const biodataTable = {
+                    table: {
+                        widths: ['35%', '65%'],
+                        body: [
+                            [
+                                { text: 'ID Pendaftaran', style: 'tableLabel' },
+                                { text: s.idPendaftaran || '-', style: 'tableValue', bold: true, color: '#1d4ed8' }
+                            ],
+                            [
+                                { text: 'Nilai Seleksi AI', style: 'tableLabel' },
+                                { text: nilaiTeks, style: 'tableValue', bold: true, color: nilaiWarna }
+                            ],
+                            [
+                                { text: 'Nama Lengkap', style: 'tableLabel' },
+                                { text: s.namaLengkap || '-', style: 'tableValue', bold: true }
+                            ],
+                            [
+                                { text: 'Email Pribadi', style: 'tableLabel' },
+                                { text: s.email || '-', style: 'tableValue' }
+                            ],
+                            [
+                                { text: 'Nomor WhatsApp', style: 'tableLabel' },
+                                { text: s.noWhatsApp || '-', style: 'tableValue' }
+                            ],
+                            [
+                                { text: 'Tempat, Tanggal Lahir', style: 'tableLabel' },
+                                { text: `${s.tempatLahir || '-'}, ${s.tanggalLahir || '-'}`, style: 'tableValue' }
+                            ],
+                            [
+                                { text: 'Alamat Lengkap', style: 'tableLabel' },
+                                { text: s.alamatLengkap || '-', style: 'tableValue' }
+                            ],
+                            [
+                                { text: 'Asal Sekolah', style: 'tableLabel' },
+                                { text: s.asalSekolah || '-', style: 'tableValue' }
+                            ],
+                            [
+                                { text: 'Media Sosial', style: 'tableLabel' },
+                                { text: s.mediaSosial || '-', style: 'tableValue' }
+                            ],
+                            [
+                                { text: 'Topik Ujian Minat', style: 'tableLabel' },
+                                { text: s.selectionTopic || '-', style: 'tableValue' }
+                            ]
+                        ]
+                    },
+                    layout: {
+                        hLineWidth: function (i, node) { return 1; },
+                        vLineWidth: function (i, node) { return 1; },
+                        hLineColor: function (i, node) { return '#e5e7eb'; },
+                        vLineColor: function (i, node) { return '#e5e7eb'; },
+                    }
+                };
+                docDefinition.content.push(biodataTable);
+
+                // 3. MOTIVASI / PORTOFOLIO
+                docDefinition.content.push({ text: 'Motivasi / Catatan Portofolio:', style: 'sectionTitle' });
+                docDefinition.content.push({
+                    table: {
+                        widths: ['100%'],
+                        body: [
+                            [{ text: s.motivasi || 'Tidak ada catatan yang dilampirkan.', style: 'motivasiText', fillColor: '#f9fafb' }]
+                        ]
+                    },
+                    layout: {
+                        hLineWidth: function (i, node) { return 1; },
+                        vLineWidth: function (i, node) { return 1; },
+                        hLineColor: function (i, node) { return '#e5e7eb'; },
+                        vLineColor: function (i, node) { return '#e5e7eb'; },
+                    }
+                });
+
             });
 
-            container.innerHTML = htmlContent;
-
-            // Proses rendering
-            setTimeout(() => {
-                const opt = {
-                    margin:       0,
-                    filename:     'Berkas_Data_Siswa_Cendekia.pdf',
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true }, 
-                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                html2pdf().set(opt).from(container).save().then(() => {
-                    container.innerHTML = ''; 
-                    Swal.close();
-                }).catch(err => {
-                    console.error(err);
-                    container.innerHTML = '';
-                    Swal.fire('Error', 'Gagal memproses PDF: ' + err.message, 'error');
-                });
-            }, 1000);
+            // Eksekusi Pembuatan PDF
+            pdfMake.createPdf(docDefinition).download('Berkas_Data_Siswa_Cendekia.pdf', () => {
+                Swal.close();
+            });
         }
 
         window.saveAnnouncement = async function() {
