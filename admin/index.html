@@ -31,15 +31,16 @@
         .swal2-html-container::-webkit-scrollbar { width: 6px; }
         .swal2-html-container::-webkit-scrollbar-thumb { background-color: #001f3f; border-radius: 10px; }
         
-        /* Stylings Khusus Untuk PDF Container agar di-render oleh html2canvas */
-        #pdf-renderer {
+        /* Stylings Khusus Untuk PDF Container */
+        #pdf-wrapper {
             position: absolute;
             top: 0;
             left: 0;
             width: 800px;
-            background-color: white;
-            z-index: -1; /* Di belakang layar tapi tetap terlihat oleh engine renderer */
-            visibility: hidden;
+            /* Menghindari interaksi tapi membiarkan div "ada" di halaman untuk dirender */
+            opacity: 0.01;
+            pointer-events: none;
+            z-index: -100;
         }
     </style>
 </head>
@@ -194,7 +195,9 @@
 
     </div>
 
-    <div id="pdf-renderer"></div>
+    <div id="pdf-wrapper">
+        <div id="pdf-renderer"></div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
@@ -484,7 +487,7 @@
         }
 
         // ==========================================
-        // FITUR PDF DENGAN TEKS VEKTOR (Bukan Gambar)
+        // FITUR PDF DENGAN TEKS VEKTOR
         // ==========================================
         window.downloadPDF = async function() {
             if (studentsData.length === 0) {
@@ -499,21 +502,18 @@
                 didOpen: () => Swal.showLoading()
             });
 
-            // Pastikan elemen renderer terlihat oleh html2pdf, tapi disembunyikan dari user
             const container = document.getElementById('pdf-renderer');
-            container.style.visibility = 'visible'; 
-            
             let htmlContent = '';
             
             studentsData.forEach((s, idx) => {
+                // PAGE BREAK UNTUK 1 SISWA = 1 HALAMAN
                 let pageBreak = idx > 0 ? `page-break-before: always;` : ``;
                 
-                // HANYA LOGO CENDEKIA & TABEL BIODATA KOMPLIT (Tanpa Foto Siswa)
                 htmlContent += `
-                <div style="${pageBreak} padding: 40px; box-sizing: border-box; width: 100%; height: 1100px; background-color: white;">
+                <div style="${pageBreak} padding: 40px; box-sizing: border-box; width: 100%; min-height: 1050px; background-color: white;">
                     
                     <div style="display: flex; align-items: center; border-bottom: 4px solid #001f3f; padding-bottom: 20px; margin-bottom: 30px;">
-                        <img src="https://imgur.com/5Srjyo4.png" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #E1AD01; margin-right: 20px;">
+                        <img src="https://imgur.com/5Srjyo4.png" crossorigin="anonymous" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #E1AD01; margin-right: 20px;">
                         <div>
                             <h1 style="color: #001f3f; margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 1px;">CENDEKIA AKSARA</h1>
                             <p style="color: #E1AD01; margin: 0; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">Berkas Formulir Calon Siswa Baru</p>
@@ -573,27 +573,25 @@
 
             container.innerHTML = htmlContent;
 
-            // Beri jeda agar library memproses CSS
+            // Proses rendering
             setTimeout(() => {
                 const opt = {
                     margin:       0,
                     filename:     'Berkas_Data_Siswa_Cendekia.pdf',
                     image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2 }, 
+                    html2canvas:  { scale: 2, useCORS: true }, 
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
                 html2pdf().set(opt).from(container).save().then(() => {
                     container.innerHTML = ''; 
-                    container.style.visibility = 'hidden'; 
                     Swal.close();
                 }).catch(err => {
                     console.error(err);
                     container.innerHTML = '';
-                    container.style.visibility = 'hidden';
                     Swal.fire('Error', 'Gagal memproses PDF: ' + err.message, 'error');
                 });
-            }, 500);
+            }, 1000);
         }
 
         window.saveAnnouncement = async function() {
