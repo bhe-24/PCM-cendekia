@@ -30,6 +30,17 @@
         .sidebar-closed { transform: translateX(-100%); }
         .swal2-html-container::-webkit-scrollbar { width: 6px; }
         .swal2-html-container::-webkit-scrollbar-thumb { background-color: #001f3f; border-radius: 10px; }
+        
+        /* Stylings Khusus Untuk PDF Container agar di-render oleh html2canvas */
+        #pdf-renderer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 800px;
+            background-color: white;
+            z-index: -1; /* Di belakang layar tapi tetap terlihat oleh engine renderer */
+            visibility: hidden;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex font-sans overflow-x-hidden">
@@ -183,7 +194,7 @@
 
     </div>
 
-    <div id="pdf-container" style="position: absolute; left: -9999px; top: 0; width: 794px; background: white;"></div>
+    <div id="pdf-renderer"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
@@ -445,127 +456,6 @@
             } catch (e) { Swal.fire('Error', e.message, 'error'); }
         }
 
-        // ==========================================
-        // FITUR BARU: DOWNLOAD PDF (1 HALAMAN/SISWA)
-        // ==========================================
-        window.downloadPDF = async function() {
-            if (studentsData.length === 0) {
-                Swal.fire('Kosong', 'Belum ada data siswa untuk diunduh.', 'info');
-                return;
-            }
-
-            Swal.fire({
-                title: 'Menyusun Berkas PDF...', 
-                text: 'Proses ini mungkin memakan waktu beberapa detik tergantung jumlah siswa.',
-                allowOutsideClick: false, 
-                didOpen: () => Swal.showLoading()
-            });
-
-            const container = document.getElementById('pdf-container');
-            let htmlContent = '';
-            
-            studentsData.forEach((s, idx) => {
-                let pageBreak = idx > 0 ? `page-break-before: always;` : ``;
-                
-                // Gunakan URL default jika foto tidak ada, dan tambahkan query string untuk menghindari cache
-                const fotoUrl = (s.photoURL || 'https://i.ibb.co/tMdJD76/default-avatar.png') + "?t=" + new Date().getTime();
-                
-                htmlContent += `
-                <div style="${pageBreak} padding: 40px; box-sizing: border-box; min-height: 1120px;">
-                    
-                    <div style="display: flex; align-items: center; border-bottom: 4px solid #001f3f; padding-bottom: 20px; margin-bottom: 30px;">
-                        <img src="https://imgur.com/5Srjyo4.png" crossorigin="anonymous" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #E1AD01; margin-right: 20px;">
-                        <div>
-                            <h1 style="color: #001f3f; margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 1px;">CENDEKIA AKSARA</h1>
-                            <p style="color: #E1AD01; margin: 0; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">Berkas Formulir Calon Siswa Baru</p>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 30px;">
-                        <div style="width: 150px; flex-shrink: 0; text-align: center;">
-                            <img src="${fotoUrl}" crossorigin="anonymous" style="width: 150px; height: 200px; object-fit: cover; border-radius: 8px; border: 3px solid #001f3f; padding: 2px;">
-                            
-                            <div style="margin-top: 15px; padding: 10px; background-color: #f3f4f6; border-radius: 8px; border: 1px solid #e5e7eb;">
-                                <p style="font-size: 11px; color: #6b7280; font-weight: bold; margin: 0;">NILAI SELEKSI</p>
-                                <p style="font-size: 24px; font-weight: 900; color: ${s.selectionScore >= PASSING_GRADE ? '#16a34a' : '#dc2626'}; margin: 0;">${s.selectionScore !== undefined ? s.selectionScore : 'N/A'}</p>
-                            </div>
-                        </div>
-
-                        <div style="flex-grow: 1;">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #374151;">
-                                <tr>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; width: 150px; font-weight: bold; color: #001f3f;">ID Pendaftaran</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: 900; color: #1d4ed8; font-family: monospace; font-size: 16px;">: ${s.idPendaftaran || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #001f3f;">Nama Lengkap</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold;">: ${s.namaLengkap || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #001f3f;">Email Pribadi</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">: ${s.email || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #001f3f;">Nomor WhatsApp</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">: ${s.noWhatsApp || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #001f3f;">Tempat, Tgl Lahir</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">: ${s.tempatLahir || '-'}, ${s.tanggalLahir || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #001f3f;">Alamat Rumah</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">: ${s.alamatLengkap || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #001f3f;">Asal Sekolah</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">: ${s.asalSekolah || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #001f3f;">Media Sosial</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">: ${s.mediaSosial || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #001f3f;">Topik Ujian</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">: ${s.selectionTopic || '-'}</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 30px;">
-                        <h4 style="color: #001f3f; border-bottom: 2px solid #E1AD01; display: inline-block; margin-bottom: 10px; padding-bottom: 5px;">Motivasi / Portofolio Singkat</h4>
-                        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 13px; line-height: 1.6; white-space: pre-wrap; min-height: 100px;">${s.motivasi || 'Tidak ada catatan.'}</div>
-                    </div>
-                    
-                </div>`;
-            });
-
-            // Memasukkan HTML ke dalam container rahasia di DOM
-            container.innerHTML = htmlContent;
-
-            // Beri jeda 1 detik agar semua gambar (logo dan foto profil) selesai di-load oleh browser
-            setTimeout(() => {
-                const opt = {
-                    margin:       0,
-                    filename:     'Berkas_Data_Siswa_Cendekia.pdf',
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true, logging: false },
-                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                html2pdf().set(opt).from(container).save().then(() => {
-                    container.innerHTML = ''; // Bersihkan DOM
-                    Swal.close();
-                }).catch(err => {
-                    console.error(err);
-                    container.innerHTML = '';
-                    Swal.fire('Error', 'Gagal memproses PDF: ' + err.message, 'error');
-                });
-            }, 1000);
-        }
-
-        // 7. EXPORT EXCEL (Tetap Sama)
         window.downloadExcel = function() {
             if (studentsData.length === 0) {
                 Swal.fire('Kosong', 'Belum ada data siswa untuk diunduh.', 'info');
@@ -591,6 +481,119 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Data Lengkap Pendaftar");
             XLSX.writeFile(wb, "Database_Pendaftar_Cendekia.xlsx");
+        }
+
+        // ==========================================
+        // FITUR PDF DENGAN TEKS VEKTOR (Bukan Gambar)
+        // ==========================================
+        window.downloadPDF = async function() {
+            if (studentsData.length === 0) {
+                Swal.fire('Kosong', 'Belum ada data siswa untuk diunduh.', 'info');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Menyusun Berkas PDF...', 
+                text: 'Proses ini mungkin memakan waktu beberapa detik.',
+                allowOutsideClick: false, 
+                didOpen: () => Swal.showLoading()
+            });
+
+            // Pastikan elemen renderer terlihat oleh html2pdf, tapi disembunyikan dari user
+            const container = document.getElementById('pdf-renderer');
+            container.style.visibility = 'visible'; 
+            
+            let htmlContent = '';
+            
+            studentsData.forEach((s, idx) => {
+                let pageBreak = idx > 0 ? `page-break-before: always;` : ``;
+                
+                // HANYA LOGO CENDEKIA & TABEL BIODATA KOMPLIT (Tanpa Foto Siswa)
+                htmlContent += `
+                <div style="${pageBreak} padding: 40px; box-sizing: border-box; width: 100%; height: 1100px; background-color: white;">
+                    
+                    <div style="display: flex; align-items: center; border-bottom: 4px solid #001f3f; padding-bottom: 20px; margin-bottom: 30px;">
+                        <img src="https://imgur.com/5Srjyo4.png" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #E1AD01; margin-right: 20px;">
+                        <div>
+                            <h1 style="color: #001f3f; margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 1px;">CENDEKIA AKSARA</h1>
+                            <p style="color: #E1AD01; margin: 0; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">Berkas Formulir Calon Siswa Baru</p>
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #374151;">
+                        <tr>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; width: 200px; font-weight: bold; color: #001f3f; background-color: #f9fafb;">ID Pendaftaran</td>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: 900; color: #1d4ed8; font-family: monospace; font-size: 16px;">${s.idPendaftaran || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Nilai Seleksi</td>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: ${s.selectionScore >= PASSING_GRADE ? '#16a34a' : '#dc2626'}; font-size: 16px;">${s.selectionScore !== undefined ? s.selectionScore : 'Belum Ujian'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Nama Lengkap</td>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold;">${s.namaLengkap || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Email Pribadi</td>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.email || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Nomor WhatsApp</td>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.noWhatsApp || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Tempat, Tgl Lahir</td>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.tempatLahir || '-'}, ${s.tanggalLahir || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Alamat Rumah</td>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.alamatLengkap || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Asal Sekolah</td>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.asalSekolah || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Media Sosial</td>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.mediaSosial || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Topik Ujian</td>
+                            <td style="padding: 12px 10px; border: 1px solid #e5e7eb;">${s.selectionTopic || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding: 12px 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #001f3f; background-color: #f9fafb;">Motivasi / Portofolio Singkat:</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding: 15px 10px; border: 1px solid #e5e7eb; white-space: pre-wrap; line-height: 1.5; min-height: 150px; vertical-align: top;">${s.motivasi || 'Tidak ada catatan.'}</td>
+                        </tr>
+                    </table>
+                </div>`;
+            });
+
+            container.innerHTML = htmlContent;
+
+            // Beri jeda agar library memproses CSS
+            setTimeout(() => {
+                const opt = {
+                    margin:       0,
+                    filename:     'Berkas_Data_Siswa_Cendekia.pdf',
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2 }, 
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                html2pdf().set(opt).from(container).save().then(() => {
+                    container.innerHTML = ''; 
+                    container.style.visibility = 'hidden'; 
+                    Swal.close();
+                }).catch(err => {
+                    console.error(err);
+                    container.innerHTML = '';
+                    container.style.visibility = 'hidden';
+                    Swal.fire('Error', 'Gagal memproses PDF: ' + err.message, 'error');
+                });
+            }, 500);
         }
 
         window.saveAnnouncement = async function() {
